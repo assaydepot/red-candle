@@ -1,0 +1,11 @@
+[package]
+name = "candle"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+candle-core = "0.1.0"
+magnus = { version = "0.6", default_features = false }
