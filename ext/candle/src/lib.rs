@@ -14,6 +14,9 @@ impl Tensor {
     fn shape(&self) -> Vec<usize> {
         self.0.borrow().dims().to_vec()
     }
+    fn rank(&self) -> usize {
+        self.0.borrow().rank()
+    }
 }
 
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
@@ -26,5 +29,6 @@ fn init() -> Result<(), Error> {
     let class2 = module.define_class("DType", class::object())?;
     class1.define_singleton_method("new", function!(Tensor::new, 1))?;
     class1.define_method("shape", method!(Tensor::shape, 0))?;
+    class1.define_method("rank", method!(Tensor::rank, 0))?;
     Ok(())
 }
