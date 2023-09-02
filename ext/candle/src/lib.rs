@@ -169,9 +169,19 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_tensor.define_method("powf", method!(Tensor::powf, 1))?;
     rb_tensor.define_method("matmul", method!(Tensor::matmul, 1))?;
     rb_tensor.define_method("where_cond", method!(Tensor::where_cond, 2))?;
-    rb_tensor.define_method("__add__", method!(Tensor::__add__, 1))?;
-    rb_tensor.define_method("__mul__", method!(Tensor::__mul__, 1))?;
-    rb_tensor.define_method("__sub__", method!(Tensor::__sub__, 1))?;
+    rb_tensor.define_method("+", method!(Tensor::__add__, 1))?;
+    rb_tensor.define_method("*", method!(Tensor::__mul__, 1))?;
+    rb_tensor.define_method("-", method!(Tensor::__sub__, 1))?;
+    rb_tensor.define_method("reshape", method!(Tensor::reshape, 1))?;
+    rb_tensor.define_method("broadcast_as", method!(Tensor::broadcast_as, 1))?;
+    rb_tensor.define_method("broadcast_left", method!(Tensor::broadcast_left, 1))?;
+    rb_tensor.define_method("squeeze", method!(Tensor::squeeze, 1))?;
+    rb_tensor.define_method("unsqueeze", method!(Tensor::unsqueeze, 1))?;
+    rb_tensor.define_method("get", method!(Tensor::get, 1))?;
+    rb_tensor.define_method("transpose", method!(Tensor::transpose, 2))?;
+    rb_tensor.define_method("narrow", method!(Tensor::narrow, 3))?;
+    rb_tensor.define_method("get", method!(Tensor::get, 1))?;
+
     rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_dtype.define_method("to_s", method!(DType::__str__, 0))?;
