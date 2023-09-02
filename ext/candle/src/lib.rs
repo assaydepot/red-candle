@@ -81,6 +81,18 @@ impl Tensor {
     fn __add__(&self, rhs: &Tensor) -> Tensor {
         Tensor((&self.0 + &rhs.0).unwrap())
     }
+
+    fn __mul__(&self, rhs: &Tensor) -> Tensor {
+        Tensor((&self.0 * &rhs.0).unwrap())
+    }
+
+    fn __sub__(&self, rhs: &Tensor) -> Tensor {
+        Tensor((&self.0 - &rhs.0).unwrap())
+    }
+
+    fn reshape(&self, shape: Vec<usize>) -> Tensor {
+        Tensor(self.0.reshape(shape.as_slice()).unwrap())
+    }
 }
 
 impl DType {
@@ -113,6 +125,9 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_tensor.define_method("powf", method!(Tensor::powf, 1))?;
     rb_tensor.define_method("matmul", method!(Tensor::matmul, 1))?;
     rb_tensor.define_method("where_cond", method!(Tensor::where_cond, 2))?;
+    rb_tensor.define_method("__add__", method!(Tensor::__add__, 1))?;
+    rb_tensor.define_method("__mul__", method!(Tensor::__mul__, 1))?;
+    rb_tensor.define_method("__sub__", method!(Tensor::__sub__, 1))?;
     rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
     Ok(())
 }
