@@ -127,6 +127,42 @@ impl Tensor {
     fn narrow(&self, dim: usize, start: usize, len: usize) -> Tensor {
         Tensor(self.0.narrow(dim, start, len).unwrap())
     }
+
+    fn sum_all(&self) -> Tensor {
+        Tensor(self.0.sum_all().unwrap())
+    }
+
+    fn mean_all(&self) -> Tensor {
+        let elements = self.0.elem_count();
+        let sum = self.0.sum_all().unwrap();
+        let mean = (sum / elements as f64).unwrap();
+        Tensor(mean)
+    }
+
+    fn flatten_all(&self) -> Tensor {
+        Tensor(self.0.flatten_all().unwrap())
+    }
+
+    fn t(&self) -> Tensor {
+        Tensor(self.0.t().unwrap())
+    }
+
+    fn contiguous(&self) -> Tensor {
+        Tensor(self.0.contiguous().unwrap())
+    }
+
+    fn is_contiguous(&self) -> bool {
+        self.0.is_contiguous()
+    }
+
+    fn is_fortran_contiguous(&self) -> bool {
+        self.0.is_fortran_contiguous()
+    }
+
+    fn detach(&self) -> Tensor {
+        Tensor(self.0.detach().unwrap())
+    }
+
 }
 
 impl DType {
@@ -180,7 +216,14 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_tensor.define_method("get", method!(Tensor::get, 1))?;
     rb_tensor.define_method("transpose", method!(Tensor::transpose, 2))?;
     rb_tensor.define_method("narrow", method!(Tensor::narrow, 3))?;
-    rb_tensor.define_method("get", method!(Tensor::get, 1))?;
+    rb_tensor.define_method("sum_all", method!(Tensor::sum_all, 0))?;
+    rb_tensor.define_method("mean_all", method!(Tensor::mean_all, 0))?;
+    rb_tensor.define_method("flatten_all", method!(Tensor::flatten_all, 0))?;
+    rb_tensor.define_method("t", method!(Tensor::t, 0))?;
+    rb_tensor.define_method("contiguous", method!(Tensor::contiguous, 0))?;
+    rb_tensor.define_method("is_contiguous", method!(Tensor::is_contiguous, 0))?;
+    rb_tensor.define_method("is_fortran_contiguous", method!(Tensor::is_fortran_contiguous, 0))?;
+    rb_tensor.define_method("detach", method!(Tensor::detach, 0))?;
 
     rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
