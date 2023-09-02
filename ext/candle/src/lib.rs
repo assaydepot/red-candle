@@ -8,6 +8,12 @@ struct Tensor(candle_core::Tensor);
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
 struct DType(candle_core::DType);
 
+#[magnus::wrap(class = "Candle::Device")]
+enum Device {
+    Cpu,
+    Cuda,
+}
+
 impl Tensor {
     fn new(array: Vec<f32>) -> Self {
         use candle_core::Device::Cpu;
@@ -101,6 +107,26 @@ impl Tensor {
     fn broadcast_left(&self, shape: Vec<usize>) -> Tensor {
         Tensor(self.0.broadcast_left(shape).unwrap())
     }
+
+    fn squeeze(&self, dim: usize) -> Tensor {
+        Tensor(self.0.squeeze(dim).unwrap())
+    }
+
+    fn unsqueeze(&self, dim: usize) -> Tensor {
+        Tensor(self.0.unsqueeze(dim).unwrap())
+    }
+
+    fn get(&self, index: usize) -> Tensor {
+        Tensor(self.0.get(index).unwrap())
+    }
+
+    fn transpose(&self, dim1: usize, dim2: usize) -> Tensor {
+        Tensor(self.0.transpose(dim1, dim2).unwrap())
+    }
+
+    fn narrow(&self, dim: usize, start: usize, len: usize) -> Tensor {
+        Tensor(self.0.narrow(dim, start, len).unwrap())
+    }
 }
 
 impl DType {
@@ -128,7 +154,6 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_candle.const_set("VERSION", "0.1.0")?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
-    let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(Tensor::new, 1))?;
     rb_tensor.define_method("shape", method!(Tensor::shape, 0))?;
     rb_tensor.define_method("stride", method!(Tensor::stride, 0))?;
@@ -148,5 +173,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_tensor.define_method("__mul__", method!(Tensor::__mul__, 1))?;
     rb_tensor.define_method("__sub__", method!(Tensor::__sub__, 1))?;
     rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
+    let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
+    rb_dtype.define_method("to_s", method!(DType::__str__, 0))?;
     Ok(())
 }
