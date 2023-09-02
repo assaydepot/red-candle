@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use magnus::{class, define_module, function, method, prelude::*, Error};
+use magnus::{function, method, prelude::*, Error, Ruby};
 
 //use candle_core::{DType, Device, Tensor, WithDType};
 
@@ -23,10 +23,10 @@ impl Tensor {
 struct DType(candle_core::DType);
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("Candle")?;
-    let class1 = module.define_class("Tensor", class::object())?;
-    let class2 = module.define_class("DType", class::object())?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("Candle")?;
+    let class1 = module.define_class("Tensor", Ruby::class_object(ruby))?;
+    let class2 = module.define_class("DType", Ruby::class_object(ruby))?;
     class1.define_singleton_method("new", function!(Tensor::new, 1))?;
     class1.define_method("shape", method!(Tensor::shape, 0))?;
     class1.define_method("rank", method!(Tensor::rank, 0))?;
