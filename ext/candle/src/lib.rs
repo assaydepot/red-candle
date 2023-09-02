@@ -163,6 +163,9 @@ impl Tensor {
         Tensor(self.0.detach().unwrap())
     }
 
+    fn copy(&self) -> Tensor {
+        Tensor(self.0.copy().unwrap())
+    }
 }
 
 impl DType {
@@ -177,9 +180,18 @@ impl DType {
 
 fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
     let rb_utils = rb_candle.define_module("Utils")?;
-    rb_utils.define_singleton_method("cuda_is_available", function!(candle_core::utils::cuda_is_available, 0))?;
-    rb_utils.define_singleton_method("get_num_threads", function!(candle_core::utils::get_num_threads, 0))?;
-    rb_utils.define_singleton_method("has_accelerate", function!(candle_core::utils::has_accelerate, 0))?;
+    rb_utils.define_singleton_method(
+        "cuda_is_available",
+        function!(candle_core::utils::cuda_is_available, 0),
+    )?;
+    rb_utils.define_singleton_method(
+        "get_num_threads",
+        function!(candle_core::utils::get_num_threads, 0),
+    )?;
+    rb_utils.define_singleton_method(
+        "has_accelerate",
+        function!(candle_core::utils::has_accelerate, 0),
+    )?;
     rb_utils.define_singleton_method("has_mkl", function!(candle_core::utils::has_mkl, 0))?;
     Ok(())
 }
@@ -222,9 +234,12 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_tensor.define_method("t", method!(Tensor::t, 0))?;
     rb_tensor.define_method("contiguous", method!(Tensor::contiguous, 0))?;
     rb_tensor.define_method("is_contiguous", method!(Tensor::is_contiguous, 0))?;
-    rb_tensor.define_method("is_fortran_contiguous", method!(Tensor::is_fortran_contiguous, 0))?;
+    rb_tensor.define_method(
+        "is_fortran_contiguous",
+        method!(Tensor::is_fortran_contiguous, 0),
+    )?;
     rb_tensor.define_method("detach", method!(Tensor::detach, 0))?;
-
+    rb_tensor.define_method("copy", method!(Tensor::copy, 0))?;
     rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_dtype.define_method("to_s", method!(DType::__str__, 0))?;
