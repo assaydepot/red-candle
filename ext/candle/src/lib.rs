@@ -13,18 +13,23 @@ impl Tensor {
         use candle_core::Device::Cpu;
         Self(candle_core::Tensor::new(array.as_slice(), &Cpu).unwrap())
     }
+
     fn shape(&self) -> Vec<usize> {
         self.0.dims().to_vec()
     }
+
     fn stride(&self) -> Vec<usize> {
         self.0.stride().to_vec()
     }
+
     fn dtype(&self) -> DType {
         DType(self.0.dtype())
     }
+
     fn rank(&self) -> usize {
         self.0.rank()
     }
+
     fn __repr__(&self) -> String {
         format!("{}", self.0)
     }
@@ -32,6 +37,7 @@ impl Tensor {
     fn __str__(&self) -> String {
         self.__repr__()
     }
+
     fn sin(&self) -> Tensor {
         Tensor(self.0.sin().unwrap())
     }
@@ -39,20 +45,41 @@ impl Tensor {
     fn cos(&self) -> Tensor {
         Tensor(self.0.cos().unwrap())
     }
+
     fn log(&self) -> Tensor {
         Tensor(self.0.log().unwrap())
     }
+
     fn sqr(&self) -> Tensor {
         Tensor(self.0.sqr().unwrap())
     }
+
     fn sqrt(&self) -> Tensor {
         Tensor(self.0.sqrt().unwrap())
     }
+
     fn recip(&self) -> Tensor {
         Tensor(self.0.recip().unwrap())
     }
+
     fn exp(&self) -> Tensor {
         Tensor(self.0.exp().unwrap())
+    }
+
+    fn powf(&self, n: f64) -> Tensor {
+        Tensor(self.0.powf(n).unwrap())
+    }
+
+    fn matmul(&self, other: &Tensor) -> Tensor {
+        Tensor(self.0.matmul(&other.0).unwrap())
+    }
+
+    fn where_cond(&self, on_true: &Tensor, on_false: &Tensor) -> Tensor {
+        Tensor(self.0.where_cond(&on_true.0, &on_false.0).unwrap())
+    }
+
+    fn __add__(&self, rhs: &Tensor) -> Tensor {
+        Tensor((&self.0 + &rhs.0).unwrap())
     }
 }
 
@@ -83,6 +110,9 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     rb_tensor.define_method("sqrt", method!(Tensor::sqrt, 0))?;
     rb_tensor.define_method("recip", method!(Tensor::recip, 0))?;
     rb_tensor.define_method("exp", method!(Tensor::exp, 0))?;
+    rb_tensor.define_method("powf", method!(Tensor::powf, 1))?;
+    rb_tensor.define_method("matmul", method!(Tensor::matmul, 1))?;
+    rb_tensor.define_method("where_cond", method!(Tensor::where_cond, 2))?;
     rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
     Ok(())
 }
