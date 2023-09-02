@@ -91,7 +91,15 @@ impl Tensor {
     }
 
     fn reshape(&self, shape: Vec<usize>) -> Tensor {
-        Tensor(self.0.reshape(shape.as_slice()).unwrap())
+        Tensor(self.0.reshape(shape).unwrap())
+    }
+
+    fn broadcast_as(&self, shape: Vec<usize>) -> Tensor {
+        Tensor(self.0.broadcast_as(shape).unwrap())
+    }
+
+    fn broadcast_left(&self, shape: Vec<usize>) -> Tensor {
+        Tensor(self.0.broadcast_left(shape).unwrap())
     }
 }
 
@@ -105,11 +113,21 @@ impl DType {
     }
 }
 
+fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
+    let rb_utils = rb_candle.define_module("Utils")?;
+    rb_utils.define_singleton_method("cuda_is_available", function!(candle_core::utils::cuda_is_available, 0))?;
+    rb_utils.define_singleton_method("get_num_threads", function!(candle_core::utils::get_num_threads, 0))?;
+    rb_utils.define_singleton_method("has_accelerate", function!(candle_core::utils::has_accelerate, 0))?;
+    rb_utils.define_singleton_method("has_mkl", function!(candle_core::utils::has_mkl, 0))?;
+    Ok(())
+}
+
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
-    let module = ruby.define_module("Candle")?;
-    let rb_tensor = module.define_class("Tensor", Ruby::class_object(ruby))?;
-    let rb_dtype = module.define_class("DType", Ruby::class_object(ruby))?;
+    let rb_candle = ruby.define_module("Candle")?;
+    candle_utils(rb_candle)?;
+    let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
+    let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(Tensor::new, 1))?;
     rb_tensor.define_method("shape", method!(Tensor::shape, 0))?;
     rb_tensor.define_method("stride", method!(Tensor::stride, 0))?;
