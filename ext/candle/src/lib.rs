@@ -125,6 +125,7 @@ fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let rb_candle = ruby.define_module("Candle")?;
+    rb_candle.const_set("VERSION", "0.1.0")?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
