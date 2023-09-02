@@ -7,5 +7,5 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-candle-core = "0.1.0"
+candle-core = "0.2"
 magnus = { version = "0.6", default_features = false }
