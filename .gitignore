@@ -60,3 +60,4 @@ build-iPhoneSimulator/
 *.dll
 *.a
 *.o
+*.lock
