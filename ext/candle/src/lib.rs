@@ -26,11 +26,33 @@ impl Tensor {
         self.0.rank()
     }
     fn __repr__(&self) -> String {
-    format!("{}", self.0)
+        format!("{}", self.0)
     }
 
     fn __str__(&self) -> String {
         self.__repr__()
+    }
+    fn sin(&self) -> Tensor {
+        Tensor(self.0.sin().unwrap())
+    }
+
+    fn cos(&self) -> Tensor {
+        Tensor(self.0.cos().unwrap())
+    }
+    fn log(&self) -> Tensor {
+        Tensor(self.0.log().unwrap())
+    }
+    fn sqr(&self) -> Tensor {
+        Tensor(self.0.sqr().unwrap())
+    }
+    fn sqrt(&self) -> Tensor {
+        Tensor(self.0.sqrt().unwrap())
+    }
+    fn recip(&self) -> Tensor {
+        Tensor(self.0.recip().unwrap())
+    }
+    fn exp(&self) -> Tensor {
+        Tensor(self.0.exp().unwrap())
     }
 }
 
@@ -47,13 +69,20 @@ impl DType {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Candle")?;
-    let class1 = module.define_class("Tensor", Ruby::class_object(ruby))?;
-    let class2 = module.define_class("DType", Ruby::class_object(ruby))?;
-    class1.define_singleton_method("new", function!(Tensor::new, 1))?;
-    class1.define_method("shape", method!(Tensor::shape, 0))?;
-    class1.define_method("stride", method!(Tensor::stride, 0))?;
-    class1.define_method("dtype", method!(Tensor::dtype, 0))?;
-    class1.define_method("rank", method!(Tensor::rank, 0))?;
-    class1.define_method("to_s", method!(Tensor::__str__, 0))?;
+    let rb_tensor = module.define_class("Tensor", Ruby::class_object(ruby))?;
+    let rb_dtype = module.define_class("DType", Ruby::class_object(ruby))?;
+    rb_tensor.define_singleton_method("new", function!(Tensor::new, 1))?;
+    rb_tensor.define_method("shape", method!(Tensor::shape, 0))?;
+    rb_tensor.define_method("stride", method!(Tensor::stride, 0))?;
+    rb_tensor.define_method("dtype", method!(Tensor::dtype, 0))?;
+    rb_tensor.define_method("rank", method!(Tensor::rank, 0))?;
+    rb_tensor.define_method("sin", method!(Tensor::sin, 0))?;
+    rb_tensor.define_method("cos", method!(Tensor::cos, 0))?;
+    rb_tensor.define_method("log", method!(Tensor::log, 0))?;
+    rb_tensor.define_method("sqr", method!(Tensor::sqr, 0))?;
+    rb_tensor.define_method("sqrt", method!(Tensor::sqrt, 0))?;
+    rb_tensor.define_method("recip", method!(Tensor::recip, 0))?;
+    rb_tensor.define_method("exp", method!(Tensor::exp, 0))?;
+    rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
     Ok(())
 }
