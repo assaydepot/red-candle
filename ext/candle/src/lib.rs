@@ -11,7 +11,7 @@ impl RbCandleErr {
     }
 }
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
-struct Tensor(candle_core::Tensor);
+struct RbTensor(candle_core::Tensor);
 
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
 struct DType(candle_core::DType);
@@ -22,7 +22,7 @@ enum Device {
     Cuda,
 }
 
-impl Tensor {
+impl RbTensor {
     fn new(array: Vec<f32>) -> Self {
         use candle_core::Device::Cpu;
         Self(candle_core::Tensor::new(array.as_slice(), &Cpu).unwrap())
@@ -84,11 +84,11 @@ impl Tensor {
         Ok(Self(self.0.powf(n).map_err(RbCandleErr::from)?))
     }
 
-    fn matmul(&self, other: &Tensor) -> RbResult<Self> {
+    fn matmul(&self, other: &RbTensor) -> RbResult<Self> {
         Ok(Self(self.0.matmul(&other.0).map_err(RbCandleErr::from)?))
     }
 
-    fn where_cond(&self, on_true: &Tensor, on_false: &Tensor) -> RbResult<Self> {
+    fn where_cond(&self, on_true: &RbTensor, on_false: &RbTensor) -> RbResult<Self> {
         Ok(Self(
             self.0
                 .where_cond(&on_true.0, &on_false.0)
@@ -96,15 +96,15 @@ impl Tensor {
         ))
     }
 
-    fn __add__(&self, rhs: &Tensor) -> RbResult<Self> {
+    fn __add__(&self, rhs: &RbTensor) -> RbResult<Self> {
         Ok(Self(self.0.add(&rhs.0).map_err(RbCandleErr::from)?))
     }
 
-    fn __mul__(&self, rhs: &Tensor) -> RbResult<Self> {
+    fn __mul__(&self, rhs: &RbTensor) -> RbResult<Self> {
         Ok(Self(self.0.mul(&rhs.0).map_err(RbCandleErr::from)?))
     }
 
-    fn __sub__(&self, rhs: &Tensor) -> RbResult<Self> {
+    fn __sub__(&self, rhs: &RbTensor) -> RbResult<Self> {
         Ok(Self(self.0.sub(&rhs.0).map_err(RbCandleErr::from)?))
     }
 
@@ -150,11 +150,11 @@ impl Tensor {
         Ok(Self(self.0.sum_all().map_err(RbCandleErr::from)?))
     }
 
-    fn mean_all(&self) -> Tensor {
+    fn mean_all(&self) -> RbTensor {
         let elements = self.0.elem_count();
         let sum = self.0.sum_all().unwrap();
         let mean = (sum / elements as f64).unwrap();
-        Tensor(mean)
+        RbTensor(mean)
     }
 
     fn flatten_all(&self) -> RbResult<Self> {
@@ -219,45 +219,45 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
-    rb_tensor.define_singleton_method("new", function!(Tensor::new, 1))?;
-    rb_tensor.define_method("shape", method!(Tensor::shape, 0))?;
-    rb_tensor.define_method("stride", method!(Tensor::stride, 0))?;
-    rb_tensor.define_method("dtype", method!(Tensor::dtype, 0))?;
-    rb_tensor.define_method("rank", method!(Tensor::rank, 0))?;
-    rb_tensor.define_method("sin", method!(Tensor::sin, 0))?;
-    rb_tensor.define_method("cos", method!(Tensor::cos, 0))?;
-    rb_tensor.define_method("log", method!(Tensor::log, 0))?;
-    rb_tensor.define_method("sqr", method!(Tensor::sqr, 0))?;
-    rb_tensor.define_method("sqrt", method!(Tensor::sqrt, 0))?;
-    rb_tensor.define_method("recip", method!(Tensor::recip, 0))?;
-    rb_tensor.define_method("exp", method!(Tensor::exp, 0))?;
-    rb_tensor.define_method("powf", method!(Tensor::powf, 1))?;
-    rb_tensor.define_method("matmul", method!(Tensor::matmul, 1))?;
-    rb_tensor.define_method("where_cond", method!(Tensor::where_cond, 2))?;
-    rb_tensor.define_method("+", method!(Tensor::__add__, 1))?;
-    rb_tensor.define_method("*", method!(Tensor::__mul__, 1))?;
-    rb_tensor.define_method("-", method!(Tensor::__sub__, 1))?;
-    rb_tensor.define_method("reshape", method!(Tensor::reshape, 1))?;
-    rb_tensor.define_method("broadcast_as", method!(Tensor::broadcast_as, 1))?;
-    rb_tensor.define_method("broadcast_left", method!(Tensor::broadcast_left, 1))?;
-    rb_tensor.define_method("squeeze", method!(Tensor::squeeze, 1))?;
-    rb_tensor.define_method("unsqueeze", method!(Tensor::unsqueeze, 1))?;
-    rb_tensor.define_method("get", method!(Tensor::get, 1))?;
-    rb_tensor.define_method("transpose", method!(Tensor::transpose, 2))?;
-    rb_tensor.define_method("narrow", method!(Tensor::narrow, 3))?;
-    rb_tensor.define_method("sum_all", method!(Tensor::sum_all, 0))?;
-    rb_tensor.define_method("mean_all", method!(Tensor::mean_all, 0))?;
-    rb_tensor.define_method("flatten_all", method!(Tensor::flatten_all, 0))?;
-    rb_tensor.define_method("t", method!(Tensor::t, 0))?;
-    rb_tensor.define_method("contiguous", method!(Tensor::contiguous, 0))?;
-    rb_tensor.define_method("is_contiguous", method!(Tensor::is_contiguous, 0))?;
+    rb_tensor.define_singleton_method("new", function!(RbTensor::new, 1))?;
+    rb_tensor.define_method("shape", method!(RbTensor::shape, 0))?;
+    rb_tensor.define_method("stride", method!(RbTensor::stride, 0))?;
+    rb_tensor.define_method("dtype", method!(RbTensor::dtype, 0))?;
+    rb_tensor.define_method("rank", method!(RbTensor::rank, 0))?;
+    rb_tensor.define_method("sin", method!(RbTensor::sin, 0))?;
+    rb_tensor.define_method("cos", method!(RbTensor::cos, 0))?;
+    rb_tensor.define_method("log", method!(RbTensor::log, 0))?;
+    rb_tensor.define_method("sqr", method!(RbTensor::sqr, 0))?;
+    rb_tensor.define_method("sqrt", method!(RbTensor::sqrt, 0))?;
+    rb_tensor.define_method("recip", method!(RbTensor::recip, 0))?;
+    rb_tensor.define_method("exp", method!(RbTensor::exp, 0))?;
+    rb_tensor.define_method("powf", method!(RbTensor::powf, 1))?;
+    rb_tensor.define_method("matmul", method!(RbTensor::matmul, 1))?;
+    rb_tensor.define_method("where_cond", method!(RbTensor::where_cond, 2))?;
+    rb_tensor.define_method("+", method!(RbTensor::__add__, 1))?;
+    rb_tensor.define_method("*", method!(RbTensor::__mul__, 1))?;
+    rb_tensor.define_method("-", method!(RbTensor::__sub__, 1))?;
+    rb_tensor.define_method("reshape", method!(RbTensor::reshape, 1))?;
+    rb_tensor.define_method("broadcast_as", method!(RbTensor::broadcast_as, 1))?;
+    rb_tensor.define_method("broadcast_left", method!(RbTensor::broadcast_left, 1))?;
+    rb_tensor.define_method("squeeze", method!(RbTensor::squeeze, 1))?;
+    rb_tensor.define_method("unsqueeze", method!(RbTensor::unsqueeze, 1))?;
+    rb_tensor.define_method("get", method!(RbTensor::get, 1))?;
+    rb_tensor.define_method("transpose", method!(RbTensor::transpose, 2))?;
+    rb_tensor.define_method("narrow", method!(RbTensor::narrow, 3))?;
+    rb_tensor.define_method("sum_all", method!(RbTensor::sum_all, 0))?;
+    rb_tensor.define_method("mean_all", method!(RbTensor::mean_all, 0))?;
+    rb_tensor.define_method("flatten_all", method!(RbTensor::flatten_all, 0))?;
+    rb_tensor.define_method("t", method!(RbTensor::t, 0))?;
+    rb_tensor.define_method("contiguous", method!(RbTensor::contiguous, 0))?;
+    rb_tensor.define_method("is_contiguous", method!(RbTensor::is_contiguous, 0))?;
     rb_tensor.define_method(
         "is_fortran_contiguous",
-        method!(Tensor::is_fortran_contiguous, 0),
+        method!(RbTensor::is_fortran_contiguous, 0),
     )?;
-    rb_tensor.define_method("detach", method!(Tensor::detach, 0))?;
-    rb_tensor.define_method("copy", method!(Tensor::copy, 0))?;
-    rb_tensor.define_method("to_s", method!(Tensor::__str__, 0))?;
+    rb_tensor.define_method("detach", method!(RbTensor::detach, 0))?;
+    rb_tensor.define_method("copy", method!(RbTensor::copy, 0))?;
+    rb_tensor.define_method("to_s", method!(RbTensor::__str__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_dtype.define_method("to_s", method!(DType::__str__, 0))?;
     Ok(())
