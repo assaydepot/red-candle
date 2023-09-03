@@ -10,6 +10,39 @@ impl RbCandleErr {
         Error::new(magnus::exception::runtime_error(), e.to_string())
     }
 }
+
+fn actual_index(t: &candle_core::Tensor, dim: usize, index: i64) -> candle_core::Result<usize> {
+    let dim = t.dim(dim)?;
+    if 0 <= index {
+        let index = index as usize;
+        if dim <= index {
+            candle_core::bail!("index {index} is too large for tensor dimension {dim}")
+        }
+        Ok(index)
+    } else {
+        if (dim as i64) < -index {
+            candle_core::bail!("index {index} is too low for tensor dimension {dim}")
+        }
+        Ok((dim as i64 + index) as usize)
+    }
+}
+
+fn actual_dim(t: &candle_core::Tensor, dim: i64) -> candle_core::Result<usize> {
+    let rank = t.rank();
+    if 0 <= dim {
+        let dim = dim as usize;
+        if rank <= dim {
+            candle_core::bail!("dimension index {dim} is too large for tensor rank {rank}")
+        }
+        Ok(dim)
+    } else {
+        if (rank as i64) < -dim {
+            candle_core::bail!("dimension index {dim} is too low for tensor rank {rank}")
+        }
+        Ok((rank as i64 + dim) as usize)
+    }
+}
+
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
 struct RbTensor(candle_core::Tensor);
 
@@ -123,6 +156,7 @@ impl RbTensor {
     }
 
     fn squeeze(&self, dim: usize) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim as i64).map_err(RbCandleErr::from)?;
         Ok(Self(self.0.squeeze(dim).map_err(RbCandleErr::from)?))
     }
 
@@ -131,6 +165,7 @@ impl RbTensor {
     }
 
     fn get(&self, index: usize) -> RbResult<Self> {
+        let index = actual_index(&self.0, 0, index as i64).map_err(RbCandleErr::from)?;
         Ok(Self(self.0.get(index).map_err(RbCandleErr::from)?))
     }
 
@@ -141,9 +176,31 @@ impl RbTensor {
     }
 
     fn narrow(&self, dim: usize, start: usize, len: usize) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim as i64).map_err(RbCandleErr::from)?;
+        let start = actual_index(&self.0, dim, start as i64).map_err(RbCandleErr::from)?;
         Ok(Self(
             self.0.narrow(dim, start, len).map_err(RbCandleErr::from)?,
         ))
+    }
+
+    fn argmax_keepdim(&self, dim: i64) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
+        Ok(Self(self.0.argmax_keepdim(dim).map_err(RbCandleErr::from)?))
+    }
+
+    fn argmin_keepdim(&self, dim: i64) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
+        Ok(Self(self.0.argmin_keepdim(dim).map_err(RbCandleErr::from)?))
+    }
+
+    fn max_keepdim(&self, dim: i64) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
+        Ok(Self(self.0.max_keepdim(dim).map_err(RbCandleErr::from)?))
+    }
+
+    fn min_keepdim(&self, dim: i64) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
+        Ok(Self(self.0.min_keepdim(dim).map_err(RbCandleErr::from)?))
     }
 
     fn sum_all(&self) -> RbResult<Self> {
@@ -155,6 +212,16 @@ impl RbTensor {
         let sum = self.0.sum_all().unwrap();
         let mean = (sum / elements as f64).unwrap();
         RbTensor(mean)
+    }
+
+    fn flatten_from(&self, dim: i64) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
+        Ok(Self(self.0.flatten_from(dim).map_err(RbCandleErr::from)?))
+    }
+
+    fn flatten_to(&self, dim: i64) -> RbResult<Self> {
+        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
+        Ok(Self(self.0.flatten_to(dim).map_err(RbCandleErr::from)?))
     }
 
     fn flatten_all(&self) -> RbResult<Self> {
@@ -183,6 +250,14 @@ impl RbTensor {
 
     fn copy(&self) -> RbResult<Self> {
         Ok(Self(self.0.copy().map_err(RbCandleErr::from)?))
+    }
+
+    fn to_dtype(&self, dtype: &RbDType) -> RbResult<Self> {
+        Ok(Self(
+            self.0
+                .to_dtype(dtype.0)
+                .map_err(RbCandleErr::from)?,
+        ))
     }
 }
 
@@ -245,8 +320,14 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_method("get", method!(RbTensor::get, 1))?;
     rb_tensor.define_method("transpose", method!(RbTensor::transpose, 2))?;
     rb_tensor.define_method("narrow", method!(RbTensor::narrow, 3))?;
+    rb_tensor.define_method("argmax_keepdim", method!(RbTensor::argmax_keepdim, 1))?;
+    rb_tensor.define_method("argmin_keepdim", method!(RbTensor::argmin_keepdim, 1))?;
+    rb_tensor.define_method("max_keepdim", method!(RbTensor::max_keepdim, 1))?;
+    rb_tensor.define_method("min_keepdim", method!(RbTensor::min_keepdim, 1))?;
     rb_tensor.define_method("sum_all", method!(RbTensor::sum_all, 0))?;
     rb_tensor.define_method("mean_all", method!(RbTensor::mean_all, 0))?;
+    rb_tensor.define_method("flatten_from", method!(RbTensor::flatten_from, 1))?;
+    rb_tensor.define_method("flatten_to", method!(RbTensor::flatten_to, 1))?;
     rb_tensor.define_method("flatten_all", method!(RbTensor::flatten_all, 0))?;
     rb_tensor.define_method("t", method!(RbTensor::t, 0))?;
     rb_tensor.define_method("contiguous", method!(RbTensor::contiguous, 0))?;
