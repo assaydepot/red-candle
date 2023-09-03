@@ -339,7 +339,9 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_method("detach", method!(RbTensor::detach, 0))?;
     rb_tensor.define_method("copy", method!(RbTensor::copy, 0))?;
     rb_tensor.define_method("to_s", method!(RbTensor::__str__, 0))?;
+    rb_tensor.define_method("inspect", method!(RbTensor::__repr__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_dtype.define_method("to_s", method!(RbDType::__str__, 0))?;
+    rb_dtype.define_method("inspect", method!(RbDType::__repr__, 0))?;
     Ok(())
 }
