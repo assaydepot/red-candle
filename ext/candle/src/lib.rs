@@ -217,7 +217,6 @@ fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
-    rb_candle.const_set("VERSION", "0.1.0")?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(Tensor::new, 1))?;
