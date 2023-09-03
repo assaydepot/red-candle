@@ -2,6 +2,14 @@ use magnus::{function, method, prelude::*, Error, Ruby};
 
 //use candle_core::{DType, Device, Tensor, WithDType};
 
+type RbResult<T> = Result<T, Error>;
+struct RbCandleErr {}
+
+impl RbCandleErr {
+    pub fn from(e: candle_core::Error) -> Error {
+        Error::new(magnus::exception::runtime_error(), e.to_string())
+    }
+}
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
 struct Tensor(candle_core::Tensor);
 
@@ -44,92 +52,102 @@ impl Tensor {
         self.__repr__()
     }
 
-    fn sin(&self) -> Tensor {
-        Tensor(self.0.sin().unwrap())
+    fn sin(&self) -> RbResult<Self> {
+        Ok(Self(self.0.sin().map_err(RbCandleErr::from)?))
     }
 
-    fn cos(&self) -> Tensor {
-        Tensor(self.0.cos().unwrap())
+    fn cos(&self) -> RbResult<Self> {
+        Ok(Self(self.0.cos().map_err(RbCandleErr::from)?))
     }
 
-    fn log(&self) -> Tensor {
-        Tensor(self.0.log().unwrap())
+    fn log(&self) -> RbResult<Self> {
+        Ok(Self(self.0.log().map_err(RbCandleErr::from)?))
     }
 
-    fn sqr(&self) -> Tensor {
-        Tensor(self.0.sqr().unwrap())
+    fn sqr(&self) -> RbResult<Self> {
+        Ok(Self(self.0.sqr().map_err(RbCandleErr::from)?))
     }
 
-    fn sqrt(&self) -> Tensor {
-        Tensor(self.0.sqrt().unwrap())
+    fn sqrt(&self) -> RbResult<Self> {
+        Ok(Self(self.0.sqrt().map_err(RbCandleErr::from)?))
     }
 
-    fn recip(&self) -> Tensor {
-        Tensor(self.0.recip().unwrap())
+    fn recip(&self) -> RbResult<Self> {
+        Ok(Self(self.0.recip().map_err(RbCandleErr::from)?))
     }
 
-    fn exp(&self) -> Tensor {
-        Tensor(self.0.exp().unwrap())
+    fn exp(&self) -> RbResult<Self> {
+        Ok(Self(self.0.exp().map_err(RbCandleErr::from)?))
     }
 
-    fn powf(&self, n: f64) -> Tensor {
-        Tensor(self.0.powf(n).unwrap())
+    fn powf(&self, n: f64) -> RbResult<Self> {
+        Ok(Self(self.0.powf(n).map_err(RbCandleErr::from)?))
     }
 
-    fn matmul(&self, other: &Tensor) -> Tensor {
-        Tensor(self.0.matmul(&other.0).unwrap())
+    fn matmul(&self, other: &Tensor) -> RbResult<Self> {
+        Ok(Self(self.0.matmul(&other.0).map_err(RbCandleErr::from)?))
     }
 
-    fn where_cond(&self, on_true: &Tensor, on_false: &Tensor) -> Tensor {
-        Tensor(self.0.where_cond(&on_true.0, &on_false.0).unwrap())
+    fn where_cond(&self, on_true: &Tensor, on_false: &Tensor) -> RbResult<Self> {
+        Ok(Self(
+            self.0
+                .where_cond(&on_true.0, &on_false.0)
+                .map_err(RbCandleErr::from)?,
+        ))
     }
 
-    fn __add__(&self, rhs: &Tensor) -> Tensor {
-        Tensor((&self.0 + &rhs.0).unwrap())
+    fn __add__(&self, rhs: &Tensor) -> RbResult<Self> {
+        Ok(Self(self.0.add(&rhs.0).map_err(RbCandleErr::from)?))
     }
 
-    fn __mul__(&self, rhs: &Tensor) -> Tensor {
-        Tensor((&self.0 * &rhs.0).unwrap())
+    fn __mul__(&self, rhs: &Tensor) -> RbResult<Self> {
+        Ok(Self(self.0.mul(&rhs.0).map_err(RbCandleErr::from)?))
     }
 
-    fn __sub__(&self, rhs: &Tensor) -> Tensor {
-        Tensor((&self.0 - &rhs.0).unwrap())
+    fn __sub__(&self, rhs: &Tensor) -> RbResult<Self> {
+        Ok(Self(self.0.sub(&rhs.0).map_err(RbCandleErr::from)?))
     }
 
-    fn reshape(&self, shape: Vec<usize>) -> Tensor {
-        Tensor(self.0.reshape(shape).unwrap())
+    fn reshape(&self, shape: Vec<usize>) -> RbResult<Self> {
+        Ok(Self(self.0.reshape(shape).map_err(RbCandleErr::from)?))
     }
 
-    fn broadcast_as(&self, shape: Vec<usize>) -> Tensor {
-        Tensor(self.0.broadcast_as(shape).unwrap())
+    fn broadcast_as(&self, shape: Vec<usize>) -> RbResult<Self> {
+        Ok(Self(self.0.broadcast_as(shape).map_err(RbCandleErr::from)?))
     }
 
-    fn broadcast_left(&self, shape: Vec<usize>) -> Tensor {
-        Tensor(self.0.broadcast_left(shape).unwrap())
+    fn broadcast_left(&self, shape: Vec<usize>) -> RbResult<Self> {
+        Ok(Self(
+            self.0.broadcast_left(shape).map_err(RbCandleErr::from)?,
+        ))
     }
 
-    fn squeeze(&self, dim: usize) -> Tensor {
-        Tensor(self.0.squeeze(dim).unwrap())
+    fn squeeze(&self, dim: usize) -> RbResult<Self> {
+        Ok(Self(self.0.squeeze(dim).map_err(RbCandleErr::from)?))
     }
 
-    fn unsqueeze(&self, dim: usize) -> Tensor {
-        Tensor(self.0.unsqueeze(dim).unwrap())
+    fn unsqueeze(&self, dim: usize) -> RbResult<Self> {
+        Ok(Self(self.0.unsqueeze(dim).map_err(RbCandleErr::from)?))
     }
 
-    fn get(&self, index: usize) -> Tensor {
-        Tensor(self.0.get(index).unwrap())
+    fn get(&self, index: usize) -> RbResult<Self> {
+        Ok(Self(self.0.get(index).map_err(RbCandleErr::from)?))
     }
 
-    fn transpose(&self, dim1: usize, dim2: usize) -> Tensor {
-        Tensor(self.0.transpose(dim1, dim2).unwrap())
+    fn transpose(&self, dim1: usize, dim2: usize) -> RbResult<Self> {
+        Ok(Self(
+            self.0.transpose(dim1, dim2).map_err(RbCandleErr::from)?,
+        ))
     }
 
-    fn narrow(&self, dim: usize, start: usize, len: usize) -> Tensor {
-        Tensor(self.0.narrow(dim, start, len).unwrap())
+    fn narrow(&self, dim: usize, start: usize, len: usize) -> RbResult<Self> {
+        Ok(Self(
+            self.0.narrow(dim, start, len).map_err(RbCandleErr::from)?,
+        ))
     }
 
-    fn sum_all(&self) -> Tensor {
-        Tensor(self.0.sum_all().unwrap())
+    fn sum_all(&self) -> RbResult<Self> {
+        Ok(Self(self.0.sum_all().map_err(RbCandleErr::from)?))
     }
 
     fn mean_all(&self) -> Tensor {
@@ -139,16 +157,16 @@ impl Tensor {
         Tensor(mean)
     }
 
-    fn flatten_all(&self) -> Tensor {
-        Tensor(self.0.flatten_all().unwrap())
+    fn flatten_all(&self) -> RbResult<Self> {
+        Ok(Self(self.0.flatten_all().map_err(RbCandleErr::from)?))
     }
 
-    fn t(&self) -> Tensor {
-        Tensor(self.0.t().unwrap())
+    fn t(&self) -> RbResult<Self> {
+        Ok(Self(self.0.t().map_err(RbCandleErr::from)?))
     }
 
-    fn contiguous(&self) -> Tensor {
-        Tensor(self.0.contiguous().unwrap())
+    fn contiguous(&self) -> RbResult<Self> {
+        Ok(Self(self.0.contiguous().map_err(RbCandleErr::from)?))
     }
 
     fn is_contiguous(&self) -> bool {
@@ -159,12 +177,12 @@ impl Tensor {
         self.0.is_fortran_contiguous()
     }
 
-    fn detach(&self) -> Tensor {
-        Tensor(self.0.detach().unwrap())
+    fn detach(&self) -> RbResult<Self> {
+        Ok(Self(self.0.detach().map_err(RbCandleErr::from)?))
     }
 
-    fn copy(&self) -> Tensor {
-        Tensor(self.0.copy().unwrap())
+    fn copy(&self) -> RbResult<Self> {
+        Ok(Self(self.0.copy().map_err(RbCandleErr::from)?))
     }
 }
 
@@ -197,7 +215,7 @@ fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
 }
 
 #[magnus::init]
-fn init(ruby: &Ruby) -> Result<(), Error> {
+fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
     rb_candle.const_set("VERSION", "0.1.0")?;
     candle_utils(rb_candle)?;
