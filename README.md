@@ -2,6 +2,26 @@
 
 [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
 
-# Development
+## Usage
+
+```ruby
+require "candle"
+
+x = Candle::Tensor.new([1, 2, 3, 4, 5, 6])
+x = x.reshape([3, 2])
+# [[1., 2.],
+#  [3., 4.],
+#  [5., 6.]]
+# Tensor[[3, 2], f32]
+```
+
+## Development
 
 Fork it.
+
+Implemented with [Magnus](https://github.com/matsadler/magnus), with reference to [Polars Ruby](https://github.com/ankane/polars-ruby)
+
+### See Also
+
+- [Numo::NArray](https://github.com/ruby-numo/numo-narray)
+- [Cumo](https://github.com/sonots/cumo)
