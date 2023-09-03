@@ -14,7 +14,7 @@ impl RbCandleErr {
 struct RbTensor(candle_core::Tensor);
 
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
-struct DType(candle_core::DType);
+struct RbDType(candle_core::DType);
 
 #[magnus::wrap(class = "Candle::Device")]
 enum Device {
@@ -36,8 +36,8 @@ impl RbTensor {
         self.0.stride().to_vec()
     }
 
-    fn dtype(&self) -> DType {
-        DType(self.0.dtype())
+    fn dtype(&self) -> RbDType {
+        RbDType(self.0.dtype())
     }
 
     fn rank(&self) -> usize {
@@ -186,7 +186,7 @@ impl RbTensor {
     }
 }
 
-impl DType {
+impl RbDType {
     fn __repr__(&self) -> String {
         format!("{:?}", self.0)
     }
@@ -259,6 +259,6 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_method("copy", method!(RbTensor::copy, 0))?;
     rb_tensor.define_method("to_s", method!(RbTensor::__str__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
-    rb_dtype.define_method("to_s", method!(DType::__str__, 0))?;
+    rb_dtype.define_method("to_s", method!(RbDType::__str__, 0))?;
     Ok(())
 }
