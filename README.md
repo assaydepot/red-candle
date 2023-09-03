@@ -1,5 +1,7 @@
 # ruby-candle
 
+[![build](https://github.com/kojix2/ruby-candle/actions/workflows/build.yml/badge.svg)](https://github.com/kojix2/ruby-candle/actions/workflows/build.yml)
+
 [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
 
 ## Usage
