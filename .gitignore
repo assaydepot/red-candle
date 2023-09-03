@@ -58,6 +58,7 @@ build-iPhoneSimulator/
 target
 *.so
 *.dylib
+*.bundle
 *.dll
 *.a
 *.o
