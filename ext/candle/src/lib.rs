@@ -1,6 +1,6 @@
 use magnus::{function, method, prelude::*, Error, Ruby};
 
-//use candle_core::{DType, Device, Tensor, WithDType};
+use ::candle_core::{quantized::QTensor, DType, Device, Tensor, WithDType};
 
 type RbResult<T> = Result<T, Error>;
 struct RbCandleErr {}
@@ -11,7 +11,7 @@ impl RbCandleErr {
     }
 }
 
-fn actual_index(t: &candle_core::Tensor, dim: usize, index: i64) -> candle_core::Result<usize> {
+fn actual_index(t: &Tensor, dim: usize, index: i64) -> candle_core::Result<usize> {
     let dim = t.dim(dim)?;
     if 0 <= index {
         let index = index as usize;
@@ -27,7 +27,7 @@ fn actual_index(t: &candle_core::Tensor, dim: usize, index: i64) -> candle_core:
     }
 }
 
-fn actual_dim(t: &candle_core::Tensor, dim: i64) -> candle_core::Result<usize> {
+fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
     let rank = t.rank();
     if 0 <= dim {
         let dim = dim as usize;
@@ -44,21 +44,49 @@ fn actual_dim(t: &candle_core::Tensor, dim: i64) -> candle_core::Result<usize> {
 }
 
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
-struct RbTensor(candle_core::Tensor);
+struct RbTensor(Tensor);
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
-struct RbDType(candle_core::DType);
+struct RbDType(DType);
 
+static CUDA_DEVICE: std::sync::Mutex<Option<Device>> = std::sync::Mutex::new(None);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::Device")]
-enum Device {
+enum RbDevice {
     Cpu,
     Cuda,
 }
 
+impl RbDevice {
+    fn from_device(device: &Device) -> Self {
+        match device {
+            Device::Cpu => Self::Cpu,
+            Device::Cuda(_) => Self::Cuda,
+        }
+    }
+
+    fn as_device(&self) -> RbResult<Device> {
+        match self {
+            Self::Cpu => Ok(Device::Cpu),
+            Self::Cuda => {
+                let mut device = CUDA_DEVICE.lock().unwrap();
+                if let Some(device) = device.as_ref() {
+                    return Ok(device.clone());
+                };
+                let d = Device::new_cuda(0).map_err(RbCandleErr::from)?;
+                *device = Some(d.clone());
+                Ok(d)
+            }
+        }
+    }
+}
+
 impl RbTensor {
     fn new(array: Vec<f32>) -> Self {
-        use candle_core::Device::Cpu;
-        Self(candle_core::Tensor::new(array.as_slice(), &Cpu).unwrap())
+        use Device::Cpu;
+        Self(Tensor::new(array.as_slice(), &Cpu).unwrap())
     }
 
     fn shape(&self) -> Vec<usize> {
@@ -253,11 +281,7 @@ impl RbTensor {
     }
 
     fn to_dtype(&self, dtype: &RbDType) -> RbResult<Self> {
-        Ok(Self(
-            self.0
-                .to_dtype(dtype.0)
-                .map_err(RbCandleErr::from)?,
-        ))
+        Ok(Self(self.0.to_dtype(dtype.0).map_err(RbCandleErr::from)?))
     }
 }
 
