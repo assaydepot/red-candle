@@ -1,4 +1,5 @@
 use magnus::{function, method, prelude::*, Error, Ruby};
+use std::sync::Arc;
 
 use ::candle_core::{quantized::QTensor, DType, Device, Tensor, WithDType};
 
@@ -8,6 +9,56 @@ struct RbCandleErr {}
 impl RbCandleErr {
     pub fn from(e: candle_core::Error) -> Error {
         Error::new(magnus::exception::runtime_error(), e.to_string())
+    }
+}
+
+#[derive(Clone, Debug)]
+struct RbShape(Vec<usize>);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[magnus::wrap(class = "Candle::DType", free_immediately, size)]
+struct RbDType(DType);
+
+impl RbDType {
+    fn __repr__(&self) -> String {
+        format!("{:?}", self.0)
+    }
+
+    fn __str__(&self) -> String {
+        self.__repr__()
+    }
+}
+
+static CUDA_DEVICE: std::sync::Mutex<Option<Device>> = std::sync::Mutex::new(None);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[magnus::wrap(class = "Candle::Device")]
+enum RbDevice {
+    Cpu,
+    Cuda,
+}
+
+impl RbDevice {
+    fn from_device(device: &Device) -> Self {
+        match device {
+            Device::Cpu => Self::Cpu,
+            Device::Cuda(_) => Self::Cuda,
+        }
+    }
+
+    fn as_device(&self) -> RbResult<Device> {
+        match self {
+            Self::Cpu => Ok(Device::Cpu),
+            Self::Cuda => {
+                let mut device = CUDA_DEVICE.lock().unwrap();
+                if let Some(device) = device.as_ref() {
+                    return Ok(device.clone());
+                };
+                let d = Device::new_cuda(0).map_err(RbCandleErr::from)?;
+                *device = Some(d.clone());
+                Ok(d)
+            }
+        }
     }
 }
 
@@ -43,45 +94,10 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
     }
 }
 
+#[derive(Clone, Debug)]
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
 struct RbTensor(Tensor);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[magnus::wrap(class = "Candle::DType", free_immediately, size)]
-struct RbDType(DType);
-
-static CUDA_DEVICE: std::sync::Mutex<Option<Device>> = std::sync::Mutex::new(None);
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[magnus::wrap(class = "Candle::Device")]
-enum RbDevice {
-    Cpu,
-    Cuda,
-}
-
-impl RbDevice {
-    fn from_device(device: &Device) -> Self {
-        match device {
-            Device::Cpu => Self::Cpu,
-            Device::Cuda(_) => Self::Cuda,
-        }
-    }
-
-    fn as_device(&self) -> RbResult<Device> {
-        match self {
-            Self::Cpu => Ok(Device::Cpu),
-            Self::Cuda => {
-                let mut device = CUDA_DEVICE.lock().unwrap();
-                if let Some(device) = device.as_ref() {
-                    return Ok(device.clone());
-                };
-                let d = Device::new_cuda(0).map_err(RbCandleErr::from)?;
-                *device = Some(d.clone());
-                Ok(d)
-            }
-        }
-    }
-}
 
 impl RbTensor {
     fn new(array: Vec<f32>) -> Self {
@@ -282,16 +298,6 @@ impl RbTensor {
 
     fn to_dtype(&self, dtype: &RbDType) -> RbResult<Self> {
         Ok(Self(self.0.to_dtype(dtype.0).map_err(RbCandleErr::from)?))
-    }
-}
-
-impl RbDType {
-    fn __repr__(&self) -> String {
-        format!("{:?}", self.0)
-    }
-
-    fn __str__(&self) -> String {
-        self.__repr__()
     }
 }
 
