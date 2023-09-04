@@ -235,7 +235,7 @@ impl PyTensor {
     fn narrow(&self, dim: i64, start: i64, len: usize) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim as i64).map_err(wrap_err)?;
         let start = actual_index(&self.0, dim, start as i64).map_err(wrap_err)?;
-        Ok(Self(self.0.narrow(dim, start, len).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.narrow(dim, start, len).map_err(wrap_err)?))
     }
 
     fn argmax_keepdim(&self, dim: i64) -> PyResult<Self> {
@@ -308,7 +308,11 @@ impl PyTensor {
     }
 
     fn to_dtype(&self, dtype: &PyDType) -> PyResult<Self> {
-        Ok(Self(self.0.to_dtype(dtype.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.to_dtype(dtype.0).map_err(wrap_err)?))
+    }
+    fn to_device(&self, device: PyDevice) -> PyResult<Self> {
+        let device = device.as_device()?;
+        Ok(PyTensor(self.0.to_device(&device).map_err(wrap_err)?))
     }
 }
 
@@ -405,21 +409,37 @@ impl PyQTensor {
     // }
 }
 
+fn cuda_is_available() -> bool {
+    candle_core::utils::cuda_is_available()
+}
+
+fn has_accelerate() -> bool {
+    candle_core::utils::has_accelerate()
+}
+
+fn has_mkl() -> bool {
+    candle_core::utils::has_mkl()
+}
+
+fn get_num_threads() -> usize {
+    candle_core::utils::get_num_threads()
+}
+
 fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
     let rb_utils = rb_candle.define_module("Utils")?;
     rb_utils.define_singleton_method(
         "cuda_is_available",
-        function!(candle_core::utils::cuda_is_available, 0),
+        function!(cuda_is_available, 0),
     )?;
     rb_utils.define_singleton_method(
         "get_num_threads",
-        function!(candle_core::utils::get_num_threads, 0),
+        function!(get_num_threads, 0),
     )?;
     rb_utils.define_singleton_method(
         "has_accelerate",
-        function!(candle_core::utils::has_accelerate, 0),
+        function!(has_accelerate, 0),
     )?;
-    rb_utils.define_singleton_method("has_mkl", function!(candle_core::utils::has_mkl, 0))?;
+    rb_utils.define_singleton_method("has_mkl", function!(has_mkl, 0))?;
     Ok(())
 }
 
