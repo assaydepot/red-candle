@@ -301,6 +301,25 @@ impl RbTensor {
 }
 
 impl RbTensor {
+    // fn cat(tensors: Vec<RbTensor>, dim: i64) -> RbResult<RbTensor> {
+    //     if tensors.is_empty() {
+    //         return Err(Error::new(
+    //             magnus::exception::arg_error(),
+    //             "empty input to cat",
+    //         ));
+    //     }
+    //     let dim = actual_dim(&tensors[0].0, dim).map_err(RbCandleErr::from)?;
+    //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
+    //     let tensor = Tensor::cat(&tensors, dim).map_err(RbCandleErr::from)?;
+    //     Ok(RbTensor(tensor))
+    // }
+
+    // fn stack(tensors: Vec<RbTensor>, dim: usize) -> RbResult<Self> {
+    //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
+    //     let tensor = Tensor::stack(&tensors, dim).map_err(RbCandleErr::from)?;
+    //     Ok(Self(tensor))
+    // }
+
     fn rand(shape: Vec<usize>) -> RbResult<Self> {
         let device = RbDevice::Cpu.as_device()?;
         Ok(Self(
@@ -354,6 +373,8 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(RbTensor::new, 1))?;
+    // rb_tensor.define_singleton_method("cat", function!(RbTensor::cat, 2))?;
+    // rb_tensor.define_singleton_method("stack", function!(RbTensor::stack, 2))?;
     rb_tensor.define_singleton_method("rand", function!(RbTensor::rand, 1))?;
     rb_tensor.define_singleton_method("randn", function!(RbTensor::randn, 1))?;
     rb_tensor.define_singleton_method("ones", function!(RbTensor::ones, 1))?;
