@@ -4,12 +4,9 @@ use std::sync::Arc;
 use ::candle_core::{quantized::QTensor, DType, Device, Tensor, WithDType};
 
 type PyResult<T> = Result<T, Error>;
-struct RbCandleErr {}
 
-impl RbCandleErr {
-    pub fn from(e: candle_core::Error) -> Error {
-        Error::new(magnus::exception::runtime_error(), e.to_string())
-    }
+pub fn wrap_error(err: candle_core::Error) -> Error {
+    Error::new(magnus::exception::runtime_error(), err.to_string())
 }
 
 #[derive(Clone, Debug)]
@@ -54,7 +51,7 @@ impl PyDevice {
                 if let Some(device) = device.as_ref() {
                     return Ok(device.clone());
                 };
-                let d = Device::new_cuda(0).map_err(RbCandleErr::from)?;
+                let d = Device::new_cuda(0).map_err(wrap_error)?;
                 *device = Some(d.clone());
                 Ok(d)
             }
@@ -129,125 +126,125 @@ impl PyTensor {
     }
 
     fn sin(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sin().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.sin().map_err(wrap_error)?))
     }
 
     fn cos(&self) -> PyResult<Self> {
-        Ok(Self(self.0.cos().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.cos().map_err(wrap_error)?))
     }
 
     fn log(&self) -> PyResult<Self> {
-        Ok(Self(self.0.log().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.log().map_err(wrap_error)?))
     }
 
     fn sqr(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sqr().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.sqr().map_err(wrap_error)?))
     }
 
     fn sqrt(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sqrt().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.sqrt().map_err(wrap_error)?))
     }
 
     fn recip(&self) -> PyResult<Self> {
-        Ok(Self(self.0.recip().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.recip().map_err(wrap_error)?))
     }
 
     fn exp(&self) -> PyResult<Self> {
-        Ok(Self(self.0.exp().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.exp().map_err(wrap_error)?))
     }
 
     fn powf(&self, n: f64) -> PyResult<Self> {
-        Ok(Self(self.0.powf(n).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.powf(n).map_err(wrap_error)?))
     }
 
     fn matmul(&self, other: &PyTensor) -> PyResult<Self> {
-        Ok(Self(self.0.matmul(&other.0).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.matmul(&other.0).map_err(wrap_error)?))
     }
 
     fn where_cond(&self, on_true: &PyTensor, on_false: &PyTensor) -> PyResult<Self> {
         Ok(Self(
             self.0
                 .where_cond(&on_true.0, &on_false.0)
-                .map_err(RbCandleErr::from)?,
+                .map_err(wrap_error)?,
         ))
     }
 
     fn __add__(&self, rhs: &PyTensor) -> PyResult<Self> {
-        Ok(Self(self.0.add(&rhs.0).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.add(&rhs.0).map_err(wrap_error)?))
     }
 
     fn __mul__(&self, rhs: &PyTensor) -> PyResult<Self> {
-        Ok(Self(self.0.mul(&rhs.0).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.mul(&rhs.0).map_err(wrap_error)?))
     }
 
     fn __sub__(&self, rhs: &PyTensor) -> PyResult<Self> {
-        Ok(Self(self.0.sub(&rhs.0).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.sub(&rhs.0).map_err(wrap_error)?))
     }
 
     fn reshape(&self, shape: Vec<usize>) -> PyResult<Self> {
-        Ok(Self(self.0.reshape(shape).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.reshape(shape).map_err(wrap_error)?))
     }
 
     fn broadcast_as(&self, shape: Vec<usize>) -> PyResult<Self> {
-        Ok(Self(self.0.broadcast_as(shape).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.broadcast_as(shape).map_err(wrap_error)?))
     }
 
     fn broadcast_left(&self, shape: Vec<usize>) -> PyResult<Self> {
         Ok(Self(
-            self.0.broadcast_left(shape).map_err(RbCandleErr::from)?,
+            self.0.broadcast_left(shape).map_err(wrap_error)?,
         ))
     }
 
     fn squeeze(&self, dim: usize) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim as i64).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.squeeze(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim as i64).map_err(wrap_error)?;
+        Ok(Self(self.0.squeeze(dim).map_err(wrap_error)?))
     }
 
     fn unsqueeze(&self, dim: usize) -> PyResult<Self> {
-        Ok(Self(self.0.unsqueeze(dim).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.unsqueeze(dim).map_err(wrap_error)?))
     }
 
     fn get(&self, index: usize) -> PyResult<Self> {
-        let index = actual_index(&self.0, 0, index as i64).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.get(index).map_err(RbCandleErr::from)?))
+        let index = actual_index(&self.0, 0, index as i64).map_err(wrap_error)?;
+        Ok(Self(self.0.get(index).map_err(wrap_error)?))
     }
 
     fn transpose(&self, dim1: usize, dim2: usize) -> PyResult<Self> {
         Ok(Self(
-            self.0.transpose(dim1, dim2).map_err(RbCandleErr::from)?,
+            self.0.transpose(dim1, dim2).map_err(wrap_error)?,
         ))
     }
 
     fn narrow(&self, dim: usize, start: usize, len: usize) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim as i64).map_err(RbCandleErr::from)?;
-        let start = actual_index(&self.0, dim, start as i64).map_err(RbCandleErr::from)?;
+        let dim = actual_dim(&self.0, dim as i64).map_err(wrap_error)?;
+        let start = actual_index(&self.0, dim, start as i64).map_err(wrap_error)?;
         Ok(Self(
-            self.0.narrow(dim, start, len).map_err(RbCandleErr::from)?,
+            self.0.narrow(dim, start, len).map_err(wrap_error)?,
         ))
     }
 
     fn argmax_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.argmax_keepdim(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim).map_err(wrap_error)?;
+        Ok(Self(self.0.argmax_keepdim(dim).map_err(wrap_error)?))
     }
 
     fn argmin_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.argmin_keepdim(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim).map_err(wrap_error)?;
+        Ok(Self(self.0.argmin_keepdim(dim).map_err(wrap_error)?))
     }
 
     fn max_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.max_keepdim(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim).map_err(wrap_error)?;
+        Ok(Self(self.0.max_keepdim(dim).map_err(wrap_error)?))
     }
 
     fn min_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.min_keepdim(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim).map_err(wrap_error)?;
+        Ok(Self(self.0.min_keepdim(dim).map_err(wrap_error)?))
     }
 
     fn sum_all(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sum_all().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.sum_all().map_err(wrap_error)?))
     }
 
     fn mean_all(&self) -> PyTensor {
@@ -258,25 +255,25 @@ impl PyTensor {
     }
 
     fn flatten_from(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.flatten_from(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim).map_err(wrap_error)?;
+        Ok(Self(self.0.flatten_from(dim).map_err(wrap_error)?))
     }
 
     fn flatten_to(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(RbCandleErr::from)?;
-        Ok(Self(self.0.flatten_to(dim).map_err(RbCandleErr::from)?))
+        let dim = actual_dim(&self.0, dim).map_err(wrap_error)?;
+        Ok(Self(self.0.flatten_to(dim).map_err(wrap_error)?))
     }
 
     fn flatten_all(&self) -> PyResult<Self> {
-        Ok(Self(self.0.flatten_all().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.flatten_all().map_err(wrap_error)?))
     }
 
     fn t(&self) -> PyResult<Self> {
-        Ok(Self(self.0.t().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.t().map_err(wrap_error)?))
     }
 
     fn contiguous(&self) -> PyResult<Self> {
-        Ok(Self(self.0.contiguous().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.contiguous().map_err(wrap_error)?))
     }
 
     fn is_contiguous(&self) -> bool {
@@ -288,15 +285,15 @@ impl PyTensor {
     }
 
     fn detach(&self) -> PyResult<Self> {
-        Ok(Self(self.0.detach().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.detach().map_err(wrap_error)?))
     }
 
     fn copy(&self) -> PyResult<Self> {
-        Ok(Self(self.0.copy().map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.copy().map_err(wrap_error)?))
     }
 
     fn to_dtype(&self, dtype: &PyDType) -> PyResult<Self> {
-        Ok(Self(self.0.to_dtype(dtype.0).map_err(RbCandleErr::from)?))
+        Ok(Self(self.0.to_dtype(dtype.0).map_err(wrap_error)?))
     }
 }
 
@@ -308,43 +305,43 @@ impl PyTensor {
     //             "empty input to cat",
     //         ));
     //     }
-    //     let dim = actual_dim(&tensors[0].0, dim).map_err(RbCandleErr::from)?;
+    //     let dim = actual_dim(&tensors[0].0, dim).map_err(wrap_error)?;
     //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
-    //     let tensor = Tensor::cat(&tensors, dim).map_err(RbCandleErr::from)?;
+    //     let tensor = Tensor::cat(&tensors, dim).map_err(wrap_error)?;
     //     Ok(PyTensor(tensor))
     // }
 
     // fn stack(tensors: Vec<PyTensor>, dim: usize) -> PyResult<Self> {
     //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
-    //     let tensor = Tensor::stack(&tensors, dim).map_err(RbCandleErr::from)?;
+    //     let tensor = Tensor::stack(&tensors, dim).map_err(wrap_error)?;
     //     Ok(Self(tensor))
     // }
 
     fn rand(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
-            Tensor::rand(0f32, 1f32, shape, &device).map_err(RbCandleErr::from)?,
+            Tensor::rand(0f32, 1f32, shape, &device).map_err(wrap_error)?,
         ))
     }
 
     fn randn(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
-            Tensor::randn(0f32, 1f32, shape, &device).map_err(RbCandleErr::from)?,
+            Tensor::randn(0f32, 1f32, shape, &device).map_err(wrap_error)?,
         ))
     }
 
     fn ones(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
-            Tensor::ones(shape, DType::F32, &device).map_err(RbCandleErr::from)?,
+            Tensor::ones(shape, DType::F32, &device).map_err(wrap_error)?,
         ))
     }
 
     fn zeros(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
-            Tensor::zeros(shape, DType::F32, &device).map_err(RbCandleErr::from)?,
+            Tensor::zeros(shape, DType::F32, &device).map_err(wrap_error)?,
         ))
     }
 }
