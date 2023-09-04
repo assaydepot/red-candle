@@ -98,7 +98,6 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
 struct RbTensor(Tensor);
 
-
 impl RbTensor {
     fn new(array: Vec<f32>) -> Self {
         use Device::Cpu;
@@ -301,6 +300,36 @@ impl RbTensor {
     }
 }
 
+impl RbTensor {
+    fn rand(shape: Vec<usize>) -> RbResult<Self> {
+        let device = RbDevice::Cpu.as_device()?;
+        Ok(Self(
+            Tensor::rand(0f32, 1f32, shape, &device).map_err(RbCandleErr::from)?,
+        ))
+    }
+
+    fn randn(shape: Vec<usize>) -> RbResult<Self> {
+        let device = RbDevice::Cpu.as_device()?;
+        Ok(Self(
+            Tensor::randn(0f32, 1f32, shape, &device).map_err(RbCandleErr::from)?,
+        ))
+    }
+
+    fn ones(shape: Vec<usize>) -> RbResult<Self> {
+        let device = RbDevice::Cpu.as_device()?;
+        Ok(Self(
+            Tensor::ones(shape, DType::F32, &device).map_err(RbCandleErr::from)?,
+        ))
+    }
+
+    fn zeros(shape: Vec<usize>) -> RbResult<Self> {
+        let device = RbDevice::Cpu.as_device()?;
+        Ok(Self(
+            Tensor::zeros(shape, DType::F32, &device).map_err(RbCandleErr::from)?,
+        ))
+    }
+}
+
 fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
     let rb_utils = rb_candle.define_module("Utils")?;
     rb_utils.define_singleton_method(
@@ -325,6 +354,10 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(RbTensor::new, 1))?;
+    rb_tensor.define_singleton_method("rand", function!(RbTensor::rand, 1))?;
+    rb_tensor.define_singleton_method("randn", function!(RbTensor::randn, 1))?;
+    rb_tensor.define_singleton_method("ones", function!(RbTensor::ones, 1))?;
+    rb_tensor.define_singleton_method("zeros", function!(RbTensor::zeros, 1))?;
     rb_tensor.define_method("shape", method!(RbTensor::shape, 0))?;
     rb_tensor.define_method("stride", method!(RbTensor::stride, 0))?;
     rb_tensor.define_method("dtype", method!(RbTensor::dtype, 0))?;
