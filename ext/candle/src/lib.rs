@@ -190,9 +190,7 @@ impl PyTensor {
     }
 
     fn broadcast_left(&self, shape: Vec<usize>) -> PyResult<Self> {
-        Ok(Self(
-            self.0.broadcast_left(shape).map_err(wrap_err)?,
-        ))
+        Ok(Self(self.0.broadcast_left(shape).map_err(wrap_err)?))
     }
 
     fn squeeze(&self, dim: usize) -> PyResult<Self> {
@@ -210,17 +208,13 @@ impl PyTensor {
     }
 
     fn transpose(&self, dim1: usize, dim2: usize) -> PyResult<Self> {
-        Ok(Self(
-            self.0.transpose(dim1, dim2).map_err(wrap_err)?,
-        ))
+        Ok(Self(self.0.transpose(dim1, dim2).map_err(wrap_err)?))
     }
 
     fn narrow(&self, dim: usize, start: usize, len: usize) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim as i64).map_err(wrap_err)?;
         let start = actual_index(&self.0, dim, start as i64).map_err(wrap_err)?;
-        Ok(Self(
-            self.0.narrow(dim, start, len).map_err(wrap_err)?,
-        ))
+        Ok(Self(self.0.narrow(dim, start, len).map_err(wrap_err)?))
     }
 
     fn argmax_keepdim(&self, dim: i64) -> PyResult<Self> {
@@ -344,6 +338,50 @@ impl PyTensor {
             Tensor::zeros(shape, DType::F32, &device).map_err(wrap_err)?,
         ))
     }
+}
+
+#[derive(Debug)]
+struct PyQTensor(Arc<QTensor>);
+
+impl std::ops::Deref for PyQTensor {
+    type Target = QTensor;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
+    }
+}
+
+impl PyQTensor {
+    fn ggml_dtype(&self) -> String {
+        format!("{:?}", self.0.dtype())
+    }
+
+    fn rank(&self) -> usize {
+        self.0.rank()
+    }
+
+    // fn shape(&self, py: Python<'_>) -> PyObject {
+    //     PyTuple::new(py, self.0.shape().dims()).to_object(py)
+    // }
+
+    fn __repr__(&self) -> String {
+        format!("{:?}", self.0)
+    }
+
+    fn __str__(&self) -> String {
+        self.__repr__()
+    }
+
+    fn dequantize(&self) -> PyResult<PyTensor> {
+        let tensor = self.0.dequantize(&Device::Cpu).map_err(wrap_err)?;
+        Ok(PyTensor(tensor))
+    }
+
+    // fn matmul_t(&self, lhs: &PyTensor) -> PyResult<PyTensor> {
+    //     let qmatmul = ::candle_core::quantized::QMatMul::from_arc(self.0.clone());
+    //     let res = qmatmul.forward(lhs).map_err(wrap_err)?;
+    //     Ok(PyTensor(res))
+    // }
 }
 
 fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
