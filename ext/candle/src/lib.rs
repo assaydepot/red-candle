@@ -153,16 +153,37 @@ impl PyTensor {
         Ok(PyTensor(self.0.exp().map_err(wrap_err)?))
     }
 
-    fn powf(&self, n: f64) -> PyResult<Self> {
-        Ok(PyTensor(self.0.powf(n).map_err(wrap_err)?))
+    fn powf(&self, p: f64) -> PyResult<Self> {
+        Ok(PyTensor(self.0.powf(p).map_err(wrap_err)?))
     }
 
-    fn matmul(&self, other: &PyTensor) -> PyResult<Self> {
-        Ok(PyTensor(self.0.matmul(&other.0).map_err(wrap_err)?))
+    // fn index_select(&self, rhs: &Self, dim: i64) -> PyResult<Self> {
+    //     let dim = actual_dim(self, dim).map_err(wrap_err)?;
+    //     Ok(PyTensor(self.0.index_select(rhs, dim).map_err(wrap_err)?))
+    // }
+
+    fn matmul(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.matmul(&rhs.0).map_err(wrap_err)?))
     }
 
-    fn where_cond(&self, on_true: &PyTensor, on_false: &PyTensor) -> PyResult<Self> {
-        Ok(Self(
+    fn broadcast_add(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.broadcast_add(&rhs.0).map_err(wrap_err)?))
+    }
+
+    fn broadcast_sub(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.broadcast_sub(&rhs.0).map_err(wrap_err)?))
+    }
+
+    fn broadcast_mul(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.broadcast_mul(&rhs.0).map_err(wrap_err)?))
+    }
+
+    fn broadcast_div(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.broadcast_div(&rhs.0).map_err(wrap_err)?))
+    }
+
+    fn where_cond(&self, on_true: &Self, on_false: &Self) -> PyResult<Self> {
+        Ok(PyTensor(
             self.0
                 .where_cond(&on_true.0, &on_false.0)
                 .map_err(wrap_err)?,
@@ -199,19 +220,19 @@ impl PyTensor {
     }
 
     fn unsqueeze(&self, dim: usize) -> PyResult<Self> {
-        Ok(Self(self.0.unsqueeze(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.unsqueeze(dim).map_err(wrap_err)?))
     }
 
-    fn get(&self, index: usize) -> PyResult<Self> {
+    fn get(&self, index: i64) -> PyResult<Self> {
         let index = actual_index(&self.0, 0, index as i64).map_err(wrap_err)?;
         Ok(Self(self.0.get(index).map_err(wrap_err)?))
     }
 
     fn transpose(&self, dim1: usize, dim2: usize) -> PyResult<Self> {
-        Ok(Self(self.0.transpose(dim1, dim2).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.transpose(dim1, dim2).map_err(wrap_err)?))
     }
 
-    fn narrow(&self, dim: usize, start: usize, len: usize) -> PyResult<Self> {
+    fn narrow(&self, dim: i64, start: i64, len: usize) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim as i64).map_err(wrap_err)?;
         let start = actual_index(&self.0, dim, start as i64).map_err(wrap_err)?;
         Ok(Self(self.0.narrow(dim, start, len).map_err(wrap_err)?))
@@ -219,55 +240,55 @@ impl PyTensor {
 
     fn argmax_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
-        Ok(Self(self.0.argmax_keepdim(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.argmax_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn argmin_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
-        Ok(Self(self.0.argmin_keepdim(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.argmin_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn max_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
-        Ok(Self(self.0.max_keepdim(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.max_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn min_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
-        Ok(Self(self.0.min_keepdim(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.min_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn sum_all(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sum_all().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.sum_all().map_err(wrap_err)?))
     }
 
-    fn mean_all(&self) -> PyTensor {
+    fn mean_all(&self) -> PyResult<Self> {
         let elements = self.0.elem_count();
-        let sum = self.0.sum_all().unwrap();
-        let mean = (sum / elements as f64).unwrap();
-        PyTensor(mean)
+        let sum = self.0.sum_all().map_err(wrap_err)?;
+        let mean = (sum / elements as f64).map_err(wrap_err)?;
+        Ok(PyTensor(mean))
     }
 
     fn flatten_from(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
-        Ok(Self(self.0.flatten_from(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.flatten_from(dim).map_err(wrap_err)?))
     }
 
     fn flatten_to(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
-        Ok(Self(self.0.flatten_to(dim).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.flatten_to(dim).map_err(wrap_err)?))
     }
 
     fn flatten_all(&self) -> PyResult<Self> {
-        Ok(Self(self.0.flatten_all().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.flatten_all().map_err(wrap_err)?))
     }
 
     fn t(&self) -> PyResult<Self> {
-        Ok(Self(self.0.t().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.t().map_err(wrap_err)?))
     }
 
     fn contiguous(&self) -> PyResult<Self> {
-        Ok(Self(self.0.contiguous().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.contiguous().map_err(wrap_err)?))
     }
 
     fn is_contiguous(&self) -> bool {
@@ -279,11 +300,11 @@ impl PyTensor {
     }
 
     fn detach(&self) -> PyResult<Self> {
-        Ok(Self(self.0.detach().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.detach().map_err(wrap_err)?))
     }
 
     fn copy(&self) -> PyResult<Self> {
-        Ok(Self(self.0.copy().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.copy().map_err(wrap_err)?))
     }
 
     fn to_dtype(&self, dtype: &PyDType) -> PyResult<Self> {
