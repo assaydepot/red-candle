@@ -1,1 +1,1 @@
-require 'candle/candle'
+require_relative 'candle/candle'

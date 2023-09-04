@@ -2,9 +2,9 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem "rake"
-gem "rake-compiler"
-gem "minitest"
+gem 'minitest'
+gem 'rake'
+gem 'rake-compiler'
 
 # https://github.com/lsegal/yard/issues/1321
-gem "yard", require: false
+gem 'yard', require: false
