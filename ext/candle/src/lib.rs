@@ -126,39 +126,39 @@ impl PyTensor {
     }
 
     fn sin(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sin().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.sin().map_err(wrap_err)?))
     }
 
     fn cos(&self) -> PyResult<Self> {
-        Ok(Self(self.0.cos().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.cos().map_err(wrap_err)?))
     }
 
     fn log(&self) -> PyResult<Self> {
-        Ok(Self(self.0.log().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.log().map_err(wrap_err)?))
     }
 
     fn sqr(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sqr().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.sqr().map_err(wrap_err)?))
     }
 
     fn sqrt(&self) -> PyResult<Self> {
-        Ok(Self(self.0.sqrt().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.sqrt().map_err(wrap_err)?))
     }
 
     fn recip(&self) -> PyResult<Self> {
-        Ok(Self(self.0.recip().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.recip().map_err(wrap_err)?))
     }
 
     fn exp(&self) -> PyResult<Self> {
-        Ok(Self(self.0.exp().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.exp().map_err(wrap_err)?))
     }
 
     fn powf(&self, n: f64) -> PyResult<Self> {
-        Ok(Self(self.0.powf(n).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.powf(n).map_err(wrap_err)?))
     }
 
     fn matmul(&self, other: &PyTensor) -> PyResult<Self> {
-        Ok(Self(self.0.matmul(&other.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.matmul(&other.0).map_err(wrap_err)?))
     }
 
     fn where_cond(&self, on_true: &PyTensor, on_false: &PyTensor) -> PyResult<Self> {
