@@ -427,18 +427,9 @@ fn get_num_threads() -> usize {
 
 fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
     let rb_utils = rb_candle.define_module("Utils")?;
-    rb_utils.define_singleton_method(
-        "cuda_is_available",
-        function!(cuda_is_available, 0),
-    )?;
-    rb_utils.define_singleton_method(
-        "get_num_threads",
-        function!(get_num_threads, 0),
-    )?;
-    rb_utils.define_singleton_method(
-        "has_accelerate",
-        function!(has_accelerate, 0),
-    )?;
+    rb_utils.define_singleton_method("cuda_is_available", function!(cuda_is_available, 0))?;
+    rb_utils.define_singleton_method("get_num_threads", function!(get_num_threads, 0))?;
+    rb_utils.define_singleton_method("has_accelerate", function!(has_accelerate, 0))?;
     rb_utils.define_singleton_method("has_mkl", function!(has_mkl, 0))?;
     Ok(())
 }
