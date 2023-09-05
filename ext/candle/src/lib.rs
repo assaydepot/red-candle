@@ -470,6 +470,10 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     rb_tensor.define_method("exp", method!(PyTensor::exp, 0))?;
     rb_tensor.define_method("powf", method!(PyTensor::powf, 1))?;
     rb_tensor.define_method("matmul", method!(PyTensor::matmul, 1))?;
+    rb_tensor.define_method("broadcast_add", method!(PyTensor::broadcast_add, 1))?;
+    rb_tensor.define_method("broadcast_sub", method!(PyTensor::broadcast_sub, 1))?;
+    rb_tensor.define_method("broadcast_mul", method!(PyTensor::broadcast_mul, 1))?;
+    rb_tensor.define_method("broadcast_div", method!(PyTensor::broadcast_div, 1))?;
     rb_tensor.define_method("where_cond", method!(PyTensor::where_cond, 2))?;
     rb_tensor.define_method("+", method!(PyTensor::__add__, 1))?;
     rb_tensor.define_method("*", method!(PyTensor::__mul__, 1))?;
