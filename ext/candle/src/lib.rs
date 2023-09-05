@@ -12,6 +12,18 @@ pub fn wrap_err(err: candle_core::Error) -> Error {
 #[derive(Clone, Debug)]
 struct RbShape(Vec<usize>);
 
+#[derive(Clone, Debug)]
+#[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
+struct PyTensor(Tensor);
+
+impl std::ops::Deref for PyTensor {
+    type Target = Tensor;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
 struct PyDType(DType);
@@ -90,10 +102,6 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
         Ok((rank as i64 + dim) as usize)
     }
 }
-
-#[derive(Clone, Debug)]
-#[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
-struct PyTensor(Tensor);
 
 impl PyTensor {
     fn new(array: Vec<f32>) -> Self {
@@ -215,7 +223,7 @@ impl PyTensor {
     }
 
     fn squeeze(&self, dim: usize) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim as i64).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim as i64).map_err(wrap_err)?;
         Ok(Self(self.0.squeeze(dim).map_err(wrap_err)?))
     }
 
@@ -224,7 +232,7 @@ impl PyTensor {
     }
 
     fn get(&self, index: i64) -> PyResult<Self> {
-        let index = actual_index(&self.0, 0, index as i64).map_err(wrap_err)?;
+        let index = actual_index(self, 0, index as i64).map_err(wrap_err)?;
         Ok(Self(self.0.get(index).map_err(wrap_err)?))
     }
 
@@ -233,28 +241,28 @@ impl PyTensor {
     }
 
     fn narrow(&self, dim: i64, start: i64, len: usize) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim as i64).map_err(wrap_err)?;
-        let start = actual_index(&self.0, dim, start as i64).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim as i64).map_err(wrap_err)?;
+        let start = actual_index(self, dim, start as i64).map_err(wrap_err)?;
         Ok(PyTensor(self.0.narrow(dim, start, len).map_err(wrap_err)?))
     }
 
     fn argmax_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.argmax_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn argmin_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.argmin_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn max_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.max_keepdim(dim).map_err(wrap_err)?))
     }
 
     fn min_keepdim(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.min_keepdim(dim).map_err(wrap_err)?))
     }
 
@@ -270,12 +278,12 @@ impl PyTensor {
     }
 
     fn flatten_from(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.flatten_from(dim).map_err(wrap_err)?))
     }
 
     fn flatten_to(&self, dim: i64) -> PyResult<Self> {
-        let dim = actual_dim(&self.0, dim).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.flatten_to(dim).map_err(wrap_err)?))
     }
 
