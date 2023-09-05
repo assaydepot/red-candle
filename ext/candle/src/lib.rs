@@ -104,9 +104,9 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
 }
 
 impl PyTensor {
-    fn new(array: Vec<f32>) -> Self {
+    fn new(array: Vec<f32>) -> PyResult<Self> {
         use Device::Cpu;
-        Self(Tensor::new(array.as_slice(), &Cpu).unwrap())
+        Ok(Self(Tensor::new(array.as_slice(), &Cpu).map_err(wrap_err)?))
     }
 
     fn shape(&self) -> Vec<usize> {
@@ -171,30 +171,28 @@ impl PyTensor {
     // }
 
     fn matmul(&self, rhs: &Self) -> PyResult<Self> {
-        Ok(PyTensor(self.0.matmul(&rhs.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.matmul(rhs).map_err(wrap_err)?))
     }
 
     fn broadcast_add(&self, rhs: &Self) -> PyResult<Self> {
-        Ok(PyTensor(self.0.broadcast_add(&rhs.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.broadcast_add(rhs).map_err(wrap_err)?))
     }
 
     fn broadcast_sub(&self, rhs: &Self) -> PyResult<Self> {
-        Ok(PyTensor(self.0.broadcast_sub(&rhs.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.broadcast_sub(rhs).map_err(wrap_err)?))
     }
 
     fn broadcast_mul(&self, rhs: &Self) -> PyResult<Self> {
-        Ok(PyTensor(self.0.broadcast_mul(&rhs.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.broadcast_mul(rhs).map_err(wrap_err)?))
     }
 
     fn broadcast_div(&self, rhs: &Self) -> PyResult<Self> {
-        Ok(PyTensor(self.0.broadcast_div(&rhs.0).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.broadcast_div(rhs).map_err(wrap_err)?))
     }
 
     fn where_cond(&self, on_true: &Self, on_false: &Self) -> PyResult<Self> {
         Ok(PyTensor(
-            self.0
-                .where_cond(&on_true.0, &on_false.0)
-                .map_err(wrap_err)?,
+            self.0.where_cond(on_true, on_false).map_err(wrap_err)?,
         ))
     }
 
@@ -210,21 +208,25 @@ impl PyTensor {
         Ok(Self(self.0.sub(&rhs.0).map_err(wrap_err)?))
     }
 
+    fn __truediv__(&self, rhs: &PyTensor) -> PyResult<Self> {
+        Ok(Self(self.0.div(&rhs.0).map_err(wrap_err)?))
+    }
+
     fn reshape(&self, shape: Vec<usize>) -> PyResult<Self> {
-        Ok(Self(self.0.reshape(shape).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.reshape(shape).map_err(wrap_err)?))
     }
 
     fn broadcast_as(&self, shape: Vec<usize>) -> PyResult<Self> {
-        Ok(Self(self.0.broadcast_as(shape).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.broadcast_as(shape).map_err(wrap_err)?))
     }
 
     fn broadcast_left(&self, shape: Vec<usize>) -> PyResult<Self> {
-        Ok(Self(self.0.broadcast_left(shape).map_err(wrap_err)?))
+        Ok(PyTensor(self.0.broadcast_left(shape).map_err(wrap_err)?))
     }
 
-    fn squeeze(&self, dim: usize) -> PyResult<Self> {
-        let dim = actual_dim(self, dim as i64).map_err(wrap_err)?;
-        Ok(Self(self.0.squeeze(dim).map_err(wrap_err)?))
+    fn squeeze(&self, dim: i64) -> PyResult<Self> {
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
+        Ok(PyTensor(self.0.squeeze(dim).map_err(wrap_err)?))
     }
 
     fn unsqueeze(&self, dim: usize) -> PyResult<Self> {
@@ -232,8 +234,8 @@ impl PyTensor {
     }
 
     fn get(&self, index: i64) -> PyResult<Self> {
-        let index = actual_index(self, 0, index as i64).map_err(wrap_err)?;
-        Ok(Self(self.0.get(index).map_err(wrap_err)?))
+        let index = actual_index(self, 0, index).map_err(wrap_err)?;
+        Ok(PyTensor(self.0.get(index).map_err(wrap_err)?))
     }
 
     fn transpose(&self, dim1: usize, dim2: usize) -> PyResult<Self> {
@@ -241,8 +243,8 @@ impl PyTensor {
     }
 
     fn narrow(&self, dim: i64, start: i64, len: usize) -> PyResult<Self> {
-        let dim = actual_dim(self, dim as i64).map_err(wrap_err)?;
-        let start = actual_index(self, dim, start as i64).map_err(wrap_err)?;
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
+        let start = actual_index(self, dim, start).map_err(wrap_err)?;
         Ok(PyTensor(self.0.narrow(dim, start, len).map_err(wrap_err)?))
     }
 
@@ -318,6 +320,7 @@ impl PyTensor {
     fn to_dtype(&self, dtype: &PyDType) -> PyResult<Self> {
         Ok(PyTensor(self.0.to_dtype(dtype.0).map_err(wrap_err)?))
     }
+
     fn to_device(&self, device: PyDevice) -> PyResult<Self> {
         let device = device.as_device()?;
         Ok(PyTensor(self.0.to_device(&device).map_err(wrap_err)?))
