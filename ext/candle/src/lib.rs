@@ -1,6 +1,8 @@
 use magnus::{function, method, prelude::*, Error, Ruby};
 use std::sync::Arc;
 
+use half::{bf16, f16};
+
 use ::candle_core::{quantized::QTensor, DType, Device, Tensor, WithDType};
 
 type PyResult<T> = Result<T, Error>;
@@ -35,6 +37,15 @@ impl PyDType {
 
     fn __str__(&self) -> String {
         self.__repr__()
+    }
+}
+
+impl PyDType {
+    fn from_pyobject(dtype: magnus::Symbol) -> PyResult<Self> {
+        let dtype = unsafe { dtype.to_s() }.unwrap().into_owned();
+        use std::str::FromStr;
+        let dtype = DType::from_str(&dtype).unwrap();
+        Ok(Self(dtype))
     }
 }
 
@@ -317,7 +328,8 @@ impl PyTensor {
         Ok(PyTensor(self.0.copy().map_err(wrap_err)?))
     }
 
-    fn to_dtype(&self, dtype: &PyDType) -> PyResult<Self> {
+    fn to_dtype(&self, dtype: magnus::Symbol) -> PyResult<Self> {
+        let dtype = PyDType::from_pyobject(dtype)?;
         Ok(PyTensor(self.0.to_dtype(dtype.0).map_err(wrap_err)?))
     }
 
@@ -504,6 +516,7 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     )?;
     rb_tensor.define_method("detach", method!(PyTensor::detach, 0))?;
     rb_tensor.define_method("copy", method!(PyTensor::copy, 0))?;
+    rb_tensor.define_method("to_dtype", method!(PyTensor::to_dtype, 1))?;
     rb_tensor.define_method("to_s", method!(PyTensor::__str__, 0))?;
     rb_tensor.define_method("inspect", method!(PyTensor::__repr__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;

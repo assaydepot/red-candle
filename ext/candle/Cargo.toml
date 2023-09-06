@@ -8,4 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candle-core = "0.2"
+candle-nn = "0.2"
+half = "2"
 magnus = "0.6"
