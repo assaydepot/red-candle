@@ -23,6 +23,11 @@ Fork it.
 
 Implemented with [Magnus](https://github.com/matsadler/magnus), with reference to [Polars Ruby](https://github.com/ankane/polars-ruby)
 
+Policies
+- The less code, the better.
+- Ideally, the PyPO3 code should work as is.
+- Error handling is minimal.
+
 ### See Also
 
 - [Numo::NArray](https://github.com/ruby-numo/numo-narray)
