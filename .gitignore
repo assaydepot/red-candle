@@ -63,3 +63,5 @@ target
 *.a
 *.o
 *.lock
+
+lib.py.rs
