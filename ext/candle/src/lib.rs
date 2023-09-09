@@ -100,6 +100,19 @@ impl PyDevice {
     }
 }
 
+impl magnus::TryConvert for PyDevice {
+    fn try_convert(val: magnus::Value) -> PyResult<Self> {
+        let device = magnus::RString::try_convert(val)?;
+        let device = unsafe {device.as_str() }.unwrap();
+        let device = match device {
+            "cpu" => PyDevice::Cpu,
+            "cuda" => PyDevice::Cuda,
+            _ => return Err(Error::new(magnus::exception::arg_error(), "invalid device")),
+        };
+        Ok(device)
+    }
+}
+
 fn actual_index(t: &Tensor, dim: usize, index: i64) -> candle_core::Result<usize> {
     let dim = t.dim(dim)?;
     if 0 <= index {
@@ -148,6 +161,10 @@ impl PyTensor {
 
     fn dtype(&self) -> PyDType {
         PyDType(self.0.dtype())
+    }
+
+    fn device(&self) -> PyDevice {
+        PyDevice::from_device(self.0.device())
     }
 
     fn rank(&self) -> usize {
@@ -490,6 +507,7 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     rb_tensor.define_method("shape", method!(PyTensor::shape, 0))?;
     rb_tensor.define_method("stride", method!(PyTensor::stride, 0))?;
     rb_tensor.define_method("dtype", method!(PyTensor::dtype, 0))?;
+    rb_tensor.define_method("device", method!(PyTensor::device, 0))?;
     rb_tensor.define_method("rank", method!(PyTensor::rank, 0))?;
     rb_tensor.define_method("sin", method!(PyTensor::sin, 0))?;
     rb_tensor.define_method("cos", method!(PyTensor::cos, 0))?;
@@ -540,5 +558,6 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_dtype.define_method("to_s", method!(PyDType::__str__, 0))?;
     rb_dtype.define_method("inspect", method!(PyDType::__repr__, 0))?;
+    let rb_device = rb_candle.define_class("Device", Ruby::class_object(ruby))?;
     Ok(())
 }
