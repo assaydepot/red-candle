@@ -98,6 +98,17 @@ impl PyDevice {
             }
         }
     }
+
+    fn __repr__(&self) -> String {
+        match self {
+            Self::Cpu => "cpu".to_string(),
+            Self::Cuda => "cuda".to_string(),
+        }
+    }
+
+    fn __str__(&self) -> String {
+        self.__repr__()
+    }
 }
 
 impl magnus::TryConvert for PyDevice {
@@ -424,6 +435,7 @@ impl PyTensor {
 }
 
 #[derive(Debug)]
+#[magnus::wrap(class = "Candle::QTensor", free_immediately, size)]
 struct PyQTensor(Arc<QTensor>);
 
 impl std::ops::Deref for PyQTensor {
@@ -553,11 +565,18 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     rb_tensor.define_method("detach", method!(PyTensor::detach, 0))?;
     rb_tensor.define_method("copy", method!(PyTensor::copy, 0))?;
     rb_tensor.define_method("to_dtype", method!(PyTensor::to_dtype, 1))?;
+    rb_tensor.define_method("to_device", method!(PyTensor::to_device, 1))?;
     rb_tensor.define_method("to_s", method!(PyTensor::__str__, 0))?;
     rb_tensor.define_method("inspect", method!(PyTensor::__repr__, 0))?;
     let rb_dtype = rb_candle.define_class("DType", Ruby::class_object(ruby))?;
     rb_dtype.define_method("to_s", method!(PyDType::__str__, 0))?;
     rb_dtype.define_method("inspect", method!(PyDType::__repr__, 0))?;
     let rb_device = rb_candle.define_class("Device", Ruby::class_object(ruby))?;
+    rb_device.define_method("to_s", method!(PyDevice::__str__, 0))?;
+    rb_device.define_method("inspect", method!(PyDevice::__repr__, 0))?;
+    let rb_qtensor = rb_candle.define_class("QTensor", Ruby::class_object(ruby))?;
+    rb_qtensor.define_method("ggml_dtype", method!(PyQTensor::ggml_dtype, 0))?;
+    rb_qtensor.define_method("rank", method!(PyQTensor::rank, 0))?;
+    rb_qtensor.define_method("dequantize", method!(PyQTensor::dequantize, 0))?;
     Ok(())
 }
