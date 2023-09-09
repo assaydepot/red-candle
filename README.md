@@ -19,7 +19,14 @@ x = x.reshape([3, 2])
 
 ## Development
 
-Fork it.
+FORK IT!
+
+```
+git clone https://github.com/your_name/ruby-candle
+cd ruby-candle
+bundle
+bundle exec rake compile
+```
 
 Implemented with [Magnus](https://github.com/matsadler/magnus), with reference to [Polars Ruby](https://github.com/ankane/polars-ruby)
 
@@ -27,6 +34,8 @@ Policies
 - The less code, the better.
 - Ideally, the PyPO3 code should work as is.
 - Error handling is minimal.
+
+Pull requests are welcome.
 
 ### See Also
 
