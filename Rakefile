@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
+require 'bundler/gem_tasks'
 require 'rake/testtask'
 require 'rake/extensiontask'
 
 task default: :test
+Rake::TestTask.new do |t|
+  t.deps << :compile
+  t.libs << "test"
+  t.test_files = FileList["test/**/*_test.rb"]
+end
 
 spec = Bundler.load_gemspec('candle.gemspec')
-spec.requirements.clear
-spec.required_ruby_version = nil
-spec.required_rubygems_version = nil
-spec.extensions.clear
-spec.files -= Dir['ext/**/*']
-
 Rake::ExtensionTask.new('candle', spec) do |c|
   c.lib_dir = 'lib/candle'
   c.cross_compile = true
@@ -26,15 +26,7 @@ Rake::ExtensionTask.new('candle', spec) do |c|
   ]
 end
 
-task :dev do
-  ENV['RB_SYS_CARGO_PROFILE'] = 'dev'
-end
-
-Rake::TestTask.new do |t|
-  t.deps << :compile
-  t.test_files = FileList[File.expand_path('test/*_test.rb', __dir__)]
-end
-
+desc 'benchmark'
 task bench: :compile do
   ruby 'test/bench.rb'
 end
