@@ -114,7 +114,7 @@ impl PyDevice {
 impl magnus::TryConvert for PyDevice {
     fn try_convert(val: magnus::Value) -> PyResult<Self> {
         let device = magnus::RString::try_convert(val)?;
-        let device = unsafe {device.as_str() }.unwrap();
+        let device = unsafe { device.as_str() }.unwrap();
         let device = match device {
             "cpu" => PyDevice::Cpu,
             "cuda" => PyDevice::Cuda,
