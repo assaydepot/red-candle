@@ -157,14 +157,21 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
 }
 
 impl PyTensor {
-    fn new(array: magnus::RArray) -> PyResult<Self> {
-        use Device::Cpu;
-
+    fn new(array: magnus::RArray, dtype: Option<magnus::Symbol>) -> PyResult<Self> {
+        let dtype = dtype
+            .map(|dtype| PyDType::from_pyobject(dtype))
+            .unwrap_or(Ok(PyDType(DType::F32)))?;
+        // FIXME: Do not use `to_f64` here.
         let array = array
             .each()
             .map(|v| magnus::Float::try_convert(v?).map(|v| v.to_f64()))
             .collect::<PyResult<Vec<_>>>()?;
-        Ok(Self(Tensor::new(array.as_slice(), &Cpu).map_err(wrap_err)?))
+        Ok(Self(
+            Tensor::new(array.as_slice(), &Device::Cpu)
+                .map_err(wrap_err)?
+                .to_dtype(dtype.0)
+                .map_err(wrap_err)?,
+        ))
     }
 
     fn shape(&self) -> Vec<usize> {
@@ -538,7 +545,7 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
-    rb_tensor.define_singleton_method("new", function!(PyTensor::new, 1))?;
+    rb_tensor.define_singleton_method("new", function!(PyTensor::new, 2))?;
     // rb_tensor.define_singleton_method("cat", function!(PyTensor::cat, 2))?;
     // rb_tensor.define_singleton_method("stack", function!(PyTensor::stack, 2))?;
     rb_tensor.define_singleton_method("rand", function!(PyTensor::rand, 1))?;
