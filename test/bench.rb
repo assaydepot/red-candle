@@ -1,1 +1,1 @@
-puts "Under construction"
+puts 'Under construction'

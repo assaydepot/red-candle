@@ -1,0 +1,3 @@
+--plugin rustdoc
+lib
+tmp/doc/candle.json

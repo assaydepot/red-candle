@@ -7,8 +7,8 @@ require 'rake/extensiontask'
 task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
-  t.libs << "test"
-  t.test_files = FileList["test/**/*_test.rb"]
+  t.libs << 'test'
+  t.test_files = FileList['test/test_*.rb']
 end
 
 spec = Bundler.load_gemspec('candle.gemspec')
@@ -30,3 +30,30 @@ desc 'benchmark'
 task bench: :compile do
   ruby 'test/bench.rb'
 end
+
+namespace :doc do
+  task default: %i[rustdoc yard]
+
+  desc 'Generate YARD documentation'
+  task :yard do
+    sh <<~CMD
+      yard doc \
+        --plugin rustdoc -- lib tmp/doc/candle.json
+    CMD
+  end
+
+  desc 'Generate Rust documentation as JSON'
+  task :rustdoc do
+    sh <<~CMD
+      cargo +nightly rustdoc \
+        --target-dir tmp/doc/target \
+        -p candle \
+        -- -Zunstable-options --output-format json \
+        --document-private-items
+    CMD
+
+    cp "tmp/doc/target/doc/candle.json", "tmp/doc/candle.json"
+  end
+end
+
+task doc: 'doc:default'
