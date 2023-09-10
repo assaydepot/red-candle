@@ -14,8 +14,11 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Generate document
-        run: bundle exec rake doc
+        run: |
+          bundle install
+          bundle exec rake doc
       - name: Publish Documentation on GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
