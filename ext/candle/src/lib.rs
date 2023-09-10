@@ -157,8 +157,13 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
 }
 
 impl PyTensor {
-    fn new(array: Vec<f32>) -> PyResult<Self> {
+    fn new(array: magnus::RArray) -> PyResult<Self> {
         use Device::Cpu;
+
+        let array = array
+            .each()
+            .map(|v| magnus::Float::try_convert(v?).map(|v| v.to_f64()))
+            .collect::<PyResult<Vec<_>>>()?;
         Ok(Self(Tensor::new(array.as_slice(), &Cpu).map_err(wrap_err)?))
     }
 
