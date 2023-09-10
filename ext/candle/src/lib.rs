@@ -325,6 +325,30 @@ impl PyTensor {
         Ok(PyTensor(self.0.min_keepdim(dim).map_err(wrap_err)?))
     }
 
+    fn eq(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.eq(rhs).map_err(wrap_err)?))
+    }
+
+    fn ne(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.ne(rhs).map_err(wrap_err)?))
+    }
+
+    fn lt(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.lt(rhs).map_err(wrap_err)?))
+    }
+
+    fn gt(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.gt(rhs).map_err(wrap_err)?))
+    }
+
+    fn ge(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.ge(rhs).map_err(wrap_err)?))
+    }
+
+    fn le(&self, rhs: &Self) -> PyResult<Self> {
+        Ok(PyTensor(self.0.le(rhs).map_err(wrap_err)?))
+    }
+
     fn sum_all(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.sum_all().map_err(wrap_err)?))
     }
@@ -550,6 +574,12 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     rb_tensor.define_method("argmin_keepdim", method!(PyTensor::argmin_keepdim, 1))?;
     rb_tensor.define_method("max_keepdim", method!(PyTensor::max_keepdim, 1))?;
     rb_tensor.define_method("min_keepdim", method!(PyTensor::min_keepdim, 1))?;
+    rb_tensor.define_method("eq", method!(PyTensor::eq, 1))?;
+    rb_tensor.define_method("ne", method!(PyTensor::ne, 1))?;
+    rb_tensor.define_method("lt", method!(PyTensor::lt, 1))?;
+    rb_tensor.define_method("gt", method!(PyTensor::gt, 1))?;
+    rb_tensor.define_method("ge", method!(PyTensor::ge, 1))?;
+    rb_tensor.define_method("le", method!(PyTensor::le, 1))?;
     rb_tensor.define_method("sum_all", method!(PyTensor::sum_all, 0))?;
     rb_tensor.define_method("mean_all", method!(PyTensor::mean_all, 0))?;
     rb_tensor.define_method("flatten_from", method!(PyTensor::flatten_from, 1))?;
