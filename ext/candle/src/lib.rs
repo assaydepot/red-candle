@@ -11,26 +11,26 @@ pub fn wrap_err(err: candle_core::Error) -> Error {
     Error::new(magnus::exception::runtime_error(), err.to_string())
 }
 
-#[derive(Clone, Debug)]
-struct RbShape(Vec<usize>);
+// #[derive(Clone, Debug)]
+// struct RbShape(Vec<usize>);
 
-impl magnus::TryConvert for RbShape {
-    fn try_convert(val: magnus::Value) -> PyResult<Self> {
-        let ary = magnus::RArray::try_convert(val)?;
-        let shape = ary
-            .each()
-            .map(|v| magnus::Integer::try_convert(v?).map(|v| v.to_usize().unwrap()))
-            .collect::<PyResult<Vec<_>>>()?;
-        Ok(Self(shape))
-    }
-}
+// impl magnus::TryConvert for RbShape {
+//     fn try_convert(val: magnus::Value) -> PyResult<Self> {
+//         let ary = magnus::RArray::try_convert(val)?;
+//         let shape = ary
+//             .each()
+//             .map(|v| magnus::Integer::try_convert(v?).map(|v| v.to_usize().unwrap()))
+//             .collect::<PyResult<Vec<_>>>()?;
+//         Ok(Self(shape))
+//     }
+// }
 
-impl magnus::IntoValue for RbShape {
-    fn into_value_with(self, ruby: &Ruby) -> magnus::Value {
-        let ary = magnus::RArray::from_vec(self.0);
-        ary.into_value_with(ruby)
-    }
-}
+// impl magnus::IntoValue for RbShape {
+//     fn into_value_with(self, ruby: &Ruby) -> magnus::Value {
+//         let ary = magnus::RArray::from_vec(self.0);
+//         ary.into_value_with(ruby)
+//     }
+//}
 
 #[derive(Clone, Debug)]
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
