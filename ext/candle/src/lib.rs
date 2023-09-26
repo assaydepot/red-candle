@@ -34,6 +34,7 @@ pub fn wrap_err(err: candle_core::Error) -> Error {
 
 #[derive(Clone, Debug)]
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
+/// A `candle` tensor.
 struct PyTensor(Tensor);
 
 impl std::ops::Deref for PyTensor {
@@ -46,6 +47,7 @@ impl std::ops::Deref for PyTensor {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
+/// A `candle` dtype.
 struct PyDType(DType);
 
 impl PyDType {
@@ -155,7 +157,6 @@ fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
         Ok((rank as i64 + dim) as usize)
     }
 }
-
 impl PyTensor {
     fn new(array: magnus::RArray, dtype: Option<magnus::Symbol>) -> PyResult<Self> {
         let dtype = dtype
@@ -174,22 +175,32 @@ impl PyTensor {
         ))
     }
 
+    /// Gets the tensor's shape.
+    /// &RETURNS&: Tuple[int]
     fn shape(&self) -> Vec<usize> {
         self.0.dims().to_vec()
     }
 
+    /// Gets the tensor's strides.
+    /// &RETURNS&: Tuple[int]
     fn stride(&self) -> Vec<usize> {
         self.0.stride().to_vec()
     }
 
+    /// Gets the tensor's dtype.
+    /// &RETURNS&: DType
     fn dtype(&self) -> PyDType {
         PyDType(self.0.dtype())
     }
 
+    /// Gets the tensor's device.
+    /// &RETURNS&: Device
     fn device(&self) -> PyDevice {
         PyDevice::from_device(self.0.device())
     }
 
+    /// Gets the tensor's rank.
+    /// &RETURNS&: int
     fn rank(&self) -> usize {
         self.0.rank()
     }
@@ -202,34 +213,50 @@ impl PyTensor {
         self.__repr__()
     }
 
+    /// Performs the `sin` operation on the tensor.
+    /// &RETURNS&: Tensor
     fn sin(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.sin().map_err(wrap_err)?))
     }
 
+    /// Performs the `cos` operation on the tensor.
+    /// &RETURNS&: Tensor
     fn cos(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.cos().map_err(wrap_err)?))
     }
 
+    /// Performs the `log` operation on the tensor.
+    /// &RETURNS&: Tensor
     fn log(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.log().map_err(wrap_err)?))
     }
 
+    /// Squares the tensor.
+    /// &RETURNS&: Tensor
     fn sqr(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.sqr().map_err(wrap_err)?))
     }
 
+    /// Calculates the square root of the tensor.
+    /// &RETURNS&: Tensor
     fn sqrt(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.sqrt().map_err(wrap_err)?))
     }
 
+    /// Get the `recip` of the tensor.
+    /// &RETURNS&: Tensor
     fn recip(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.recip().map_err(wrap_err)?))
     }
 
+    /// Performs the `exp` operation on the tensor.
+    /// &RETURNS&: Tensor
     fn exp(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.exp().map_err(wrap_err)?))
     }
 
+    /// Performs the `pow` operation on the tensor with the given exponent.
+    /// &RETURNS&: Tensor
     fn powf(&self, p: f64) -> PyResult<Self> {
         Ok(PyTensor(self.0.powf(p).map_err(wrap_err)?))
     }
@@ -239,40 +266,60 @@ impl PyTensor {
     //     Ok(PyTensor(self.0.index_select(rhs, dim).map_err(wrap_err)?))
     // }
 
+    /// Performs a matrix multiplication between the two tensors.
+    /// &RETURNS&: Tensor
     fn matmul(&self, rhs: &Self) -> PyResult<Self> {
         Ok(PyTensor(self.0.matmul(rhs).map_err(wrap_err)?))
     }
 
+    /// Adds the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
+    /// &RETURNS&: Tensor
     fn broadcast_add(&self, rhs: &Self) -> PyResult<Self> {
         Ok(PyTensor(self.0.broadcast_add(rhs).map_err(wrap_err)?))
     }
 
+    /// Subtracts the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
+    /// &RETURNS&: Tensor
     fn broadcast_sub(&self, rhs: &Self) -> PyResult<Self> {
         Ok(PyTensor(self.0.broadcast_sub(rhs).map_err(wrap_err)?))
     }
 
+    /// Multiplies the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
+    /// &RETURNS&: Tensor
     fn broadcast_mul(&self, rhs: &Self) -> PyResult<Self> {
         Ok(PyTensor(self.0.broadcast_mul(rhs).map_err(wrap_err)?))
     }
 
+    /// Divides the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
+    /// &RETURNS&: Tensor
     fn broadcast_div(&self, rhs: &Self) -> PyResult<Self> {
         Ok(PyTensor(self.0.broadcast_div(rhs).map_err(wrap_err)?))
     }
 
+    /// Returns a tensor with the same shape as the input tensor, the values are taken from
+    /// `on_true` if the input tensor value is not zero, and `on_false` at the positions where the
+    /// input tensor is equal to zero.
+    /// &RETURNS&: Tensor
     fn where_cond(&self, on_true: &Self, on_false: &Self) -> PyResult<Self> {
         Ok(PyTensor(
             self.0.where_cond(on_true, on_false).map_err(wrap_err)?,
         ))
     }
 
+    /// Add two tensors.
+    /// &RETURNS&: Tensor
     fn __add__(&self, rhs: &PyTensor) -> PyResult<Self> {
         Ok(Self(self.0.add(&rhs.0).map_err(wrap_err)?))
     }
 
+    /// Multiply two tensors.
+    /// &RETURNS&: Tensor
     fn __mul__(&self, rhs: &PyTensor) -> PyResult<Self> {
         Ok(Self(self.0.mul(&rhs.0).map_err(wrap_err)?))
     }
 
+    /// Subtract two tensors.
+    /// &RETURNS&: Tensor
     fn __sub__(&self, rhs: &PyTensor) -> PyResult<Self> {
         Ok(Self(self.0.sub(&rhs.0).map_err(wrap_err)?))
     }
@@ -281,57 +328,82 @@ impl PyTensor {
         Ok(Self(self.0.div(&rhs.0).map_err(wrap_err)?))
     }
 
+    /// Reshapes the tensor to the given shape.
+    /// &RETURNS&: Tensor
     fn reshape(&self, shape: Vec<usize>) -> PyResult<Self> {
         Ok(PyTensor(self.0.reshape(shape).map_err(wrap_err)?))
     }
 
+    /// Broadcasts the tensor to the given shape.
+    /// &RETURNS&: Tensor
     fn broadcast_as(&self, shape: Vec<usize>) -> PyResult<Self> {
         Ok(PyTensor(self.0.broadcast_as(shape).map_err(wrap_err)?))
     }
 
+    /// Broadcasts the tensor to the given shape, adding new dimensions on the left.
+    /// &RETURNS&: Tensor
     fn broadcast_left(&self, shape: Vec<usize>) -> PyResult<Self> {
         Ok(PyTensor(self.0.broadcast_left(shape).map_err(wrap_err)?))
     }
 
+    /// Creates a new tensor with the specified dimension removed if its size was one.
+    /// &RETURNS&: Tensor
     fn squeeze(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.squeeze(dim).map_err(wrap_err)?))
     }
 
+    /// Creates a new tensor with a dimension of size one inserted at the specified position.
+    /// &RETURNS&: Tensor
     fn unsqueeze(&self, dim: usize) -> PyResult<Self> {
         Ok(PyTensor(self.0.unsqueeze(dim).map_err(wrap_err)?))
     }
 
+    /// Gets the value at the specified index.
+    /// &RETURNS&: Tensor
     fn get(&self, index: i64) -> PyResult<Self> {
         let index = actual_index(self, 0, index).map_err(wrap_err)?;
         Ok(PyTensor(self.0.get(index).map_err(wrap_err)?))
     }
 
+    /// Returns a tensor that is a transposed version of the input, the given dimensions are swapped.
+    /// &RETURNS&: Tensor
     fn transpose(&self, dim1: usize, dim2: usize) -> PyResult<Self> {
         Ok(PyTensor(self.0.transpose(dim1, dim2).map_err(wrap_err)?))
     }
 
+    /// Returns a new tensor that is a narrowed version of the input, the dimension `dim`
+    /// ranges from `start` to `start + len`.
+    /// &RETURNS&: Tensor
     fn narrow(&self, dim: i64, start: i64, len: usize) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         let start = actual_index(self, dim, start).map_err(wrap_err)?;
         Ok(PyTensor(self.0.narrow(dim, start, len).map_err(wrap_err)?))
     }
 
+    /// Returns the indices of the maximum value(s) across the selected dimension.
+    /// &RETURNS&: Tensor
     fn argmax_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.argmax_keepdim(dim).map_err(wrap_err)?))
     }
 
+    /// Returns the indices of the minimum value(s) across the selected dimension.
+    /// &RETURNS&: Tensor
     fn argmin_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.argmin_keepdim(dim).map_err(wrap_err)?))
     }
 
+    /// Gathers the maximum value across the selected dimension.
+    /// &RETURNS&: Tensor
     fn max_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.max_keepdim(dim).map_err(wrap_err)?))
     }
 
+    /// Gathers the minimum value across the selected dimension.
+    /// &RETURNS&: Tensor
     fn min_keepdim(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.min_keepdim(dim).map_err(wrap_err)?))
@@ -365,6 +437,8 @@ impl PyTensor {
         Ok(PyTensor(self.0.sum_all().map_err(wrap_err)?))
     }
 
+    /// Returns the mean of the tensor.
+    /// &RETURNS&: Tensor
     fn mean_all(&self) -> PyResult<Self> {
         let elements = self.0.elem_count();
         let sum = self.0.sum_all().map_err(wrap_err)?;
@@ -372,49 +446,71 @@ impl PyTensor {
         Ok(PyTensor(mean))
     }
 
+    /// Flattens the tensor on the dimension indexes from `dim` (inclusive) to the last dimension.
+    /// &RETURNS&: Tensor
     fn flatten_from(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.flatten_from(dim).map_err(wrap_err)?))
     }
 
+    ///Flattens the tensor on the dimension indexes from `0` to `dim` (inclusive).
+    /// &RETURNS&: Tensor
     fn flatten_to(&self, dim: i64) -> PyResult<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_err)?;
         Ok(PyTensor(self.0.flatten_to(dim).map_err(wrap_err)?))
     }
 
+    /// Flattens the tensor into a 1D tensor.
+    /// &RETURNS&: Tensor
     fn flatten_all(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.flatten_all().map_err(wrap_err)?))
     }
 
+    /// Transposes the tensor.
+    /// &RETURNS&: Tensor
     fn t(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.t().map_err(wrap_err)?))
     }
 
+    /// Makes the tensor contiguous in memory.
+    /// &RETURNS&: Tensor
     fn contiguous(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.contiguous().map_err(wrap_err)?))
     }
 
+    /// Returns true if the tensor is contiguous in C order.
+    /// &RETURNS&: bool
     fn is_contiguous(&self) -> bool {
         self.0.is_contiguous()
     }
 
+    /// Returns true if the tensor is contiguous in Fortran order.
+    /// &RETURNS&: bool
     fn is_fortran_contiguous(&self) -> bool {
         self.0.is_fortran_contiguous()
     }
 
+    /// Detach the tensor from the computation graph.
+    /// &RETURNS&: Tensor
     fn detach(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.detach().map_err(wrap_err)?))
     }
 
+    /// Returns a copy of the tensor.
+    /// &RETURNS&: Tensor
     fn copy(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.copy().map_err(wrap_err)?))
     }
 
+    /// Convert the tensor to a new dtype.
+    /// &RETURNS&: Tensor
     fn to_dtype(&self, dtype: magnus::Symbol) -> PyResult<Self> {
         let dtype = PyDType::from_pyobject(dtype)?;
         Ok(PyTensor(self.0.to_dtype(dtype.0).map_err(wrap_err)?))
     }
 
+    /// Move the tensor to a new device.
+    /// &RETURNS&: Tensor
     fn to_device(&self, device: PyDevice) -> PyResult<Self> {
         let device = device.as_device()?;
         Ok(PyTensor(self.0.to_device(&device).map_err(wrap_err)?))
@@ -441,6 +537,8 @@ impl PyTensor {
     //     Ok(Self(tensor))
     // }
 
+    /// Creates a new tensor with random values.
+    /// &RETURNS&: Tensor
     fn rand(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
@@ -448,6 +546,8 @@ impl PyTensor {
         ))
     }
 
+    /// Creates a new tensor with random values from a normal distribution.
+    /// &RETURNS&: Tensor
     fn randn(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
@@ -455,13 +555,16 @@ impl PyTensor {
         ))
     }
 
+    /// Creates a new tensor filled with ones.
+    /// &RETURNS&: Tensor
     fn ones(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
             Tensor::ones(shape, DType::F32, &device).map_err(wrap_err)?,
         ))
     }
-
+    /// Creates a new tensor filled with zeros.
+    /// &RETURNS&: Tensor
     fn zeros(shape: Vec<usize>) -> PyResult<Self> {
         let device = PyDevice::Cpu.as_device()?;
         Ok(Self(
@@ -483,10 +586,14 @@ impl std::ops::Deref for PyQTensor {
 }
 
 impl PyQTensor {
+    ///Gets the tensors quantized dtype.
+    /// &RETURNS&: str
     fn ggml_dtype(&self) -> String {
         format!("{:?}", self.0.dtype())
     }
 
+    ///Gets the rank of the tensor.
+    /// &RETURNS&: int
     fn rank(&self) -> usize {
         self.0.rank()
     }
@@ -503,6 +610,8 @@ impl PyQTensor {
         self.__repr__()
     }
 
+    /// Dequantizes the tensor.
+    /// &RETURNS&: Tensor  
     fn dequantize(&self) -> PyResult<PyTensor> {
         let tensor = self.0.dequantize(&Device::Cpu).map_err(wrap_err)?;
         Ok(PyTensor(tensor))
@@ -515,18 +624,26 @@ impl PyQTensor {
     // }
 }
 
+/// Returns true if the 'cuda' backend is available.
+/// &RETURNS&: bool
 fn cuda_is_available() -> bool {
     candle_core::utils::cuda_is_available()
 }
 
+/// Returns true if candle was compiled with 'accelerate' support.
+/// &RETURNS&: bool
 fn has_accelerate() -> bool {
     candle_core::utils::has_accelerate()
 }
 
+/// Returns true if candle was compiled with MKL support.
+/// &RETURNS&: bool
 fn has_mkl() -> bool {
     candle_core::utils::has_mkl()
 }
 
+/// Returns the number of threads used by the candle.
+/// &RETURNS&: int
 fn get_num_threads() -> usize {
     candle_core::utils::get_num_threads()
 }
