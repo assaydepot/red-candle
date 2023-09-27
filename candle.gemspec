@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.description = 'POC huggingface/candle for Ruby'
   spec.files       = Dir['lib/**/*.rb', 'ext/candle/src/lib.rs', 'ext/candle/Cargo.toml', 'Cargo.toml', 'Cargo.lock',
                          'README.md']
-  spec.extensions  = ['ext/candle/Cargo.toml']
+  spec.extensions  = ['ext/candle/extconf.rb']
   spec.authors     = ['kojix2']
   spec.email       = ['2xijok@gmail.com']
   spec.homepage    = 'https://github.com/kojix2/ruby-candle'
