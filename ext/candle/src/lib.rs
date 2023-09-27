@@ -261,10 +261,18 @@ impl PyTensor {
         Ok(PyTensor(self.0.powf(p).map_err(wrap_err)?))
     }
 
-    // fn index_select(&self, rhs: &Self, dim: i64) -> PyResult<Self> {
-    //     let dim = actual_dim(self, dim).map_err(wrap_err)?;
-    //     Ok(PyTensor(self.0.index_select(rhs, dim).map_err(wrap_err)?))
-    // }
+    /// Select values for the input tensor at the target indexes across the specified dimension.
+    ///
+    /// The `indexes` is argument is an int tensor with a single dimension.
+    /// The output has the same number of dimension as the `self` input. The target dimension of
+    /// the output has length the length of `indexes` and the values are taken from `self` using
+    /// the index from `indexes`. Other dimensions have the same number of elements as the input
+    /// tensor.
+    /// &RETURNS&: Tensor
+    fn index_select(&self, rhs: &Self, dim: i64) -> PyResult<Self> {
+        let dim = actual_dim(self, dim).map_err(wrap_err)?;
+        Ok(PyTensor(self.0.index_select(rhs, dim).map_err(wrap_err)?))
+    }
 
     /// Performs a matrix multiplication between the two tensors.
     /// &RETURNS&: Tensor
@@ -324,6 +332,8 @@ impl PyTensor {
         Ok(Self(self.0.sub(&rhs.0).map_err(wrap_err)?))
     }
 
+    /// Divide two tensors.
+    /// &RETURNS&: Tensor
     fn __truediv__(&self, rhs: &PyTensor) -> PyResult<Self> {
         Ok(Self(self.0.div(&rhs.0).map_err(wrap_err)?))
     }
@@ -433,6 +443,8 @@ impl PyTensor {
         Ok(PyTensor(self.0.le(rhs).map_err(wrap_err)?))
     }
 
+    /// Returns the sum of the tensor.
+    /// &RETURNS&: Tensor
     fn sum_all(&self) -> PyResult<Self> {
         Ok(PyTensor(self.0.sum_all().map_err(wrap_err)?))
     }
@@ -575,6 +587,7 @@ impl PyTensor {
 
 #[derive(Debug)]
 #[magnus::wrap(class = "Candle::QTensor", free_immediately, size)]
+/// A quantized tensor.
 struct PyQTensor(Arc<QTensor>);
 
 impl std::ops::Deref for PyQTensor {
@@ -598,9 +611,11 @@ impl PyQTensor {
         self.0.rank()
     }
 
-    // fn shape(&self, py: Python<'_>) -> PyObject {
-    //     PyTuple::new(py, self.0.shape().dims()).to_object(py)
-    // }
+    ///Gets the shape of the tensor.
+    /// &RETURNS&: Tuple[int]
+    fn shape(&self) -> Vec<usize> {
+        self.0.shape().dims().to_vec()
+    }
 
     fn __repr__(&self) -> String {
         format!("{:?}", self.0)
@@ -657,6 +672,21 @@ fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
     Ok(())
 }
 
+/// Applies the Softmax function to a given tensor.#
+/// &RETURNS&: Tensor
+fn softmax(tensor: PyTensor, dim: i64) -> PyResult<PyTensor> {
+    let dim = actual_dim(&tensor, dim).map_err(wrap_err)?;
+    let sm = candle_nn::ops::softmax(&tensor.0, dim).map_err(wrap_err)?;
+    Ok(PyTensor(sm))
+}
+
+/// Applies the Sigmoid Linear Unit (SiLU) function to a given tensor.
+/// &RETURNS&: Tensor
+fn silu(tensor: PyTensor) -> PyResult<PyTensor> {
+    let s = candle_nn::ops::silu(&tensor.0).map_err(wrap_err)?;
+    Ok(PyTensor(s))
+}
+
 #[magnus::init]
 fn init(ruby: &Ruby) -> PyResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
@@ -682,6 +712,7 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     rb_tensor.define_method("recip", method!(PyTensor::recip, 0))?;
     rb_tensor.define_method("exp", method!(PyTensor::exp, 0))?;
     rb_tensor.define_method("powf", method!(PyTensor::powf, 1))?;
+    rb_tensor.define_method("index_select", method!(PyTensor::index_select, 2))?;
     rb_tensor.define_method("matmul", method!(PyTensor::matmul, 1))?;
     rb_tensor.define_method("broadcast_add", method!(PyTensor::broadcast_add, 1))?;
     rb_tensor.define_method("broadcast_sub", method!(PyTensor::broadcast_sub, 1))?;
@@ -736,6 +767,7 @@ fn init(ruby: &Ruby) -> PyResult<()> {
     let rb_qtensor = rb_candle.define_class("QTensor", Ruby::class_object(ruby))?;
     rb_qtensor.define_method("ggml_dtype", method!(PyQTensor::ggml_dtype, 0))?;
     rb_qtensor.define_method("rank", method!(PyQTensor::rank, 0))?;
+    rb_qtensor.define_method("shape", method!(PyQTensor::shape, 0))?;
     rb_qtensor.define_method("dequantize", method!(PyQTensor::dequantize, 0))?;
     Ok(())
 }
