@@ -10,7 +10,7 @@
 ```ruby
 require "candle"
 
-x = Candle::Tensor.new([1, 2, 3, 4, 5, 6])
+x = Candle::Tensor.new([1, 2, 3, 4, 5, 6], :i64)
 x = x.reshape([3, 2])
 # [[1., 2.],
 #  [3., 4.],
