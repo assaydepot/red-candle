@@ -37,6 +37,8 @@ Policies
 
 Pull requests are welcome.
 
+kojix2 started this project to learn Rust, but does not necessarily have enough time to maintain this library. If you are interested in becoming a project owner or committer, please send me a pull request.
+
 ### See Also
 
 - [Numo::NArray](https://github.com/ruby-numo/numo-narray)
