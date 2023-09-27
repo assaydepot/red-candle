@@ -6,7 +6,7 @@ class CandleTest < Minitest::Test
   end
 
   def test_something_useful
-    t = Candle::Tensor.new([3.0, 1, 4, 1, 5, 9, 2, 6])
+    t = Candle::Tensor.new([3.0, 1, 4, 1, 5, 9, 2, 6], :f32)
     assert_instance_of(Candle::Tensor, t)
     assert_equal [8], t.shape
     t = t.reshape([2, 4])

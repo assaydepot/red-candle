@@ -6,5 +6,5 @@ gem 'minitest'
 gem 'rake'
 gem 'rake-compiler'
 
-gem "yard", require: false
+gem 'yard', require: false
 gem 'yard-rustdoc', require: false

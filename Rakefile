@@ -8,7 +8,7 @@ task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
   t.libs << 'test'
-  t.test_files = FileList['test/test_*.rb']
+  t.test_files = FileList['test/**/*_test.rb']
 end
 
 spec = Bundler.load_gemspec('candle.gemspec')
@@ -52,7 +52,7 @@ namespace :doc do
         --document-private-items
     CMD
 
-    cp "tmp/doc/target/doc/candle.json", "tmp/doc/candle.json"
+    cp 'tmp/doc/target/doc/candle.json', 'tmp/doc/candle.json'
   end
 end
 
