@@ -1,11 +1,11 @@
 require_relative 'lib/candle/version'
 
 Gem::Specification.new do |spec|
-  spec.name        = 'candle'
+  spec.name        = 'ruby-candle'
   spec.version     = Candle::VERSION
   spec.summary     = 'huggingface/candle for ruby'
   spec.description = 'POC huggingface/candle for Ruby'
-  spec.files       = Dir['lib/**/*.rb', 'ext/candle/src/**/*.rs', 'ext/candle/Cargo.toml', 'Cargo.toml', 'Cargo.lock',
+  spec.files       = Dir['lib/**/*.rb', 'ext/candle/src/lib.rs', 'ext/candle/Cargo.toml', 'Cargo.toml', 'Cargo.lock',
                          'README.md']
   spec.extensions  = ['ext/candle/Cargo.toml']
   spec.authors     = ['kojix2']
