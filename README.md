@@ -1,7 +1,7 @@
-# ruby-candle
+# red-candle
 
-[![build](https://github.com/kojix2/ruby-candle/actions/workflows/build.yml/badge.svg)](https://github.com/kojix2/ruby-candle/actions/workflows/build.yml)
-[![Gem Version](https://badge.fury.io/rb/ruby-candle.svg)](https://badge.fury.io/rb/ruby-candle)
+[![build](https://github.com/kojix2/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/kojix2/red-candle/actions/workflows/build.yml)
+[![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
 
 🕯️ [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
 
@@ -23,8 +23,8 @@ x = x.reshape([3, 2])
 FORK IT!
 
 ```
-git clone https://github.com/your_name/ruby-candle
-cd ruby-candle
+git clone https://github.com/your_name/red-candle
+cd red-candle
 bundle
 bundle exec rake compile
 ```

@@ -1,7 +1,7 @@
 require_relative 'lib/candle/version'
 
 Gem::Specification.new do |spec|
-  spec.name        = 'ruby-candle'
+  spec.name        = 'red-candle'
   spec.version     = Candle::VERSION
   spec.summary     = 'huggingface/candle for ruby'
   spec.description = 'POC huggingface/candle for Ruby'
@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.extensions  = ['ext/candle/extconf.rb']
   spec.authors     = ['kojix2']
   spec.email       = ['2xijok@gmail.com']
-  spec.homepage    = 'https://github.com/kojix2/ruby-candle'
+  spec.homepage    = 'https://github.com/kojix2/red-candle'
   spec.license     = 'MIT'
 
   spec.requirements = ['Rust >= 1.61']
