@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name        = 'red-candle'
   spec.version     = Candle::VERSION
   spec.summary     = 'huggingface/candle for ruby'
-  spec.description = 'POC huggingface/candle for Ruby'
+  spec.description = 'huggingface/candle for Ruby'
   spec.files       = Dir['lib/**/*.rb', 'ext/candle/src/lib.rs', 'ext/candle/Cargo.toml', 'Cargo.toml', 'Cargo.lock',
                          'README.md']
   spec.extensions  = ['ext/candle/extconf.rb']
