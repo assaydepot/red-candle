@@ -3,7 +3,7 @@
 [![build](https://github.com/kojix2/ruby-candle/actions/workflows/build.yml/badge.svg)](https://github.com/kojix2/ruby-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/ruby-candle.svg)](https://badge.fury.io/rb/ruby-candle)
 
-[candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
+🕯️ [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
 
 ## Usage
 
