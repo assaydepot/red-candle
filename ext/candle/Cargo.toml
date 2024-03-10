@@ -7,8 +7,12 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = { version = "1", features = ["backtrace"] }
 candle-core = "0.4.1"
 candle-nn = "0.4.1"
+candle-transformers = "0.4.1"
+tokenizers = { version = "0.15.0", default-features = true, features = ["fancy-regex"], exclude = ["onig"] }
+hf-hub = "0.3.0"
 half = "2"
 magnus = "0.6"
 

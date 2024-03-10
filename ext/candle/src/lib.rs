@@ -5,6 +5,8 @@ use ::candle_core::{quantized::QTensor, DType, Device, Tensor};
 
 type PyResult<T> = Result<T, Error>;
 
+pub mod model;
+
 pub fn wrap_err(err: candle_core::Error) -> Error {
     Error::new(magnus::exception::runtime_error(), err.to_string())
 }
