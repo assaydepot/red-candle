@@ -7,7 +7,10 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-candle-core = "0.2"
-candle-nn = "0.2"
+candle-core = "0.4.1"
+candle-nn = "0.4.1"
 half = "2"
 magnus = "0.6"
+
+[profile.test]
+opt-level = 3

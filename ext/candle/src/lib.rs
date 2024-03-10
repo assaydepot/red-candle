@@ -1,9 +1,7 @@
 use magnus::{function, method, prelude::*, Error, Ruby};
 use std::sync::Arc;
 
-use half::{bf16, f16};
-
-use ::candle_core::{quantized::QTensor, DType, Device, Tensor, WithDType};
+use ::candle_core::{quantized::QTensor, DType, Device, Tensor};
 
 type PyResult<T> = Result<T, Error>;
 
@@ -70,12 +68,14 @@ impl PyDType {
 }
 
 static CUDA_DEVICE: std::sync::Mutex<Option<Device>> = std::sync::Mutex::new(None);
+static METAL_DEVICE: std::sync::Mutex<Option<Device>> = std::sync::Mutex::new(None);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::Device")]
 enum PyDevice {
     Cpu,
     Cuda,
+    Metal,
 }
 
 impl PyDevice {
@@ -83,6 +83,7 @@ impl PyDevice {
         match device {
             Device::Cpu => Self::Cpu,
             Device::Cuda(_) => Self::Cuda,
+            Device::Metal(_) => Self::Metal,
         }
     }
 
@@ -98,6 +99,15 @@ impl PyDevice {
                 *device = Some(d.clone());
                 Ok(d)
             }
+            Self::Metal => {
+                let mut device = METAL_DEVICE.lock().unwrap();
+                if let Some(device) = device.as_ref() {
+                    return Ok(device.clone());
+                };
+                let d = Device::new_metal(0).map_err(wrap_err)?;
+                *device = Some(d.clone());
+                Ok(d)
+            }
         }
     }
 
@@ -105,6 +115,7 @@ impl PyDevice {
         match self {
             Self::Cpu => "cpu".to_string(),
             Self::Cuda => "cuda".to_string(),
+            Self::Metal => "metal".to_string(),
         }
     }
 
@@ -518,7 +529,7 @@ impl PyTensor {
     /// Detach the tensor from the computation graph.
     /// &RETURNS&: Tensor
     fn detach(&self) -> PyResult<Self> {
-        Ok(PyTensor(self.0.detach().map_err(wrap_err)?))
+        Ok(PyTensor(self.0.detach()))
     }
 
     /// Returns a copy of the tensor.
@@ -639,7 +650,7 @@ impl PyQTensor {
     }
 
     /// Dequantizes the tensor.
-    /// &RETURNS&: Tensor  
+    /// &RETURNS&: Tensor
     fn dequantize(&self) -> PyResult<PyTensor> {
         let tensor = self.0.dequantize(&Device::Cpu).map_err(wrap_err)?;
         Ok(PyTensor(tensor))
