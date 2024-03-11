@@ -10,19 +10,10 @@ use candle_nn::VarBuilder;
 use core::result::Result;
 use tokenizers::Tokenizer;
 use magnus::Error;
+use crate::model::errors::{wrap_std_err, wrap_hf_err, wrap_candle_err};
+use crate::model::rb_tensor::RbTensor;
 
-pub fn wrap_std_err(err: Box<dyn std::error::Error + Send + Sync>) -> Error {
-  Error::new(magnus::exception::runtime_error(), err.to_string())
-}
-
-pub fn wrap_candle_err(err: candle_core::Error) -> Error {
-  Error::new(magnus::exception::runtime_error(), err.to_string())
-}
-
-pub fn wrap_hf_err(err: hf_hub::api::sync::ApiError) -> Error {
-  Error::new(magnus::exception::runtime_error(), err.to_string())
-}
-
+#[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct ModelConfig {
     device: Device,
 
@@ -72,10 +63,10 @@ impl ModelConfig {
         Ok((model, tokenizer))
     }
 
-    pub fn embedding(&self, input: String) -> Result<Tensor, Error> {
+    pub fn embedding(&self, input: String) -> Result<RbTensor, Error> {
         let config = ModelConfig::build();
         let (model, tokenizer) = config.build_model_and_tokenizer()?;
-        return self.compute_embedding(input, model, tokenizer);
+        return Ok(RbTensor(self.compute_embedding(input, model, tokenizer)?));
     }
 
     fn compute_embedding(&self, prompt: String, model: BertModel, mut tokenizer: Tokenizer) -> Result<Tensor, Error> {
