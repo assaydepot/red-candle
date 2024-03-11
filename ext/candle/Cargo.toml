@@ -7,7 +7,6 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-anyhow = { version = "1", features = ["backtrace"] }
 candle-core = "0.4.1"
 candle-nn = "0.4.1"
 candle-transformers = "0.4.1"
