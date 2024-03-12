@@ -1,15 +1,8 @@
 use magnus::{function, method, prelude::*, Ruby};
 
-use crate::model::utils::candle_utils;
-use crate::model::rb_result::RbResult;
-use crate::model::rb_device::RbDevice;
-use crate::model::rb_d_type::RbDType;
-use crate::model::rb_tensor::RbTensor;
-use crate::model::rb_q_tensor::RbQTensor;
-use crate::model::config::ModelConfig;
+use crate::model::{candle_utils, ModelConfig, RbDType, RbDevice, RbQTensor, RbResult, RbTensor};
 
 pub mod model;
-
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> RbResult<()> {

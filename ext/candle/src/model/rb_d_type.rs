@@ -1,10 +1,8 @@
-use magnus::Error;
-use magnus::value::ReprValue;
+use magnus::{value::ReprValue, Error};
 
 use ::candle_core::DType;
 
 type RbResult<T> = Result<T, Error>;
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]

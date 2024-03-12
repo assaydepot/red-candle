@@ -1,9 +1,8 @@
 use magnus::Error;
 use std::sync::Arc;
 
+use crate::model::{errors::wrap_candle_err, rb_tensor::RbTensor};
 use ::candle_core::{quantized::QTensor, Device};
-use crate::model::errors::wrap_candle_err;
-use crate::model::rb_tensor::RbTensor;
 
 type RbResult<T> = Result<T, Error>;
 

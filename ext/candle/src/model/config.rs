@@ -4,14 +4,16 @@ extern crate intel_mkl_src;
 #[cfg(feature = "accelerate")]
 extern crate accelerate_src;
 
-use candle_transformers::models::jina_bert::{BertModel, Config};
-use candle_core::{Device, DType, Module, Tensor};
+use crate::model::{
+    errors::{wrap_candle_err, wrap_hf_err, wrap_std_err},
+    rb_tensor::RbTensor,
+};
+use candle_core::{DType, Device, Module, Tensor};
 use candle_nn::VarBuilder;
+use candle_transformers::models::jina_bert::{BertModel, Config};
 use core::result::Result;
-use tokenizers::Tokenizer;
 use magnus::Error;
-use crate::model::errors::{wrap_std_err, wrap_hf_err, wrap_candle_err};
-use crate::model::rb_tensor::RbTensor;
+use tokenizers::Tokenizer;
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct ModelConfig {
@@ -27,7 +29,7 @@ impl ModelConfig {
         ModelConfig {
             device: Device::Cpu,
             model_path: None,
-            tokenizer_path: None
+            tokenizer_path: None,
         }
     }
 
@@ -42,23 +44,26 @@ impl ModelConfig {
                     RepoType::Model,
                 ))
                 .get("model.safetensors")
-                .map_err(wrap_hf_err)?
+                .map_err(wrap_hf_err)?,
         };
         let tokenizer_path = match &self.tokenizer_path {
             Some(file) => std::path::PathBuf::from(file),
             None => Api::new()
-              .map_err(wrap_hf_err)?
-              .repo(Repo::new(
+                .map_err(wrap_hf_err)?
+                .repo(Repo::new(
                     "sentence-transformers/all-MiniLM-L6-v2".to_string(),
                     RepoType::Model,
                 ))
                 .get("tokenizer.json")
-                .map_err(wrap_hf_err)?
+                .map_err(wrap_hf_err)?,
         };
         // let device = candle_examples::device(self.cpu)?;
         let config = Config::v2_base();
         let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path).map_err(wrap_std_err)?;
-        let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &self.device).map_err(wrap_candle_err)? };
+        let vb = unsafe {
+            VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &self.device)
+                .map_err(wrap_candle_err)?
+        };
         let model = BertModel::new(vb, &config).map_err(wrap_candle_err)?;
         Ok((model, tokenizer))
     }
@@ -69,7 +74,12 @@ impl ModelConfig {
         return Ok(RbTensor(self.compute_embedding(input, model, tokenizer)?));
     }
 
-    fn compute_embedding(&self, prompt: String, model: BertModel, mut tokenizer: Tokenizer) -> Result<Tensor, Error> {
+    fn compute_embedding(
+        &self,
+        prompt: String,
+        model: BertModel,
+        mut tokenizer: Tokenizer,
+    ) -> Result<Tensor, Error> {
         let start: std::time::Instant = std::time::Instant::now();
         // let prompt = args.prompt.as_deref().unwrap_or("Hello, world!");
         let tokenizer = tokenizer
@@ -81,7 +91,10 @@ impl ModelConfig {
             .map_err(wrap_std_err)?
             .get_ids()
             .to_vec();
-        let token_ids = Tensor::new(&tokens[..], &self.device).map_err(wrap_candle_err)?.unsqueeze(0).map_err(wrap_candle_err)?;
+        let token_ids = Tensor::new(&tokens[..], &self.device)
+            .map_err(wrap_candle_err)?
+            .unsqueeze(0)
+            .map_err(wrap_candle_err)?;
         println!("Loaded and encoded {:?}", start.elapsed());
         let start: std::time::Instant = std::time::Instant::now();
         let result = model.forward(&token_ids).map_err(wrap_candle_err)?;

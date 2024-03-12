@@ -1,7 +1,7 @@
 use magnus::Error;
 
-use ::candle_core::Device;
 use crate::model::errors::wrap_candle_err;
+use ::candle_core::Device;
 
 type RbResult<T> = Result<T, Error>;
 
