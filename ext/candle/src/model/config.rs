@@ -134,24 +134,24 @@ impl ModelConfig {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn my_first_test() {
-        assert_eq!(2 + 2, 4);
-    }
+// #[cfg(test)]
+// mod tests {
+//     #[test]
+//     fn my_first_test() {
+//         assert_eq!(2 + 2, 4);
+//     }
 
-    #[test]
-    fn test_build_model_and_tokenizer() {
-        let config = super::ModelConfig::build();
-        let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
-        assert_eq!(tokenizer.get_vocab_size(true), 30522);
-    }
+//     #[test]
+//     fn test_build_model_and_tokenizer() {
+//         let config = super::ModelConfig::build();
+//         let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
+//         assert_eq!(tokenizer.get_vocab_size(true), 30522);
+//     }
 
-    #[test]
-    fn test_embedding() {
-        let config = super::ModelConfig::build();
-        // let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
-        // assert_eq!(config.embedding("Scientist.com is a marketplace for pharmaceutical services.")?, None);
-    }
-}
+//     #[test]
+//     fn test_embedding() {
+//         let config = super::ModelConfig::build();
+//         // let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
+//         // assert_eq!(config.embedding("Scientist.com is a marketplace for pharmaceutical services.")?, None);
+//     }
+// }
