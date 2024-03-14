@@ -46,6 +46,7 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_method("squeeze", method!(RbTensor::squeeze, 1))?;
     rb_tensor.define_method("unsqueeze", method!(RbTensor::unsqueeze, 1))?;
     rb_tensor.define_method("get", method!(RbTensor::get, 1))?;
+    rb_tensor.define_method("[]", method!(RbTensor::get, 1))?;
     rb_tensor.define_method("transpose", method!(RbTensor::transpose, 2))?;
     rb_tensor.define_method("narrow", method!(RbTensor::narrow, 3))?;
     rb_tensor.define_method("argmax_keepdim", method!(RbTensor::argmax_keepdim, 1))?;
