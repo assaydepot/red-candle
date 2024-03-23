@@ -16,6 +16,9 @@
 # Ignore Byebug command history file.
 .byebug_history
 
+# Ignore the RustRover project file
+.idea
+
 ## Specific to RubyMotion:
 .dat*
 .repl_history
