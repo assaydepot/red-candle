@@ -138,7 +138,7 @@ impl ModelConfig {
         let embeddings = (sum / (n_tokens as f64))
             .map_err(wrap_candle_err)?;
         println!("EMBEDDINGS {:#?}", embeddings);
-        let embeddings = Self::normalize_l2(&embeddings).map_err(wrap_candle_err)?;
+        // let embeddings = Self::normalize_l2(&embeddings).map_err(wrap_candle_err)?;
         // let embeddings = if args.normalize_embeddings {
         //
         // } else {
