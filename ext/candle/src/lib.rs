@@ -1,6 +1,6 @@
 use magnus::{function, method, prelude::*, Ruby};
 
-use crate::model::{candle_utils, ModelConfig, RbDType, RbDevice, RbQTensor, RbResult, RbTensor};
+use crate::model::{candle_utils, RbModel, RbDType, RbDevice, RbQTensor, RbResult, RbTensor};
 
 pub mod model;
 
@@ -93,10 +93,10 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_qtensor.define_method("dequantize", method!(RbQTensor::dequantize, 0))?;
 
     let rb_model = rb_candle.define_class("Model", Ruby::class_object(ruby))?;
-    rb_model.define_singleton_method("new", function!(ModelConfig::new, 0))?;
-    rb_model.define_method("embedding", method!(ModelConfig::embedding, 1))?;
-    rb_model.define_method("to_s", method!(ModelConfig::__str__, 0))?;
-    rb_model.define_method("inspect", method!(ModelConfig::__repr__, 0))?;
+    rb_model.define_singleton_method("new", function!(RbModel::new, 0))?;
+    rb_model.define_method("embedding", method!(RbModel::embedding, 1))?;
+    rb_model.define_method("to_s", method!(RbModel::__str__, 0))?;
+    rb_model.define_method("inspect", method!(RbModel::__repr__, 0))?;
 
     Ok(())
 }

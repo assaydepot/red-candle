@@ -71,6 +71,7 @@ pub fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
 
 /// Applies the Softmax function to a given tensor.#
 /// &RETURNS&: Tensor
+#[allow(dead_code)]
 fn softmax(tensor: RbTensor, dim: i64) -> RbResult<RbTensor> {
     let dim = actual_dim(&tensor, dim).map_err(wrap_candle_err)?;
     let sm = candle_nn::ops::softmax(&tensor.0, dim).map_err(wrap_candle_err)?;
@@ -79,6 +80,7 @@ fn softmax(tensor: RbTensor, dim: i64) -> RbResult<RbTensor> {
 
 /// Applies the Sigmoid Linear Unit (SiLU) function to a given tensor.
 /// &RETURNS&: Tensor
+#[allow(dead_code)]
 fn silu(tensor: RbTensor) -> RbResult<RbTensor> {
     let s = candle_nn::ops::silu(&tensor.0).map_err(wrap_candle_err)?;
     Ok(RbTensor(s))
