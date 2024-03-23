@@ -22,6 +22,7 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_method("dtype", method!(RbTensor::dtype, 0))?;
     rb_tensor.define_method("device", method!(RbTensor::device, 0))?;
     rb_tensor.define_method("rank", method!(RbTensor::rank, 0))?;
+    rb_tensor.define_method("elem_count", method!(RbTensor::elem_count, 0))?;
     rb_tensor.define_method("sin", method!(RbTensor::sin, 0))?;
     rb_tensor.define_method("cos", method!(RbTensor::cos, 0))?;
     rb_tensor.define_method("log", method!(RbTensor::log, 0))?;

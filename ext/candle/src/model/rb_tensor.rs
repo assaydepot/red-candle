@@ -82,6 +82,12 @@ impl RbTensor {
         self.0.rank()
     }
 
+    /// The number of elements stored in this tensor.
+    /// &RETURNS&: int
+    pub fn elem_count(&self) -> usize {
+        self.0.elem_count()
+    }
+
     pub fn __repr__(&self) -> String {
         format!("{}", self.0)
     }

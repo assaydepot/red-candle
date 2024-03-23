@@ -21,7 +21,7 @@ x = x.reshape([3, 2])
 ```ruby
 require 'candle'
 model = Candle::Model.new
-model.embedding("Hi there!")
+embedding = model.embedding("Hi there!")
 ```
 
 ## Development
