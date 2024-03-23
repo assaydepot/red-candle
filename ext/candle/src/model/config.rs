@@ -92,10 +92,14 @@ impl ModelConfig {
                 ))
                 .get("tokenizer.json")
                 .map_err(wrap_hf_err)?;
-        let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path)
-            // .with_padding(None)
-            // .with_truncation(None)
+        let mut tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path)
             .map_err(wrap_std_err)?;
+        let pp = tokenizers::PaddingParams {
+            strategy: tokenizers::PaddingStrategy::BatchLongest,
+            ..Default::default()
+        };
+        tokenizer.with_padding(Some(pp));
+
         Ok(tokenizer)
     }
 
