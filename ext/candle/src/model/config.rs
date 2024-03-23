@@ -113,20 +113,43 @@ impl ModelConfig {
             .map_err(wrap_std_err)?
             .get_ids()
             .to_vec();
+        println!("TOKENS {:#?}", tokens);
         let token_ids = Tensor::new(&tokens[..], &self.0.device)
             .map_err(wrap_candle_err)?
             .unsqueeze(0)
             .map_err(wrap_candle_err)?;
-        println!("Loaded and encoded {:?}", start.elapsed());
+
+        // let token_ids = Tensor::stack(&token_ids, 0)?
+        //     .map_err(wrap_candle_err)?;
+        println!("TOKEN IDS {:#?}", token_ids);
         let start: std::time::Instant = std::time::Instant::now();
         let result = model.forward(&token_ids).map_err(wrap_candle_err)?;
-        // println!("{result}");
         println!("Took {:?}", start.elapsed());
-        Ok(result)
+
+        // Apply some avg-pooling by taking the mean embedding value for all tokens (including padding)
+        let (_n_sentence, n_tokens, _hidden_size) = result.dims3()
+            .map_err(wrap_candle_err)?;
+        let sum = result.sum(1)
+            .map_err(wrap_candle_err)?;
+        let embeddings = (sum / (n_tokens as f64))
+            .map_err(wrap_candle_err)?;
+        println!("EMBEDDINGS {:#?}", embeddings);
+        let embeddings = Self::normalize_l2(&embeddings).map_err(wrap_candle_err)?;
+        // let embeddings = if args.normalize_embeddings {
+        //
+        // } else {
+        //     embeddings
+        // };
+
+        Ok(embeddings)
+    }
+
+    fn normalize_l2(v: &Tensor) -> Result<Tensor, candle_core::Error> {
+        v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
 
     pub fn __repr__(&self) -> String {
-        format!("Candle::Model(path={})", self.0.model_path.as_deref().unwrap_or("None"))
+        format!("#<Candle::Model model_path: {})", self.0.model_path.as_deref().unwrap_or("nil"))
     }
 
     pub fn __str__(&self) -> String {

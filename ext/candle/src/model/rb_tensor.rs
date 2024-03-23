@@ -40,7 +40,6 @@ impl RbTensor {
         ))
     }
 
-    // FXIME: Do not use `to_f64` here.
     pub fn values(&self) -> RbResult<Vec<f64>> {
         let values = self
             .0

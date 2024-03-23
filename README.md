@@ -18,6 +18,12 @@ x = x.reshape([3, 2])
 # Tensor[[3, 2], f32]
 ```
 
+```ruby
+require 'candle'
+model = Candle::Model.new
+model.embedding("Hi there!")
+```
+
 ## Development
 
 FORK IT!
@@ -28,6 +34,7 @@ cd red-candle
 bundle
 bundle exec rake compile
 ```
+
 
 Implemented with [Magnus](https://github.com/matsadler/magnus), with reference to [Polars Ruby](https://github.com/ankane/polars-ruby)
 
