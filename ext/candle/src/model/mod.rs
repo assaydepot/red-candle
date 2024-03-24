@@ -1,5 +1,5 @@
-mod config;
-pub use config::*;
+mod rb_model;
+pub use rb_model::*;
 
 mod errors;
 pub use errors::*;

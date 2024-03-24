@@ -40,7 +40,6 @@ impl RbTensor {
         ))
     }
 
-    // FXIME: Do not use `to_f64` here.
     pub fn values(&self) -> RbResult<Vec<f64>> {
         let values = self
             .0
@@ -81,6 +80,12 @@ impl RbTensor {
     /// &RETURNS&: int
     pub fn rank(&self) -> usize {
         self.0.rank()
+    }
+
+    /// The number of elements stored in this tensor.
+    /// &RETURNS&: int
+    pub fn elem_count(&self) -> usize {
+        self.0.elem_count()
     }
 
     pub fn __repr__(&self) -> String {

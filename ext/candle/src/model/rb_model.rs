@@ -16,9 +16,9 @@ use crate::model::RbResult;
 use tokenizers::Tokenizer;
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
-pub struct ModelConfig(pub ModelConfigInner);
+pub struct RbModel(pub RbModelInner);
 
-pub struct ModelConfigInner {
+pub struct RbModelInner {
     device: Device,
     tokenizer_path: Option<String>,
     model_path: Option<String>,
@@ -26,14 +26,14 @@ pub struct ModelConfigInner {
     tokenizer: Option<Tokenizer>,
 }
 
-impl ModelConfig {
+impl RbModel {
     pub fn new() -> RbResult<Self> {
         Self::new2(Some("jinaai/jina-embeddings-v2-base-en".to_string()), Some("sentence-transformers/all-MiniLM-L6-v2".to_string()), Some(Device::Cpu))
     }
 
     pub fn new2(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>) -> RbResult<Self> {
         let device = device.unwrap_or(Device::Cpu);
-        Ok(ModelConfig(ModelConfigInner {
+        Ok(RbModel(RbModelInner {
             device: device.clone(),
             model_path: model_path.clone(),
             tokenizer_path: tokenizer_path.clone(),
@@ -92,10 +92,14 @@ impl ModelConfig {
                 ))
                 .get("tokenizer.json")
                 .map_err(wrap_hf_err)?;
-        let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path)
-            // .with_padding(None)
-            // .with_truncation(None)
+        let mut tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path)
             .map_err(wrap_std_err)?;
+        let pp = tokenizers::PaddingParams {
+            strategy: tokenizers::PaddingStrategy::BatchLongest,
+            ..Default::default()
+        };
+        tokenizer.with_padding(Some(pp));
+
         Ok(tokenizer)
     }
 
@@ -105,9 +109,6 @@ impl ModelConfig {
         model: &BertModel,
         tokenizer: &Tokenizer,
     ) -> Result<Tensor, Error> {
-        let start: std::time::Instant = std::time::Instant::now();
-        // let tokenizer_impl = tokenizer
-        //     .map_err(wrap_std_err)?;
         let tokens = tokenizer
             .encode(prompt, true)
             .map_err(wrap_std_err)?
@@ -117,16 +118,29 @@ impl ModelConfig {
             .map_err(wrap_candle_err)?
             .unsqueeze(0)
             .map_err(wrap_candle_err)?;
-        println!("Loaded and encoded {:?}", start.elapsed());
-        let start: std::time::Instant = std::time::Instant::now();
+
+        // let start: std::time::Instant = std::time::Instant::now();
         let result = model.forward(&token_ids).map_err(wrap_candle_err)?;
-        // println!("{result}");
-        println!("Took {:?}", start.elapsed());
-        Ok(result)
+
+        // Apply some avg-pooling by taking the mean embedding value for all tokens (including padding)
+        let (_n_sentence, n_tokens, _hidden_size) = result.dims3()
+            .map_err(wrap_candle_err)?;
+        let sum = result.sum(1)
+            .map_err(wrap_candle_err)?;
+        let embeddings = (sum / (n_tokens as f64))
+            .map_err(wrap_candle_err)?;
+        // let embeddings = Self::normalize_l2(&embeddings).map_err(wrap_candle_err)?;
+
+        Ok(embeddings)
+    }
+
+    #[allow(dead_code)]
+    fn normalize_l2(v: &Tensor) -> Result<Tensor, candle_core::Error> {
+        v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
 
     pub fn __repr__(&self) -> String {
-        format!("Candle::Model(path={})", self.0.model_path.as_deref().unwrap_or("None"))
+        format!("#<Candle::Model model_path: {} tokenizer_path: {})", self.0.model_path.as_deref().unwrap_or("nil"), self.0.tokenizer_path.as_deref().unwrap_or("nil"))
     }
 
     pub fn __str__(&self) -> String {
@@ -143,14 +157,14 @@ impl ModelConfig {
 
 //     #[test]
 //     fn test_build_model_and_tokenizer() {
-//         let config = super::ModelConfig::build();
+//         let config = super::RbModel::build();
 //         let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
 //         assert_eq!(tokenizer.get_vocab_size(true), 30522);
 //     }
 
 //     #[test]
 //     fn test_embedding() {
-//         let config = super::ModelConfig::build();
+//         let config = super::RbModel::build();
 //         // let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
 //         // assert_eq!(config.embedding("Scientist.com is a marketplace for pharmaceutical services.")?, None);
 //     }
