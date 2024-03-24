@@ -24,6 +24,44 @@ model = Candle::Model.new
 embedding = model.embedding("Hi there!")
 ```
 
+## A note on memory usage
+The `Candle::Model` defaults to the `jinaai/jina-embeddings-v2-base-en` model with the `sentence-transformers/all-MiniLM-L6-v2` tokenizer (both from [HuggingFace](https://huggingface.co)). With this configuration the model takes a little more than 3GB of memory running on my Mac. The memory stays with the instantiated `Candle::Model` class, if you instantiate more than one, you'll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you'll free the memory. For example:
+
+```ruby
+> require 'candle'
+# Ruby memory = 25.9 MB
+> model = Candle::Model.new
+# Ruby memory = 3.50 GB
+> model2 = Candle::Model.new
+# Ruby memory = 7.04 GB
+> model2 = nil
+> GC.start
+# Ruby memory = 3.56 GB
+> model = nil
+> GC.start
+# Ruby memory = 55.2 MB
+```
+
+## A note on returned embeddings
+
+The code should match the same embeddings when generated from the python `transformers` library. For instance, locally I was able to generate the same embedding for the text "Hi there!" using the python code:
+
+```python
+from transformers import AutoModel
+model = AutoModel.from_pretrained('jinaai/jina-embeddings-v2-base-en', trust_remote_code=True)
+sentence = ['Hi there!']
+embedding = model.encode(sentence)
+print(embedding)
+```
+
+And the following ruby:
+
+```ruby
+require 'candle'
+model = Candle::Model.new
+embedding = model.embedding("Hi there!")
+```
+
 ## Development
 
 FORK IT!
