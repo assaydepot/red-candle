@@ -1,5 +1,5 @@
-require 'bundler/setup'
+require "bundler/setup"
 Bundler.require(:default)
-require 'minitest/autorun'
+require "minitest/autorun"
 
-require 'candle'
+require "candle"

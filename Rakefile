@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require 'bundler/gem_tasks'
-require 'rake/testtask'
-require 'rake/extensiontask'
+require "bundler/gem_tasks"
+require "rake/testtask"
+require "rake/extensiontask"
 
 task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
-  t.libs << 'test'
-  t.test_files = FileList['test/**/*_test.rb']
+  t.libs << "test"
+  t.test_files = FileList["test/**/*_test.rb"]
 end
 
-spec = Bundler.load_gemspec('candle.gemspec')
-Rake::ExtensionTask.new('candle', spec) do |c|
-  c.lib_dir = 'lib/candle'
+spec = Bundler.load_gemspec("candle.gemspec")
+Rake::ExtensionTask.new("candle", spec) do |c|
+  c.lib_dir = "lib/candle"
   c.cross_compile = true
   c.cross_platform = %w[
     aarch64-linux
@@ -26,15 +26,15 @@ Rake::ExtensionTask.new('candle', spec) do |c|
   ]
 end
 
-desc 'benchmark'
+desc "benchmark"
 task bench: :compile do
-  ruby 'test/bench.rb'
+  ruby "test/bench.rb"
 end
 
 namespace :doc do
   task default: %i[rustdoc yard]
 
-  desc 'Generate YARD documentation'
+  desc "Generate YARD documentation"
   task :yard do
     sh <<~CMD
       yard doc \
@@ -42,7 +42,7 @@ namespace :doc do
     CMD
   end
 
-  desc 'Generate Rust documentation as JSON'
+  desc "Generate Rust documentation as JSON"
   task :rustdoc do
     sh <<~CMD
       cargo +nightly rustdoc \
@@ -52,8 +52,8 @@ namespace :doc do
         --document-private-items
     CMD
 
-    cp 'tmp/doc/target/doc/candle.json', 'tmp/doc/candle.json'
+    cp "tmp/doc/target/doc/candle.json", "tmp/doc/candle.json"
   end
 end
 
-task doc: 'doc:default'
+task doc: "doc:default"
