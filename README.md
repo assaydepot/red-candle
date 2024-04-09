@@ -1,6 +1,6 @@
 # red-candle
 
-[![build](https://github.com/kojix2/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/kojix2/red-candle/actions/workflows/build.yml)
+[![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
 
 🕯️ [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
@@ -73,17 +73,9 @@ bundle
 bundle exec rake compile
 ```
 
-
 Implemented with [Magnus](https://github.com/matsadler/magnus), with reference to [Polars Ruby](https://github.com/ankane/polars-ruby)
 
-Policies
-- The less code, the better.
-- Ideally, the PyPO3 code should work as is.
-- Error handling is minimal.
-
 Pull requests are welcome.
-
-kojix2 started this project to learn Rust, but does not necessarily have enough time to maintain this library. If you are interested in becoming a project owner or committer, please send me a pull request.
 
 ### See Also
 
