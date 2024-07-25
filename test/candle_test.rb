@@ -5,7 +5,7 @@ class CandleTest < Minitest::Test
     refute_nil ::Candle::VERSION
   end
 
-  def test_something_useful
+  def test_reshape
     t = Candle::Tensor.new([3.0, 1, 4, 1, 5, 9, 2, 6], :f32)
     assert_instance_of(Candle::Tensor, t)
     assert_equal [8], t.shape
@@ -17,5 +17,12 @@ class CandleTest < Minitest::Test
     t = Candle::Tensor.randn([5, 3])
     assert_equal [5, 3], t.shape
     assert_instance_of Candle::DType, t.dtype
+  end
+
+  def test_embedding
+    model = Candle::Model.new
+    assert_instance_of(Candle::Model, model)
+    embedding = model.embedding("Rust")
+    assert_equal [1, 768], embedding.shape
   end
 end
