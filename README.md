@@ -58,7 +58,7 @@ And the following ruby:
 
 ```ruby
 require 'candle'
-model = Candle::Model.new
+model = Candle::Model.new("dmis-lab/biobert-base-cased-v1.1")
 embedding = model.embedding("Hi there!")
 ```
 

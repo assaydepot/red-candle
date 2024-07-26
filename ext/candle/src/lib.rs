@@ -95,6 +95,8 @@ fn init(ruby: &Ruby) -> RbResult<()> {
 
     let rb_model = rb_candle.define_class("Model", Ruby::class_object(ruby))?;
     rb_model.define_singleton_method("new", function!(RbModel::new, 0))?;
+    rb_model.define_singleton_method("new1", function!(RbModel::new1, 1))?;
+    rb_model.define_singleton_method("new2", function!(RbModel::new2, 2))?;
     rb_model.define_method("embedding", method!(RbModel::embedding, 1))?;
     rb_model.define_method("to_s", method!(RbModel::__str__, 0))?;
     rb_model.define_method("inspect", method!(RbModel::__repr__, 0))?;
