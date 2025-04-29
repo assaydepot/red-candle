@@ -1,2 +1,6 @@
 [workspace]
 members = ["ext/candle"]
+resolver = "2"
+
+[profile.test]
+opt-level = 3

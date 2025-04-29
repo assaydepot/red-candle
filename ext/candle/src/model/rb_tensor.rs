@@ -29,8 +29,8 @@ impl RbTensor {
             .unwrap_or(Ok(RbDType(DType::F32)))?;
         // FIXME: Do not use `to_f64` here.
         let array = array
-            .each()
-            .map(|v| magnus::Float::try_convert(v?).map(|v| v.to_f64()))
+            .into_iter()
+            .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64()))
             .collect::<RbResult<Vec<_>>>()?;
         Ok(Self(
             Tensor::new(array.as_slice(), &Device::Cpu)
