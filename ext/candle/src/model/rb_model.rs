@@ -8,37 +8,85 @@ use crate::model::{
     errors::{wrap_candle_err, wrap_hf_err, wrap_std_err},
     rb_tensor::RbTensor,
 };
-use candle_core::{DType, Device, Module, Tensor};
+use candle_core::{DType, Device, Module, Tensor, quantized::ggml_file::Content};
 use candle_nn::VarBuilder;
-use candle_transformers::models::jina_bert::{BertModel, Config};
+use candle_transformers::models::{
+    bert::{BertModel as StdBertModel, Config as BertConfig},
+    jina_bert::{BertModel as JinaBertModel, Config as JinaConfig},
+    quantized_llama::ModelWeights
+};
 use magnus::Error;
 use crate::model::RbResult;
+use std::sync::Arc;
+use std::fs::File;
 use tokenizers::Tokenizer;
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct RbModel(pub RbModelInner);
 
+/// Supported model types for embedding generation
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ModelType {
+    JinaBert,
+    StandardBert,
+    Llama
+}
+
+impl ModelType {
+    pub fn from_string(model_type: &str) -> Option<Self> {
+        match model_type.to_lowercase().as_str() {
+            "jina_bert" | "jinabert" | "jina" => Some(ModelType::JinaBert),
+            "bert" | "standard_bert" | "standardbert" => Some(ModelType::StandardBert),
+            "llama" => Some(ModelType::Llama),
+            _ => None
+        }
+    }
+}
+
+/// Model variants that can produce embeddings
+pub enum ModelVariant {
+    JinaBert(JinaBertModel),
+    StandardBert(StdBertModel),
+    Llama(Arc<ModelWeights>),
+}
+
+impl ModelVariant {
+    pub fn model_type(&self) -> ModelType {
+        match self {
+            ModelVariant::JinaBert(_) => ModelType::JinaBert,
+            ModelVariant::StandardBert(_) => ModelType::StandardBert,
+            ModelVariant::Llama(_) => ModelType::Llama,
+        }
+    }
+}
+
 pub struct RbModelInner {
     device: Device,
     tokenizer_path: Option<String>,
     model_path: Option<String>,
-    model: Option<BertModel>,
+    model_type: Option<ModelType>,
+    model: Option<ModelVariant>,
     tokenizer: Option<Tokenizer>,
 }
 
 impl RbModel {
     pub fn new() -> RbResult<Self> {
-        Self::new2(Some("jinaai/jina-embeddings-v2-base-en".to_string()), Some("sentence-transformers/all-MiniLM-L6-v2".to_string()), Some(Device::Cpu))
+        Self::new2(Some("jinaai/jina-embeddings-v2-base-en".to_string()), Some("sentence-transformers/all-MiniLM-L6-v2".to_string()), Some(Device::Cpu), Some("jina_bert".to_string()))
     }
 
-    pub fn new2(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>) -> RbResult<Self> {
+    pub fn new2(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, model_type: Option<String>) -> RbResult<Self> {
         let device = device.unwrap_or(Device::Cpu);
+        let model_type = model_type
+            .and_then(|mt| ModelType::from_string(&mt))
+            .unwrap_or(ModelType::JinaBert);
+        
         Ok(RbModel(RbModelInner {
             device: device.clone(),
             model_path: model_path.clone(),
             tokenizer_path: tokenizer_path.clone(),
+            model_type: Some(model_type),
             model: match model_path {
-                Some(mp) => Some(Self::build_model(mp, device)?),
+                Some(mp) => Some(Self::build_model(mp, device, model_type)?),
                 None => None
             },
             tokenizer: match tokenizer_path {
@@ -48,7 +96,7 @@ impl RbModel {
         }))
     }
 
-    /// Performs the `sin` operation on the tensor.
+    /// Generates an embedding vector for the input text
     /// &RETURNS&: Tensor
     pub fn embedding(&self, input: String) -> RbResult<RbTensor> {
         match &self.0.model {
@@ -58,28 +106,43 @@ impl RbModel {
                     None => Err(magnus::Error::new(magnus::exception::runtime_error(), "Tokenizer not found"))
                 }
             }
-            None => Err(magnus::Error::new(magnus::exception::runtime_error(), "Tokenizer or Model not found"))
+            None => Err(magnus::Error::new(magnus::exception::runtime_error(), "Model not found"))
         }
-
     }
 
-    fn build_model(model_path: String, device: Device) -> RbResult<BertModel> {
+    fn build_model(model_path: String, device: Device, model_type: ModelType) -> RbResult<ModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
-        let model_path = Api::new()
-                .map_err(wrap_hf_err)?
-                .repo(Repo::new(
-                    model_path,
-                    RepoType::Model,
-                ))
-                .get("model.safetensors")
-                .map_err(wrap_hf_err)?;
-        let config = Config::v2_base();
-        let vb = unsafe {
-            VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
-                .map_err(wrap_candle_err)?
-        };
-        let model = BertModel::new(vb, &config).map_err(wrap_candle_err)?;
-        Ok(model)
+        let api = Api::new().map_err(wrap_hf_err)?;
+        let repo = Repo::new(model_path, RepoType::Model);
+        match model_type {
+            ModelType::JinaBert => {
+                let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
+                let config = JinaConfig::v2_base();
+                let vb = unsafe {
+                    VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
+                        .map_err(wrap_candle_err)?
+                };
+                let model = JinaBertModel::new(vb, &config).map_err(wrap_candle_err)?;
+                Ok(ModelVariant::JinaBert(model))
+            },
+            ModelType::StandardBert => {
+                let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
+                let config = BertConfig::default();
+                let vb = unsafe {
+                    VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
+                        .map_err(wrap_candle_err)?
+                };
+                let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
+                Ok(ModelVariant::StandardBert(model))
+            },
+            ModelType::Llama => {
+                let model_path = api.repo(repo).get("model.ggml").map_err(wrap_hf_err)?;
+                let mut file = File::open(&model_path).map_err(|e| wrap_std_err(Box::new(e)))?;
+                let ct = Content::read(&mut file, &device).map_err(wrap_candle_err)?;
+                let model = ModelWeights::from_ggml(ct, 1).map_err(wrap_candle_err)?;
+                Ok(ModelVariant::Llama(Arc::new(model)))
+            }
+        }
     }
 
     fn build_tokenizer(tokenizer_path: String) -> RbResult<Tokenizer> {
@@ -106,7 +169,7 @@ impl RbModel {
     fn compute_embedding(
         &self,
         prompt: String,
-        model: &BertModel,
+        model: &ModelVariant,
         tokenizer: &Tokenizer,
     ) -> Result<Tensor, Error> {
         let tokens = tokenizer
@@ -118,20 +181,25 @@ impl RbModel {
             .map_err(wrap_candle_err)?
             .unsqueeze(0)
             .map_err(wrap_candle_err)?;
-
-        // let start: std::time::Instant = std::time::Instant::now();
-        let result = model.forward(&token_ids).map_err(wrap_candle_err)?;
-
-        // Apply some avg-pooling by taking the mean embedding value for all tokens (including padding)
-        let (_n_sentence, n_tokens, _hidden_size) = result.dims3()
+        let batch_size = token_ids.dims()[0];
+        let seq_len = token_ids.dims()[1];
+        let token_type_ids = Tensor::zeros(&[batch_size, seq_len], DType::U32, &self.0.device)
             .map_err(wrap_candle_err)?;
-        let sum = result.sum(1)
+        let attention_mask = Tensor::ones(&[batch_size, seq_len], DType::U32, &self.0.device)
             .map_err(wrap_candle_err)?;
-        let embeddings = (sum / (n_tokens as f64))
-            .map_err(wrap_candle_err)?;
-        // let embeddings = Self::normalize_l2(&embeddings).map_err(wrap_candle_err)?;
-
-        Ok(embeddings)
+        match model {
+            ModelVariant::JinaBert(model) => {
+                let result = model.forward(&token_ids).map_err(wrap_candle_err)?;
+                Ok(result)
+            },
+            ModelVariant::StandardBert(model) => {
+                let result = model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)?;
+                Ok(result)
+            },
+            ModelVariant::Llama(_) => {
+                Err(Error::new(magnus::exception::runtime_error(), "Llama embedding not implemented for quantized model"))
+            }
+        }
     }
 
     #[allow(dead_code)]
@@ -139,33 +207,23 @@ impl RbModel {
         v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
 
+    pub fn model_type(&self) -> String {
+        match self.0.model_type {
+            Some(model_type) => format!("{:?}", model_type),
+            None => "nil".to_string(),
+        }
+    }
+
     pub fn __repr__(&self) -> String {
-        format!("#<Candle::Model model_path: {} tokenizer_path: {})", self.0.model_path.as_deref().unwrap_or("nil"), self.0.tokenizer_path.as_deref().unwrap_or("nil"))
+        format!(
+            "#<Candle::Model model_type: {}, model_path: {}, tokenizer_path: {}>", 
+            self.model_type(), 
+            self.0.model_path.as_deref().unwrap_or("nil"), 
+            self.0.tokenizer_path.as_deref().unwrap_or("nil")
+        )
     }
 
     pub fn __str__(&self) -> String {
         self.__repr__()
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn my_first_test() {
-//         assert_eq!(2 + 2, 4);
-//     }
-
-//     #[test]
-//     fn test_build_model_and_tokenizer() {
-//         let config = super::RbModel::build();
-//         let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
-//         assert_eq!(tokenizer.get_vocab_size(true), 30522);
-//     }
-
-//     #[test]
-//     fn test_embedding() {
-//         let config = super::RbModel::build();
-//         // let (_model, tokenizer) = config.build_model_and_tokenizer().unwrap();
-//         // assert_eq!(config.embedding("Scientist.com is a marketplace for pharmaceutical services.")?, None);
-//     }
-// }

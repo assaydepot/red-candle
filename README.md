@@ -20,12 +20,39 @@ x = x.reshape([3, 2])
 
 ```ruby
 require 'candle'
+
+# Default model (JinaBERT)
 model = Candle::Model.new
+embedding = model.embedding("Hi there!")
+
+# Specify a different model type
+model = Candle::Model.new2(
+  "sentence-transformers/all-MiniLM-L6-v2",  # model path
+  "sentence-transformers/all-MiniLM-L6-v2",  # tokenizer path
+  nil,                                       # device (nil = CPU)
+  Candle::ModelType::STANDARD_BERT           # model type
+)
 embedding = model.embedding("Hi there!")
 ```
 
+## Supported Embedding Models
+
+Red-Candle supports the following embedding model types from Hugging Face:
+
+1. `Candle::ModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`)
+2. `Candle::ModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`)
+3. `Candle::ModelType::SENTIMENT` - Sentiment models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`)
+4. `Candle::ModelType::LLAMA` - Llama models (e.g., `meta-llama/Llama-2-7b` - requires Hugging Face token)
+
+You can get a list of all supported model types and suggested models paths:
+
+```ruby
+Candle::ModelType.all  # Returns all supported model types
+Candle::ModelType.suggested_model_paths  # Returns hash of suggested models for each type
+```
+
 ## A note on memory usage
-The `Candle::Model` defaults to the `jinaai/jina-embeddings-v2-base-en` model with the `sentence-transformers/all-MiniLM-L6-v2` tokenizer (both from [HuggingFace](https://huggingface.co)). With this configuration the model takes a little more than 3GB of memory running on my Mac. The memory stays with the instantiated `Candle::Model` class, if you instantiate more than one, you'll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you'll free the memory. For example:
+The default model (`jinaai/jina-embeddings-v2-base-en` with the `sentence-transformers/all-MiniLM-L6-v2` tokenizer, both from [HuggingFace](https://huggingface.co)) takes a little more than 3GB of memory running on a Mac. The memory stays with the instantiated `Candle::Model` class, if you instantiate more than one, you'll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you'll free the memory. For example:
 
 ```ruby
 > require 'candle'
