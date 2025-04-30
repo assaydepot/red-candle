@@ -94,8 +94,9 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_qtensor.define_method("dequantize", method!(RbQTensor::dequantize, 0))?;
 
     let rb_model = rb_candle.define_class("Model", Ruby::class_object(ruby))?;
-    rb_model.define_singleton_method("new", function!(RbModel::new, 0))?;
+    rb_model.define_method("initialize", function!(RbModel::new, 4))?;
     rb_model.define_method("embedding", method!(RbModel::embedding, 1))?;
+    rb_model.define_method("model_type", method!(RbModel::model_type, 0))?;
     rb_model.define_method("to_s", method!(RbModel::__str__, 0))?;
     rb_model.define_method("inspect", method!(RbModel::__repr__, 0))?;
 

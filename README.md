@@ -26,11 +26,11 @@ model = Candle::Model.new
 embedding = model.embedding("Hi there!")
 
 # Specify a different model type
-model = Candle::Model.new2(
-  "sentence-transformers/all-MiniLM-L6-v2",  # model path
-  "sentence-transformers/all-MiniLM-L6-v2",  # tokenizer path
-  nil,                                       # device (nil = CPU)
-  Candle::ModelType::STANDARD_BERT           # model type
+model = Candle::Model.new(
+  model_path: "sentence-transformers/all-MiniLM-L6-v2",
+  tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
+  device: nil,  # nil = CPU
+  model_type: Candle::ModelType::STANDARD_BERT
 )
 embedding = model.embedding("Hi there!")
 ```

@@ -17,6 +17,7 @@ use candle_transformers::models::{
 };
 use magnus::Error;
 use crate::model::RbResult;
+use crate::model::rb_device::RbDevice;
 use std::sync::Arc;
 use std::fs::File;
 use tokenizers::Tokenizer;
@@ -70,12 +71,8 @@ pub struct RbModelInner {
 }
 
 impl RbModel {
-    pub fn new() -> RbResult<Self> {
-        Self::new2(Some("jinaai/jina-embeddings-v2-base-en".to_string()), Some("sentence-transformers/all-MiniLM-L6-v2".to_string()), Some(Device::Cpu), Some("jina_bert".to_string()))
-    }
-
-    pub fn new2(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, model_type: Option<String>) -> RbResult<Self> {
-        let device = device.unwrap_or(Device::Cpu);
+    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<RbDevice>, model_type: Option<String>) -> RbResult<Self> {
+        let device = device.unwrap_or(RbDevice::Cpu).as_device()?;
         let model_type = model_type
             .and_then(|mt| ModelType::from_string(&mt))
             .unwrap_or(ModelType::JinaBert);
