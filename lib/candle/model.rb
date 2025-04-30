@@ -18,8 +18,8 @@ module Candle
       tokenizer_path: DEFAULT_TOKENIZER_PATH,
       device: nil,
       model_type: DEFAULT_MODEL_TYPE)
-      # Call the original Rust-defined `new`
-      super(model_path, tokenizer_path, device, model_type)
+      # Call the Rust-defined factory method
+      _create(model_path, tokenizer_path, device, model_type)
     end
   end
 end
