@@ -9,6 +9,7 @@ use crate::model::{
     rb_tensor::RbTensor,
 };
 use candle_core::{DType, Device, Module, Tensor, quantized::ggml_file::Content};
+use safetensors::tensor::SafeTensors;
 use candle_nn::VarBuilder;
 use candle_transformers::models::{
     bert::{BertModel as StdBertModel, Config as BertConfig},
@@ -20,6 +21,7 @@ use crate::model::RbResult;
 use crate::model::rb_device::RbDevice;
 use std::sync::Arc;
 use std::fs::File;
+use std::path::Path;
 use tokenizers::Tokenizer;
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
@@ -84,7 +86,7 @@ impl RbModel {
             tokenizer_path: tokenizer_path.clone(),
             model_type: Some(model_type),
             model: match model_path {
-                Some(mp) => Some(Self::build_model(mp, device, model_type, embedding_size)?),
+                Some(mp) => Some(Self::build_model(Path::new(&mp), device, model_type, embedding_size)?),
                 None => None
             },
             tokenizer: match tokenizer_path {
@@ -109,32 +111,56 @@ impl RbModel {
         }
     }
 
-    fn build_model(model_path: String, device: Device, model_type: ModelType, embedding_size: Option<usize>) -> RbResult<ModelVariant> {
+    /// Infers and validates the embedding size from a safetensors file
+    fn resolve_embedding_size(model_path: &Path, embedding_size: Option<usize>) -> Result<usize, magnus::Error> {
+        let inferred_emb_dim = match SafeTensors::deserialize(&std::fs::read(model_path).map_err(|e| wrap_std_err(Box::new(e)))?) {
+            Ok(st) => {
+                if let Some(tensor) = st.tensor("embeddings.word_embeddings.weight").ok() {
+                    let shape = tensor.shape();
+                    if shape.len() == 2 { Some(shape[1] as usize) } else { None }
+                } else { None }
+            },
+            Err(_) => None
+        };
+        match embedding_size {
+            Some(user_dim) => {
+                if let Some(inferred) = inferred_emb_dim {
+                    if user_dim != inferred {
+                        return Err(magnus::Error::new(magnus::exception::runtime_error(), format!("User-specified embedding_size {} does not match model file's embedding size {}", user_dim, inferred)));
+                    }
+                }
+                Ok(user_dim)
+            },
+            None => inferred_emb_dim.ok_or_else(|| magnus::Error::new(magnus::exception::runtime_error(), "Could not infer embedding size from model file. Please specify embedding_size explicitly."))
+        }
+    }
+
+    fn build_model(model_path: &Path, device: Device, model_type: ModelType, embedding_size: Option<usize>) -> RbResult<ModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let api = Api::new().map_err(wrap_hf_err)?;
-        let repo = Repo::new(model_path, RepoType::Model);
+        let repo = Repo::new(model_path.to_str().unwrap().to_string(), RepoType::Model);
         match model_type {
             ModelType::JinaBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
-                let config = JinaConfig::v2_base();
+                let final_emb_dim = Self::resolve_embedding_size(Path::new(&model_path), embedding_size)?;
+                let mut config = JinaConfig::v2_base();
+                config.hidden_size = final_emb_dim;
                 let vb = unsafe {
                     VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
                         .map_err(wrap_candle_err)?
                 };
-                // If embedding_size is provided, check or use it; else infer from vb
-                // (You may need to add logic here to check the shape of the embedding weights)
                 let model = JinaBertModel::new(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::JinaBert(model))
             },
             ModelType::StandardBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
-                let config = BertConfig::default();
+                let final_emb_dim = Self::resolve_embedding_size(Path::new(&model_path), embedding_size)?;
+                let mut config = BertConfig::default();
+                config.hidden_size = final_emb_dim;
                 let vb = unsafe {
                     VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
                         .map_err(wrap_candle_err)?
                 };
-                // If embedding_size is provided, check or use it; else infer from vb
-                // (You may need to add logic here to check the shape of the embedding weights)
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::StandardBert(model))
             },

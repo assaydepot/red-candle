@@ -14,6 +14,7 @@ tokenizers = { version = "0.21.1", default-features = true, features = ["fancy-r
 hf-hub = "0.4.2"
 half = "2.6.0"
 magnus = "0.7.1"
+safetensors = "0.3"
 
 [features]
 mkl = []
