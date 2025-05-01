@@ -8,6 +8,7 @@ use crate::model::{
     errors::{wrap_candle_err, wrap_hf_err, wrap_std_err},
     rb_tensor::RbTensor,
 };
+use crate::model::rb_device::RbDevice;
 use candle_core::{DType, Device, Module, Tensor, quantized::ggml_file::Content};
 use safetensors::tensor::SafeTensors;
 use candle_nn::VarBuilder;
@@ -18,12 +19,12 @@ use candle_transformers::models::{
 };
 use magnus::Error;
 use crate::model::RbResult;
-use crate::model::rb_device::RbDevice;
 use std::sync::Arc;
 use std::fs::File;
 use std::path::Path;
 use tokenizers::Tokenizer;
 use serde_json;
+use magnus::{value::ReprValue, TryConvert};
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct RbModel(pub RbModelInner);
@@ -84,7 +85,6 @@ impl RbModel {
         let model_type = model_type
             .and_then(|mt| ModelType::from_string(&mt))
             .unwrap_or(ModelType::JinaBert);
-        
         Ok(RbModel(RbModelInner {
             device: device.clone(),
             model_path: model_path.clone(),
@@ -173,7 +173,10 @@ impl RbModel {
                 let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
                 let config_path = api.repo(repo).get("config.json").map_err(wrap_hf_err)?;
                 let config_file = std::fs::File::open(&config_path).map_err(|e| wrap_std_err(Box::new(e)))?;
-                let config: BertConfig = serde_json::from_reader(config_file).map_err(|e| wrap_std_err(Box::new(e)))?;
+                let mut config: BertConfig = serde_json::from_reader(config_file).map_err(|e| wrap_std_err(Box::new(e)))?;
+                if let Some(embedding_size) = embedding_size {
+                    config.hidden_size = embedding_size;
+                }
                 let vb = unsafe {
                     VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
                         .map_err(wrap_candle_err)?

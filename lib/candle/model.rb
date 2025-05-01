@@ -20,7 +20,6 @@ module Candle
       device: nil,
       model_type: DEFAULT_MODEL_TYPE,
       embedding_size: nil)
-      # Call the Rust-defined factory method (embedding_size passed through)
       _create(model_path, tokenizer_path, device, model_type, embedding_size)
     end
   end
