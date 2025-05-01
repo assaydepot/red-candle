@@ -24,7 +24,6 @@ use std::fs::File;
 use std::path::Path;
 use tokenizers::Tokenizer;
 use serde_json;
-use magnus::{value::ReprValue, TryConvert};
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct RbModel(pub RbModelInner);
@@ -147,6 +146,12 @@ impl RbModel {
         match model_type {
             ModelType::JinaBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
+                if !std::path::Path::new(&model_path).exists() {
+                    return Err(magnus::Error::new(
+                        magnus::exception::runtime_error(),
+                        "model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors."
+                    ));
+                }
                 let final_emb_dim = Self::resolve_embedding_size(Path::new(&model_path), embedding_size)?;
                 let mut config = JinaConfig::v2_base();
                 config.hidden_size = final_emb_dim;
@@ -159,6 +164,12 @@ impl RbModel {
             },
             ModelType::StandardBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
+                if !std::path::Path::new(&model_path).exists() {
+                    return Err(magnus::Error::new(
+                        magnus::exception::runtime_error(),
+                        "model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors."
+                    ));
+                }
                 let final_emb_dim = Self::resolve_embedding_size(Path::new(&model_path), embedding_size)?;
                 let mut config = BertConfig::default();
                 config.hidden_size = final_emb_dim;
@@ -171,6 +182,12 @@ impl RbModel {
             },
             ModelType::MiniLM => {
                 let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
+                if !std::path::Path::new(&model_path).exists() {
+                    return Err(magnus::Error::new(
+                        magnus::exception::runtime_error(),
+                        "model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors."
+                    ));
+                }
                 let config_path = api.repo(repo).get("config.json").map_err(wrap_hf_err)?;
                 let config_file = std::fs::File::open(&config_path).map_err(|e| wrap_std_err(Box::new(e)))?;
                 let mut config: BertConfig = serde_json::from_reader(config_file).map_err(|e| wrap_std_err(Box::new(e)))?;
@@ -185,8 +202,23 @@ impl RbModel {
                 Ok(ModelVariant::MiniLM(model))
             },
             ModelType::Llama => {
-                let model_path = api.repo(repo).get("model.ggml").map_err(wrap_hf_err)?;
-                let mut file = File::open(&model_path).map_err(|e| wrap_std_err(Box::new(e)))?;
+                // Try safetensors first
+                let safetensors_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
+                if std::path::Path::new(&safetensors_path).exists() {
+                    return Err(magnus::Error::new(
+                        magnus::exception::runtime_error(),
+                        "Llama safetensors loading is not yet implemented. Please use GGML for Llama."
+                    ));
+                }
+                // Fallback to ggml
+                let ggml_path = api.repo(repo).get("model.ggml").map_err(wrap_hf_err)?;
+                if !std::path::Path::new(&ggml_path).exists() {
+                    return Err(magnus::Error::new(
+                        magnus::exception::runtime_error(),
+                        "model.ggml not found after download. Only GGML format is supported for Llama models. Please ensure your model repo contains model.ggml."
+                    ));
+                }
+                let mut file = File::open(&ggml_path).map_err(|e| wrap_std_err(Box::new(e)))?;
                 let ct = Content::read(&mut file, &device).map_err(wrap_candle_err)?;
                 let model = ModelWeights::from_ggml(ct, 1).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::Llama(Arc::new(model)))

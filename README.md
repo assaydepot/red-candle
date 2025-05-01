@@ -3,7 +3,7 @@
 [![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
 
-🕯️ [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
+ [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
 
 ## Usage
 
@@ -35,14 +35,34 @@ model = Candle::Model.new(
 embedding = model.embedding("Hi there!")
 ```
 
+## ⚠️ Model Format Requirement: Safetensors Only (GGML for Llama)
+
+Red-Candle **only supports embedding models that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file), **except for Llama models, which must provide a `model.ggml` file**. If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do. Llama models are only supported in GGML format (not safetensors or bin).
+
+**If you encounter an error like:**
+
+```
+RuntimeError: model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors.
+```
+
+or
+
+```
+RuntimeError: model.ggml not found after download. Only GGML format is supported for Llama models. Please ensure your model repo contains model.ggml.
+```
+
+this means the selected model is not compatible. Please choose a model repo that provides the required file.
+
 ## Supported Embedding Models
 
 Red-Candle supports the following embedding model types from Hugging Face:
 
-1. `Candle::ModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`)
-2. `Candle::ModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`)
-3. `Candle::ModelType::SENTIMENT` - Sentiment models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`)
-4. `Candle::ModelType::LLAMA` - Llama models (e.g., `meta-llama/Llama-2-7b` - requires Hugging Face token)
+1. `Candle::ModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`) (**safetensors required**)
+2. `Candle::ModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`) (**safetensors required**)
+3. `Candle::ModelType::SENTIMENT` - Sentiment models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`) (**safetensors required**)
+4. `Candle::ModelType::LLAMA` - Llama models (e.g., `meta-llama/Llama-2-7b` - requires Hugging Face token, **GGML required**)
+
+> **Note:** Most official BERT and DistilBERT models do _not_ provide safetensors. Llama models must be in GGML format. Please check the model repo before use.
 
 You can get a list of all supported model types and suggested models paths:
 
