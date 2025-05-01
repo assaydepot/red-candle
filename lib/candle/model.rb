@@ -14,12 +14,14 @@ module Candle
     # @param tokenizer_path [String, nil] The path to the tokenizer on Hugging Face
     # @param device [Candle::Device, nil] The device to use for computation (nil = CPU)
     # @param model_type [String, nil] The type of model to use
+    # @param embedding_size [Integer, nil] Override for the embedding size (optional)
     def self.new(model_path: DEFAULT_MODEL_PATH,
       tokenizer_path: DEFAULT_TOKENIZER_PATH,
       device: nil,
-      model_type: DEFAULT_MODEL_TYPE)
-      # Call the Rust-defined factory method
-      _create(model_path, tokenizer_path, device, model_type)
+      model_type: DEFAULT_MODEL_TYPE,
+      embedding_size: nil)
+      # Call the Rust-defined factory method (embedding_size passed through)
+      _create(model_path, tokenizer_path, device, model_type, embedding_size)
     end
   end
 end

@@ -68,10 +68,11 @@ pub struct RbModelInner {
     model_type: Option<ModelType>,
     model: Option<ModelVariant>,
     tokenizer: Option<Tokenizer>,
+    embedding_size: Option<usize>,
 }
 
 impl RbModel {
-    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<RbDevice>, model_type: Option<String>) -> RbResult<Self> {
+    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<RbDevice>, model_type: Option<String>, embedding_size: Option<usize>) -> RbResult<Self> {
         let device = device.unwrap_or(RbDevice::Cpu).as_device()?;
         let model_type = model_type
             .and_then(|mt| ModelType::from_string(&mt))
@@ -83,13 +84,14 @@ impl RbModel {
             tokenizer_path: tokenizer_path.clone(),
             model_type: Some(model_type),
             model: match model_path {
-                Some(mp) => Some(Self::build_model(mp, device, model_type)?),
+                Some(mp) => Some(Self::build_model(mp, device, model_type, embedding_size)?),
                 None => None
             },
             tokenizer: match tokenizer_path {
                 Some(tp) => Some(Self::build_tokenizer(tp)?),
                 None => None
-            }
+            },
+            embedding_size,
         }))
     }
 
@@ -107,7 +109,7 @@ impl RbModel {
         }
     }
 
-    fn build_model(model_path: String, device: Device, model_type: ModelType) -> RbResult<ModelVariant> {
+    fn build_model(model_path: String, device: Device, model_type: ModelType, embedding_size: Option<usize>) -> RbResult<ModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let api = Api::new().map_err(wrap_hf_err)?;
         let repo = Repo::new(model_path, RepoType::Model);
@@ -119,6 +121,8 @@ impl RbModel {
                     VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
                         .map_err(wrap_candle_err)?
                 };
+                // If embedding_size is provided, check or use it; else infer from vb
+                // (You may need to add logic here to check the shape of the embedding weights)
                 let model = JinaBertModel::new(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::JinaBert(model))
             },
@@ -129,6 +133,8 @@ impl RbModel {
                     VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
                         .map_err(wrap_candle_err)?
                 };
+                // If embedding_size is provided, check or use it; else infer from vb
+                // (You may need to add logic here to check the shape of the embedding weights)
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::StandardBert(model))
             },
@@ -221,10 +227,11 @@ impl RbModel {
 
     pub fn __repr__(&self) -> String {
         format!(
-            "#<Candle::Model model_type: {}, model_path: {}, tokenizer_path: {}>", 
+            "#<Candle::Model model_type: {}, model_path: {}, tokenizer_path: {}, embedding_size: {}>", 
             self.model_type(), 
             self.0.model_path.as_deref().unwrap_or("nil"), 
-            self.0.tokenizer_path.as_deref().unwrap_or("nil")
+            self.0.tokenizer_path.as_deref().unwrap_or("nil"),
+            self.0.embedding_size.map(|x| x.to_string()).unwrap_or("nil".to_string())
         )
     }
 
