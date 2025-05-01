@@ -163,6 +163,14 @@ impl RbModel {
         Ok(tokenizer)
     }
 
+    fn pooled_normalized_embedding(result: &Tensor) -> Result<Tensor, Error> {
+        let (_n_sentence, n_tokens, _hidden_size) = result.dims3().map_err(wrap_candle_err)?;
+        let sum = result.sum(1).map_err(wrap_candle_err)?;
+        let mean = (sum / (n_tokens as f64)).map_err(wrap_candle_err)?;
+        let norm = Self::normalize_l2(&mean).map_err(wrap_candle_err)?;
+        Ok(norm)
+    }
+
     fn compute_embedding(
         &self,
         prompt: String,
@@ -187,11 +195,11 @@ impl RbModel {
         match model {
             ModelVariant::JinaBert(model) => {
                 let result = model.forward(&token_ids).map_err(wrap_candle_err)?;
-                Ok(result)
+                Self::pooled_normalized_embedding(&result)
             },
             ModelVariant::StandardBert(model) => {
                 let result = model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)?;
-                Ok(result)
+                Self::pooled_normalized_embedding(&result)
             },
             ModelVariant::Llama(_) => {
                 Err(Error::new(magnus::exception::runtime_error(), "Llama embedding not implemented for quantized model"))
