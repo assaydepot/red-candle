@@ -197,6 +197,7 @@ dependencies = [
  "hf-hub",
  "magnus",
  "safetensors 0.3.3",
+ "serde_json",
  "tokenizers",
 ]
 

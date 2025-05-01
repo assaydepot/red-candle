@@ -23,6 +23,7 @@ use std::sync::Arc;
 use std::fs::File;
 use std::path::Path;
 use tokenizers::Tokenizer;
+use serde_json;
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct RbModel(pub RbModelInner);
@@ -32,6 +33,7 @@ pub struct RbModel(pub RbModelInner);
 pub enum ModelType {
     JinaBert,
     StandardBert,
+    MiniLM,
     Llama
 }
 
@@ -40,6 +42,7 @@ impl ModelType {
         match model_type.to_lowercase().as_str() {
             "jina_bert" | "jinabert" | "jina" => Some(ModelType::JinaBert),
             "bert" | "standard_bert" | "standardbert" => Some(ModelType::StandardBert),
+            "minilm" => Some(ModelType::MiniLM),
             "llama" => Some(ModelType::Llama),
             _ => None
         }
@@ -50,6 +53,7 @@ impl ModelType {
 pub enum ModelVariant {
     JinaBert(JinaBertModel),
     StandardBert(StdBertModel),
+    MiniLM(StdBertModel),
     Llama(Arc<ModelWeights>),
 }
 
@@ -58,6 +62,7 @@ impl ModelVariant {
         match self {
             ModelVariant::JinaBert(_) => ModelType::JinaBert,
             ModelVariant::StandardBert(_) => ModelType::StandardBert,
+            ModelVariant::MiniLM(_) => ModelType::MiniLM,
             ModelVariant::Llama(_) => ModelType::Llama,
         }
     }
@@ -164,6 +169,18 @@ impl RbModel {
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::StandardBert(model))
             },
+            ModelType::MiniLM => {
+                let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
+                let config_path = api.repo(repo).get("config.json").map_err(wrap_hf_err)?;
+                let config_file = std::fs::File::open(&config_path).map_err(|e| wrap_std_err(Box::new(e)))?;
+                let config: BertConfig = serde_json::from_reader(config_file).map_err(|e| wrap_std_err(Box::new(e)))?;
+                let vb = unsafe {
+                    VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
+                        .map_err(wrap_candle_err)?
+                };
+                let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
+                Ok(ModelVariant::MiniLM(model))
+            },
             ModelType::Llama => {
                 let model_path = api.repo(repo).get("model.ggml").map_err(wrap_hf_err)?;
                 let mut file = File::open(&model_path).map_err(|e| wrap_std_err(Box::new(e)))?;
@@ -230,6 +247,10 @@ impl RbModel {
                 Self::pooled_normalized_embedding(&result)
             },
             ModelVariant::StandardBert(model) => {
+                let result = model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)?;
+                Self::pooled_normalized_embedding(&result)
+            },
+            ModelVariant::MiniLM(model) => {
                 let result = model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)?;
                 Self::pooled_normalized_embedding(&result)
             },
