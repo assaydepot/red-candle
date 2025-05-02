@@ -115,6 +115,27 @@ impl RbModel {
         }
     }
 
+    /// Returns the unpooled embedding tensor ([1, SEQLENGTH, DIM]) for the input text
+    /// &RETURNS&: Tensor
+    pub fn embeddings(&self, input: String) -> RbResult<RbTensor> {
+        match &self.0.model {
+            Some(model) => {
+                match &self.0.tokenizer {
+                    Some(tokenizer) => Ok(RbTensor(self.compute_embeddings(input, model, tokenizer)?)),
+                    None => Err(magnus::Error::new(magnus::exception::runtime_error(), "Tokenizer not found"))
+                }
+            }
+            None => Err(magnus::Error::new(magnus::exception::runtime_error(), "Model not found"))
+        }
+    }
+
+    /// Pools and normalizes a sequence embedding tensor ([1, SEQLENGTH, DIM]) to [1, DIM]
+    /// &RETURNS&: Tensor
+    pub fn pool_and_normalize_embedding(&self, tensor: &RbTensor) -> RbResult<RbTensor> {
+        let pooled = Self::pooled_normalized_embedding(&tensor.0)?;
+        Ok(RbTensor(pooled))
+    }
+
     /// Infers and validates the embedding size from a safetensors file
     fn resolve_embedding_size(model_path: &Path, embedding_size: Option<usize>) -> Result<usize, magnus::Error> {
         let inferred_emb_dim = match SafeTensors::deserialize(&std::fs::read(model_path).map_err(|e| wrap_std_err(Box::new(e)))?) {
