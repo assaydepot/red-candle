@@ -26,26 +26,50 @@ class ModelTypesTest < Minitest::Test
   }
 
   def test_model_types_initialize
+    # Test all model types with their default Hugging Face repos
     MODEL_TYPES.each do |model_type, model_path|
-      # Llama may require a token, so we skip it by default
-      next if model_type == Candle::ModelType::LLAMA
-
       embedding_size = case model_type
         when Candle::ModelType::JINA_BERT then 768
         when Candle::ModelType::STANDARD_BERT then 768
         when Candle::ModelType::MINILM then 384
         when Candle::ModelType::SENTIMENT then 768
+        when Candle::ModelType::LLAMA then nil
         else nil
       end
 
-      model = Candle::Model.new(
-        model_path: model_path,
-        tokenizer_path: model_path,
-        model_type: model_type,
-        device: nil,
-        embedding_size: embedding_size
-      )
-      assert model, "Model should be initialized for #{model_type}"
+      if model_type == Candle::ModelType::LLAMA
+        # Llama: should succeed if GGML is present, fail with safetensors or bin
+        assert_raises RuntimeError, /safetensors|not yet implemented|not found/ do
+          Candle::Model.new(
+            model_path: model_path,
+            tokenizer_path: model_path,
+            model_type: model_type,
+            device: nil,
+            embedding_size: embedding_size
+          )
+        end
+      elsif model_type == Candle::ModelType::STANDARD_BERT || model_type == Candle::ModelType::SENTIMENT
+        # These official models do not provide safetensors, should error helpfully
+        assert_raises RuntimeError, /model\.safetensors not found|Only safetensors models are supported/ do
+          Candle::Model.new(
+            model_path: model_path,
+            tokenizer_path: model_path,
+            model_type: model_type,
+            device: nil,
+            embedding_size: embedding_size
+          )
+        end
+      else
+        # Should succeed for models with safetensors
+        model = Candle::Model.new(
+          model_path: model_path,
+          tokenizer_path: model_path,
+          model_type: model_type,
+          device: nil,
+          embedding_size: embedding_size
+        )
+        assert model, "Model should be initialized for #{model_type}"
+      end
     end
   end
 
@@ -59,6 +83,37 @@ class ModelTypesTest < Minitest::Test
         embedding_size: info[:embedding_size]
       )
       assert model, "Model should be initialized for #{model_type}"
+    end
+  end
+
+  def test_llama_ggml_and_pytorch_bin
+    llama_model = "meta-llama/Llama-2-7b"
+    # Should error for safetensors (not implemented)
+    assert_raises RuntimeError, /Llama safetensors loading is not yet implemented/ do
+      Candle::Model.new(
+        model_path: llama_model,
+        tokenizer_path: llama_model,
+        model_type: Candle::ModelType::LLAMA,
+        device: nil
+      )
+    end
+    # Should error for missing ggml
+    assert_raises RuntimeError, /model\.ggml not found/ do
+      Candle::Model.new(
+        model_path: "some/llama-without-ggml",
+        tokenizer_path: "some/llama-without-ggml",
+        model_type: Candle::ModelType::LLAMA,
+        device: nil
+      )
+    end
+    # Should error for pytorch_model.bin
+    assert_raises RuntimeError, /model\.safetensors not found|Only safetensors models are supported/ do
+      Candle::Model.new(
+        model_path: "bert-base-uncased", # This repo only provides pytorch_model.bin
+        tokenizer_path: "bert-base-uncased",
+        model_type: Candle::ModelType::STANDARD_BERT,
+        device: nil
+      )
     end
   end
 end
