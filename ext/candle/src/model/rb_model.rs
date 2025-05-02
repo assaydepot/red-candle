@@ -138,25 +138,20 @@ impl RbModel {
 
     /// Infers and validates the embedding size from a safetensors file
     fn resolve_embedding_size(model_path: &Path, embedding_size: Option<usize>) -> Result<usize, magnus::Error> {
-        let inferred_emb_dim = match SafeTensors::deserialize(&std::fs::read(model_path).map_err(|e| wrap_std_err(Box::new(e)))?) {
-            Ok(st) => {
-                if let Some(tensor) = st.tensor("embeddings.word_embeddings.weight").ok() {
-                    let shape = tensor.shape();
-                    if shape.len() == 2 { Some(shape[1] as usize) } else { None }
-                } else { None }
-            },
-            Err(_) => None
-        };
         match embedding_size {
-            Some(user_dim) => {
-                if let Some(inferred) = inferred_emb_dim {
-                    if user_dim != inferred {
-                        return Err(magnus::Error::new(magnus::exception::runtime_error(), format!("User-specified embedding_size {} does not match model file's embedding size {}", user_dim, inferred)));
-                    }
-                }
-                Ok(user_dim)
-            },
-            None => inferred_emb_dim.ok_or_else(|| magnus::Error::new(magnus::exception::runtime_error(), "Could not infer embedding size from model file. Please specify embedding_size explicitly."))
+            Some(user_dim) => Ok(user_dim),
+            None => {
+                let inferred_emb_dim = match SafeTensors::deserialize(&std::fs::read(model_path).map_err(|e| wrap_std_err(Box::new(e)))?) {
+                    Ok(st) => {
+                        if let Some(tensor) = st.tensor("embeddings.word_embeddings.weight").ok() {
+                            let shape = tensor.shape();
+                            if shape.len() == 2 { Some(shape[1] as usize) } else { None }
+                        } else { None }
+                    },
+                    Err(_) => None
+                };
+                inferred_emb_dim.ok_or_else(|| magnus::Error::new(magnus::exception::runtime_error(), "Could not infer embedding size from model file. Please specify embedding_size explicitly."))
+            }
         }
     }
 
