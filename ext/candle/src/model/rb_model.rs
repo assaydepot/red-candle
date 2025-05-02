@@ -255,7 +255,7 @@ impl RbModel {
         Ok(norm)
     }
 
-    fn compute_embedding(
+    fn compute_embeddings(
         &self,
         prompt: String,
         model: &ModelVariant,
@@ -278,21 +278,28 @@ impl RbModel {
             .map_err(wrap_candle_err)?;
         match model {
             ModelVariant::JinaBert(model) => {
-                let result = model.forward(&token_ids).map_err(wrap_candle_err)?;
-                Self::pooled_normalized_embedding(&result)
+                model.forward(&token_ids).map_err(wrap_candle_err)
             },
             ModelVariant::StandardBert(model) => {
-                let result = model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)?;
-                Self::pooled_normalized_embedding(&result)
+                model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
             },
             ModelVariant::MiniLM(model) => {
-                let result = model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)?;
-                Self::pooled_normalized_embedding(&result)
+                model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
             },
             ModelVariant::Llama(_) => {
                 Err(Error::new(magnus::exception::runtime_error(), "Llama embedding not implemented for quantized model"))
             }
         }
+    }
+
+    fn compute_embedding(
+        &self,
+        prompt: String,
+        model: &ModelVariant,
+        tokenizer: &Tokenizer,
+    ) -> Result<Tensor, Error> {
+        let result = self.compute_embeddings(prompt, model, tokenizer)?;
+        Self::pooled_normalized_embedding(&result)
     }
 
     #[allow(dead_code)]
