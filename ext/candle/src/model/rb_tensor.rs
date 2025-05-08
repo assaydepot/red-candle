@@ -249,7 +249,7 @@ impl RbTensor {
     /// @param rhs [Candle::Tensor, Float, or Integer]
     /// @return [Candle::Tensor]
     pub fn __truediv__(&self, rhs: magnus::Value) -> RbResult<Self> {
-        use magnus::{Float, Integer, TryConvert};
+        use magnus::TryConvert;
         if let Ok(tensor) = <&RbTensor>::try_convert(rhs) {
             Ok(Self(self.0.broadcast_div(&tensor.0).map_err(wrap_candle_err)?))
         } else if let Ok(f) = <f64>::try_convert(rhs) {
