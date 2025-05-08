@@ -1,26 +1,6 @@
 require_relative "test_helper"
 
 class ModelTypesTest < Minitest::Test
-  SAFETENSOR_MODELS = {
-    Candle::ModelType::JINA_BERT => [{
-      model_path: "jinaai/jina-embeddings-v2-base-en",
-      embedding_size: 768
-    }],
-    Candle::ModelType::STANDARD_BERT => [{
-      model_path: "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
-      embedding_size: 768
-    }],
-    Candle::ModelType::MINILM => [{
-      model_path: "sentence-transformers/all-MiniLM-L6-v2",
-      embedding_size: 384
-    }],
-    Candle::ModelType::DISTILBERT => [{
-      model_path: "scientistcom/distilbert-base-uncased-finetuned-sst-2-english",
-      embedding_size: 768
-    }]
-    # Add more safetensors models as needed
-  }
-
   # Helper to initialize a model and assert correctness
   private def initialize_model_for_type(model_type, model_option)
     model_path = model_option[:model_path]
