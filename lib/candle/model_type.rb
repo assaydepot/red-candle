@@ -25,7 +25,7 @@ module Candle
     def self.suggested_model_paths
       {
         JINA_BERT => "jinaai/jina-embeddings-v2-base-en",
-        STANDARD_BERT => "google-bert/bert-base-uncased",
+        STANDARD_BERT => "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
         MINILM => "sentence-transformers/all-MiniLM-L6-v2",
         SENTIMENT => "distilbert-base-uncased-finetuned-sst-2-english",
         LLAMA => "meta-llama/Llama-2-7b" # Requires Hugging Face token

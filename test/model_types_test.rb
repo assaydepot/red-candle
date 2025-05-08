@@ -1,95 +1,95 @@
 require_relative "test_helper"
 
 class ModelTypesTest < Minitest::Test
-  MODEL_TYPES = {
-    Candle::ModelType::JINA_BERT => "jinaai/jina-embeddings-v2-base-en",
-    Candle::ModelType::STANDARD_BERT => "google-bert/bert-base-uncased",
-    Candle::ModelType::MINILM => "sentence-transformers/all-MiniLM-L6-v2",
-    Candle::ModelType::SENTIMENT => "distilbert-base-uncased-finetuned-sst-2-english",
-    Candle::ModelType::LLAMA => "meta-llama/Llama-2-7b"
-  }
-
   SAFETENSOR_MODELS = {
-    Candle::ModelType::JINA_BERT => {
+    Candle::ModelType::JINA_BERT => [{
       model_path: "jinaai/jina-embeddings-v2-base-en",
       embedding_size: 768
-    },
-    Candle::ModelType::STANDARD_BERT => {
-      model_path: "google-bert/bert-base-uncased",
+    }],
+    Candle::ModelType::STANDARD_BERT => [{
+      model_path: "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
       embedding_size: 768
-    },
-    Candle::ModelType::MINILM => {
+    }, {
+      model_path: "scientistcom/distilbert-base-uncased-finetuned-sst-2-english",
+      embedding_size: 768
+    }],
+    Candle::ModelType::MINILM => [{
       model_path: "sentence-transformers/all-MiniLM-L6-v2",
       embedding_size: 384
-    },
+    }],
+    Candle::ModelType::LLAMA => [{
+      model_path: "meta-llama/Llama-2-7b",
+      embedding_size: 4096
+    }]
     # Add more safetensors models as needed
   }
 
   def test_model_types_initialize
     # Test all model types with their default Hugging Face repos
-    MODEL_TYPES.each do |model_type, model_path|
-      embedding_size = case model_type
-        when Candle::ModelType::JINA_BERT then 768
-        when Candle::ModelType::STANDARD_BERT then 768
-        when Candle::ModelType::MINILM then 384
-        when Candle::ModelType::SENTIMENT then 768
-        when Candle::ModelType::LLAMA then nil
-        else nil
-      end
+    SAFETENSOR_MODELS.each do |model_type, model_options|
+      model_options.each do |model_option|
+        model_path = model_option[:model_path]
+        embedding_size = model_option[:embedding_size]
+        puts ">>>>>>>>>>>>> model_path #{model_path} model_type #{model_type}"
 
-      if model_type == Candle::ModelType::LLAMA
-        # Llama: should succeed if GGML is present, fail with safetensors or bin
-        assert_raises RuntimeError, /safetensors|not yet implemented|not found/ do
-          Candle::Model.new(
+        if model_type == Candle::ModelType::LLAMA
+          # Llama: should succeed if GGML is present, fail with safetensors or bin
+          assert_raises RuntimeError, /safetensors|not yet implemented|not found/ do
+            Candle::Model.new(
+              model_path: model_path,
+              tokenizer_path: model_path,
+              model_type: model_type,
+              device: nil,
+              embedding_size: embedding_size
+            )
+          end
+        elsif model_type == Candle::ModelType::STANDARD_BERT
+          # These official models do not provide safetensors, should error helpfully
+          assert_raises RuntimeError, /model\.safetensors not found|Only safetensors models are supported/ do
+            Candle::Model.new(
+              model_path: model_path,
+              tokenizer_path: model_path,
+              model_type: model_type,
+              device: nil,
+              embedding_size: embedding_size
+            )
+          end
+        else
+          # Should succeed for models with safetensors
+          model = Candle::Model.new(
             model_path: model_path,
             tokenizer_path: model_path,
             model_type: model_type,
             device: nil,
             embedding_size: embedding_size
           )
+          assert model, "Model should be initialized for #{model_type}"
         end
-      elsif model_type == Candle::ModelType::STANDARD_BERT || model_type == Candle::ModelType::SENTIMENT
-        # These official models do not provide safetensors, should error helpfully
-        assert_raises RuntimeError, /model\.safetensors not found|Only safetensors models are supported/ do
-          Candle::Model.new(
-            model_path: model_path,
-            tokenizer_path: model_path,
-            model_type: model_type,
-            device: nil,
-            embedding_size: embedding_size
-          )
-        end
-      else
-        # Should succeed for models with safetensors
-        model = Candle::Model.new(
-          model_path: model_path,
-          tokenizer_path: model_path,
-          model_type: model_type,
-          device: nil,
-          embedding_size: embedding_size
-        )
-        assert model, "Model should be initialized for #{model_type}"
       end
     end
   end
 
   def test_safetensor_model_types_initialize
-    SAFETENSOR_MODELS.each do |model_type, info|
-      begin
-        model = Candle::Model.new(
-          model_path: info[:model_path],
-          tokenizer_path: info[:model_path],
-          model_type: model_type,
-          device: nil,
-          embedding_size: info[:embedding_size]
-        )
-        assert model, "Model should be initialized for #{model_type}"
-      rescue => e
-        puts e.message
-        puts e.backtrace.join("\n")
-        puts "Initializing model for [#{model_type}]"
-        puts info.inspect
-        raise e
+    SAFETENSOR_MODELS.each do |model_type, model_options|
+      model_options.each do |model_option|
+        model_path = model_option[:model_path]
+        embedding_size = model_option[:embedding_size]
+        begin
+          model = Candle::Model.new(
+            model_path: model_path,
+            tokenizer_path: model_path,
+            model_type: model_type,
+            device: nil,
+            embedding_size: embedding_size
+          )
+          assert model, "Model should be initialized for #{model_type}"
+        rescue => e
+          puts e.message
+          puts e.backtrace.join("\n")
+          puts "Initializing model for [#{model_type}]"
+          puts model_option.inspect
+          raise e
+        end
       end
     end
   end
