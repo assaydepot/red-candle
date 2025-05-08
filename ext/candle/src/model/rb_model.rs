@@ -266,10 +266,15 @@ impl RbModel {
         Ok(tokenizer)
     }
 
-    fn pooled_normalized_embedding(result: &Tensor) -> Result<Tensor, Error> {
+    fn pooled_embedding(result: &Tensor) -> Result<Tensor, Error> {
         let (_n_sentence, n_tokens, _hidden_size) = result.dims3().map_err(wrap_candle_err)?;
         let sum = result.sum(1).map_err(wrap_candle_err)?;
         let mean = (sum / (n_tokens as f64)).map_err(wrap_candle_err)?;
+        Ok(mean)
+    }
+
+    fn pooled_normalized_embedding(result: &Tensor) -> Result<Tensor, Error> {
+        let mean = Self::pooled_embedding(result)?;
         let norm = Self::normalize_l2(&mean).map_err(wrap_candle_err)?;
         Ok(norm)
     }
