@@ -83,13 +83,10 @@ pub struct RbModelInner {
 
 impl RbModel {
     pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<RbDevice>, model_type: Option<String>, embedding_size: Option<usize>) -> RbResult<Self> {
-        println!("Initializing model for {:?} with embedding size {:?}, model path {:?}, tokenizer path {:?}, device {:?}", model_type, embedding_size, model_path, tokenizer_path, device);
         let device = device.unwrap_or(RbDevice::Cpu).as_device()?;
-        println!("Using device: {:?}", device);
         let model_type = model_type
             .and_then(|mt| ModelType::from_string(&mt))
             .unwrap_or(ModelType::JinaBert);
-        println!("Using model type: {:?}", model_type);
         Ok(RbModel(RbModelInner {
             device: device.clone(),
             model_path: model_path.clone(),
@@ -144,14 +141,11 @@ impl RbModel {
 
     /// Infers and validates the embedding size from a safetensors file
     fn resolve_embedding_size(model_path: &Path, embedding_size: Option<usize>) -> Result<usize, magnus::Error> {
-        println!("Resolving embedding size for {:?} with embedding size {:?}", model_path, embedding_size);
         match embedding_size {
             Some(user_dim) => {
-                println!("Using user-specified embedding size: {}", user_dim);
                 Ok(user_dim)
             },
             None => {
-                println!("Inferring embedding size from model file");
                 let inferred_emb_dim = match SafeTensors::deserialize(&std::fs::read(model_path).map_err(|e| wrap_std_err(Box::new(e)))?) {
                     Ok(st) => {
                         if let Some(tensor) = st.tensor("embeddings.word_embeddings.weight").ok() {
@@ -167,13 +161,9 @@ impl RbModel {
     }
 
     fn build_model(model_path: &Path, device: Device, model_type: ModelType, embedding_size: Option<usize>) -> RbResult<ModelVariant> {
-        println!("Building model for {:?} with embedding size {:?}, model path {:?}, device {:?}", model_type, embedding_size, model_path, device);
         use hf_hub::{api::sync::Api, Repo, RepoType};
-        println!("Fetching model from Hugging Face 1");
         let api = Api::new().map_err(wrap_hf_err)?;
-        println!("Fetching model from Hugging Face 2");
         let repo = Repo::new(model_path.to_str().unwrap().to_string(), RepoType::Model);
-        println!("Fetching model from Hugging Face 3");
         match model_type {
             ModelType::JinaBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
