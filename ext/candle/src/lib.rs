@@ -98,7 +98,8 @@ fn init(ruby: &Ruby) -> RbResult<()> {
         "_create",
         function!(RbModel::new, 5),
     )?;
-    rb_model.define_method("embedding", method!(RbModel::embedding, 1))?;
+    // Expose embedding with an optional pooling_method argument (default: "pooled")
+    rb_model.define_method("_embedding", method!(RbModel::embedding, 2))?;
     rb_model.define_method("embeddings", method!(RbModel::embeddings, 1))?;
     rb_model.define_method("pool_embedding", method!(RbModel::pool_embedding, 1))?;
     rb_model.define_method("pool_and_normalize_embedding", method!(RbModel::pool_and_normalize_embedding, 1))?;

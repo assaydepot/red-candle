@@ -22,5 +22,11 @@ module Candle
       embedding_size: nil)
       _create(model_path, tokenizer_path, device, model_type, embedding_size)
     end
+    # Returns the embedding for a string using the specified pooling method.
+    # @param str [String] The input text
+    # @param pooling_method [String] Pooling method: "pooled", "pooled_normalized", or "cls". Default: "pooled"
+    def embedding(str, pooling_method = "pooled")
+      _embedding(str, pooling_method)
+    end
   end
 end

@@ -104,11 +104,14 @@ impl RbModel {
 
     /// Generates an embedding vector for the input text
     /// &RETURNS&: Tensor
-    pub fn embedding(&self, input: String) -> RbResult<RbTensor> {
+    /// Generates an embedding vector for the input text using the specified pooling method.
+    /// &RETURNS&: Tensor
+    /// pooling_method: "pooled", "pooled_normalized", or "cls" (default: "pooled")
+    pub fn embedding(&self, input: String, pooling_method: String) -> RbResult<RbTensor> {
         match &self.0.model {
             Some(model) => {
                 match &self.0.tokenizer {
-                    Some(tokenizer) => Ok(RbTensor(self.compute_embedding(input, model, tokenizer)?)),
+                    Some(tokenizer) => Ok(RbTensor(self.compute_embedding(input, model, tokenizer, &pooling_method)?)),
                     None => Err(magnus::Error::new(magnus::exception::runtime_error(), "Tokenizer not found"))
                 }
             }
@@ -351,14 +354,22 @@ impl RbModel {
         }
     }
 
+    /// Computes an embedding for the prompt using the specified pooling method.
+    /// pooling_method: "pooled", "pooled_normalized", or "cls"
     fn compute_embedding(
         &self,
         prompt: String,
         model: &ModelVariant,
         tokenizer: &Tokenizer,
+        pooling_method: &str,
     ) -> Result<Tensor, Error> {
         let result = self.compute_embeddings(prompt, model, tokenizer)?;
-        Self::pooled_embedding(&result)
+        match pooling_method {
+            "pooled" => Self::pooled_embedding(&result),
+            "pooled_normalized" => Self::pooled_normalized_embedding(&result),
+            "cls" => Self::pooled_cls_embedding(&result),
+            _ => Err(magnus::Error::new(magnus::exception::runtime_error(), "Unknown pooling method")),
+        }
     }
 
     #[allow(dead_code)]
