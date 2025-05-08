@@ -24,7 +24,7 @@ module Candle
         JINA_BERT => "jinaai/jina-embeddings-v2-base-en",
         STANDARD_BERT => "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
         MINILM => "sentence-transformers/all-MiniLM-L6-v2",
-        DISTILBERT => "distilbert-base-uncased-finetuned-sst-2-english",
+        DISTILBERT => "scientistcom/distilbert-base-uncased-finetuned-sst-2-english",
       }
     end
   end
