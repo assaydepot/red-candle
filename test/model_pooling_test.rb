@@ -19,7 +19,7 @@ class ModelPoolingTest < Minitest::Test
     # Manually pool and then normalize
     pooled_manual = @embeddings.mean(1)
     norm = pooled_manual / Math.sqrt(pooled_manual.sqr.sum(1).values.first)
-    assert_in_delta pooled_norm_ruby.first.to_a[0], norm.first.to_a[0], 1e-3
+    assert_in_delta pooled_norm_ruby.first.to_a[0], norm.first.to_a[0], 1e-5
   end
 
   def test_pool_cls_embedding
