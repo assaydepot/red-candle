@@ -10,15 +10,15 @@ module Candle
     # MiniLM embedding models (e.g., all-MiniLM-L6-v2)
     MINILM = "minilm"
     
-    # Sentiment models which can be used for embeddings
-    SENTIMENT = "sentiment"
+    # DistilBERT models which can be used for embeddings
+    DISTILBERT = "distilbert"
     
     # Llama models which can be used for embeddings
     LLAMA = "llama"
     
     # Returns a list of all supported model types
     def self.all
-      [JINA_BERT, STANDARD_BERT, MINILM, SENTIMENT, LLAMA]
+      [JINA_BERT, STANDARD_BERT, DISTILBERT, MINILM, LLAMA]
     end
     
     # Returns suggested model paths for each model type
@@ -27,7 +27,7 @@ module Candle
         JINA_BERT => "jinaai/jina-embeddings-v2-base-en",
         STANDARD_BERT => "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
         MINILM => "sentence-transformers/all-MiniLM-L6-v2",
-        SENTIMENT => "distilbert-base-uncased-finetuned-sst-2-english",
+        DISTILBERT => "distilbert-base-uncased-finetuned-sst-2-english",
         LLAMA => "meta-llama/Llama-2-7b" # Requires Hugging Face token
       }
     end

@@ -9,13 +9,14 @@ class ModelTypesTest < Minitest::Test
     Candle::ModelType::STANDARD_BERT => [{
       model_path: "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
       embedding_size: 768
-    }, {
-      model_path: "scientistcom/distilbert-base-uncased-finetuned-sst-2-english",
-      embedding_size: 768
     }],
     Candle::ModelType::MINILM => [{
       model_path: "sentence-transformers/all-MiniLM-L6-v2",
       embedding_size: 384
+    }],
+    Candle::ModelType::DISTILBERT => [{
+      model_path: "scientistcom/distilbert-base-uncased-finetuned-sst-2-english",
+      embedding_size: 768
     }],
     Candle::ModelType::LLAMA => [{
       model_path: "meta-llama/Llama-2-7b",

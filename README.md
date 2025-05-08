@@ -59,7 +59,7 @@ Red-Candle supports the following embedding model types from Hugging Face:
 
 1. `Candle::ModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`) (**safetensors required**)
 2. `Candle::ModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`) (**safetensors required**)
-3. `Candle::ModelType::SENTIMENT` - Sentiment models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`) (**safetensors required**)
+3. `Candle::ModelType::DISTILBERT` - DistilBERT models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`) (**safetensors required**)
 4. `Candle::ModelType::LLAMA` - Llama models (e.g., `meta-llama/Llama-2-7b` - requires Hugging Face token, **GGML required**)
 
 > **Note:** Most official BERT and DistilBERT models do _not_ provide safetensors. Llama models must be in GGML format. Please check the model repo before use.

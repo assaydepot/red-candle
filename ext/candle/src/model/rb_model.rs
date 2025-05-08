@@ -15,6 +15,7 @@ use candle_nn::VarBuilder;
 use candle_transformers::models::{
     bert::{BertModel as StdBertModel, Config as BertConfig},
     jina_bert::{BertModel as JinaBertModel, Config as JinaConfig},
+    distilbert::{DistilBertModel, Config as DistilBertConfig},
     quantized_llama::ModelWeights
 };
 use magnus::Error;
@@ -33,6 +34,7 @@ pub struct RbModel(pub RbModelInner);
 pub enum ModelType {
     JinaBert,
     StandardBert,
+    DistilBert,
     MiniLM,
     Llama
 }
@@ -44,6 +46,7 @@ impl ModelType {
             "bert" | "standard_bert" | "standardbert" => Some(ModelType::StandardBert),
             "minilm" => Some(ModelType::MiniLM),
             "llama" => Some(ModelType::Llama),
+            "distilbert" => Some(ModelType::DistilBert),
             _ => None
         }
     }
@@ -53,6 +56,7 @@ impl ModelType {
 pub enum ModelVariant {
     JinaBert(JinaBertModel),
     StandardBert(StdBertModel),
+    DistilBert(DistilBertModel),
     MiniLM(StdBertModel),
     Llama(Arc<ModelWeights>),
 }
@@ -62,6 +66,7 @@ impl ModelVariant {
         match self {
             ModelVariant::JinaBert(_) => ModelType::JinaBert,
             ModelVariant::StandardBert(_) => ModelType::StandardBert,
+            ModelVariant::DistilBert(_) => ModelType::DistilBert,
             ModelVariant::MiniLM(_) => ModelType::MiniLM,
             ModelVariant::Llama(_) => ModelType::Llama,
         }
@@ -208,6 +213,27 @@ impl RbModel {
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::StandardBert(model))
             },
+            ModelType::DistilBert => {
+                let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
+                if !std::path::Path::new(&model_path).exists() {
+                    return Err(magnus::Error::new(
+                        magnus::exception::runtime_error(),
+                        "model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors."
+                    ));
+                }
+                let config_path = api.repo(repo.clone()).get("config.json").map_err(wrap_hf_err)?;
+                let config_file = std::fs::File::open(&config_path).map_err(|e| wrap_std_err(Box::new(e)))?;
+                let mut config: DistilBertConfig = serde_json::from_reader(config_file).map_err(|e| wrap_std_err(Box::new(e)))?;
+                if let Some(embedding_size) = embedding_size {
+                    config.dim = embedding_size;
+                }
+                let vb = unsafe {
+                    VarBuilder::from_mmaped_safetensors(&[model_path], DType::F32, &device)
+                        .map_err(wrap_candle_err)?
+                };
+                let model = DistilBertModel::load(vb, &config).map_err(wrap_candle_err)?;
+                Ok(ModelVariant::DistilBert(model))
+            },
             ModelType::MiniLM => {
                 let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
                 if !std::path::Path::new(&model_path).exists() {
@@ -216,7 +242,7 @@ impl RbModel {
                         "model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors."
                     ));
                 }
-                let config_path = api.repo(repo).get("config.json").map_err(wrap_hf_err)?;
+                let config_path = api.repo(repo.clone()).get("config.json").map_err(wrap_hf_err)?;
                 let config_file = std::fs::File::open(&config_path).map_err(|e| wrap_std_err(Box::new(e)))?;
                 let mut config: BertConfig = serde_json::from_reader(config_file).map_err(|e| wrap_std_err(Box::new(e)))?;
                 if let Some(embedding_size) = embedding_size {
@@ -310,6 +336,9 @@ impl RbModel {
             },
             ModelVariant::StandardBert(model) => {
                 model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
+            },
+            ModelVariant::DistilBert(model) => {
+                model.forward(&token_ids, &attention_mask).map_err(wrap_candle_err)
             },
             ModelVariant::MiniLM(model) => {
                 model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
