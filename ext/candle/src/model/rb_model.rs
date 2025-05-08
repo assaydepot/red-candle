@@ -9,7 +9,7 @@ use crate::model::{
     rb_tensor::RbTensor,
 };
 use crate::model::rb_device::RbDevice;
-use candle_core::{DType, Device, Module, Tensor, quantized::ggml_file::Content};
+use candle_core::{DType, Device, Module, Tensor};
 use safetensors::tensor::SafeTensors;
 use candle_nn::VarBuilder;
 use candle_transformers::models::{
@@ -19,8 +19,6 @@ use candle_transformers::models::{
 };
 use magnus::Error;
 use crate::model::RbResult;
-use std::sync::Arc;
-use std::fs::File;
 use std::path::Path;
 use tokenizers::Tokenizer;
 use serde_json;
