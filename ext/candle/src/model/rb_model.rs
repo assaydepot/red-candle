@@ -15,8 +15,7 @@ use candle_nn::VarBuilder;
 use candle_transformers::models::{
     bert::{BertModel as StdBertModel, Config as BertConfig},
     jina_bert::{BertModel as JinaBertModel, Config as JinaConfig},
-    distilbert::{DistilBertModel, Config as DistilBertConfig},
-    quantized_llama::ModelWeights
+    distilbert::{DistilBertModel, Config as DistilBertConfig}
 };
 use magnus::Error;
 use crate::model::RbResult;
@@ -36,7 +35,6 @@ pub enum ModelType {
     StandardBert,
     DistilBert,
     MiniLM,
-    Llama
 }
 
 impl ModelType {
@@ -45,7 +43,7 @@ impl ModelType {
             "jina_bert" | "jinabert" | "jina" => Some(ModelType::JinaBert),
             "bert" | "standard_bert" | "standardbert" => Some(ModelType::StandardBert),
             "minilm" => Some(ModelType::MiniLM),
-            "llama" => Some(ModelType::Llama),
+    
             "distilbert" => Some(ModelType::DistilBert),
             _ => None
         }
@@ -58,7 +56,7 @@ pub enum ModelVariant {
     StandardBert(StdBertModel),
     DistilBert(DistilBertModel),
     MiniLM(StdBertModel),
-    Llama(Arc<ModelWeights>),
+
 }
 
 impl ModelVariant {
@@ -68,7 +66,7 @@ impl ModelVariant {
             ModelVariant::StandardBert(_) => ModelType::StandardBert,
             ModelVariant::DistilBert(_) => ModelType::DistilBert,
             ModelVariant::MiniLM(_) => ModelType::MiniLM,
-            ModelVariant::Llama(_) => ModelType::Llama,
+    
         }
     }
 }
@@ -255,28 +253,7 @@ impl RbModel {
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
                 Ok(ModelVariant::MiniLM(model))
             },
-            ModelType::Llama => {
-                // Try safetensors first
-                let safetensors_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
-                if std::path::Path::new(&safetensors_path).exists() {
-                    return Err(magnus::Error::new(
-                        magnus::exception::runtime_error(),
-                        "Llama safetensors loading is not yet implemented. Please use GGML for Llama."
-                    ));
-                }
-                // Fallback to ggml
-                let ggml_path = api.repo(repo).get("model.ggml").map_err(wrap_hf_err)?;
-                if !std::path::Path::new(&ggml_path).exists() {
-                    return Err(magnus::Error::new(
-                        magnus::exception::runtime_error(),
-                        "model.ggml not found after download. Only GGML format is supported for Llama models. Please ensure your model repo contains model.ggml."
-                    ));
-                }
-                let mut file = File::open(&ggml_path).map_err(|e| wrap_std_err(Box::new(e)))?;
-                let ct = Content::read(&mut file, &device).map_err(wrap_candle_err)?;
-                let model = ModelWeights::from_ggml(ct, 1).map_err(wrap_candle_err)?;
-                Ok(ModelVariant::Llama(Arc::new(model)))
-            }
+
         }
     }
 
@@ -343,9 +320,7 @@ impl RbModel {
             ModelVariant::MiniLM(model) => {
                 model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
             },
-            ModelVariant::Llama(_) => {
-                Err(Error::new(magnus::exception::runtime_error(), "Llama embedding not implemented for quantized model"))
-            }
+
         }
     }
 

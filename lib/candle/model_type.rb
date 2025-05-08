@@ -13,12 +13,9 @@ module Candle
     # DistilBERT models which can be used for embeddings
     DISTILBERT = "distilbert"
     
-    # Llama models which can be used for embeddings
-    LLAMA = "llama"
-    
     # Returns a list of all supported model types
     def self.all
-      [JINA_BERT, STANDARD_BERT, DISTILBERT, MINILM, LLAMA]
+      [JINA_BERT, STANDARD_BERT, DISTILBERT, MINILM]
     end
     
     # Returns suggested model paths for each model type
@@ -28,7 +25,6 @@ module Candle
         STANDARD_BERT => "scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
         MINILM => "sentence-transformers/all-MiniLM-L6-v2",
         DISTILBERT => "distilbert-base-uncased-finetuned-sst-2-english",
-        LLAMA => "meta-llama/Llama-2-7b" # Requires Hugging Face token
       }
     end
   end
