@@ -132,8 +132,22 @@ impl RbModel {
 
     /// Pools and normalizes a sequence embedding tensor ([1, SEQLENGTH, DIM]) to [1, DIM]
     /// &RETURNS&: Tensor
+    pub fn pool_embedding(&self, tensor: &RbTensor) -> RbResult<RbTensor> {
+        let pooled = Self::pooled_embedding(&tensor.0)?;
+        Ok(RbTensor(pooled))
+    }
+
+    /// Pools and normalizes a sequence embedding tensor ([1, SEQLENGTH, DIM]) to [1, DIM]
+    /// &RETURNS&: Tensor
     pub fn pool_and_normalize_embedding(&self, tensor: &RbTensor) -> RbResult<RbTensor> {
         let pooled = Self::pooled_normalized_embedding(&tensor.0)?;
+        Ok(RbTensor(pooled))
+    }
+
+    /// Pools the embedding tensor by extracting the CLS token ([1, SEQLENGTH, DIM] -> [1, DIM])
+    /// &RETURNS&: Tensor
+    pub fn pool_cls_embedding(&self, tensor: &RbTensor) -> RbResult<RbTensor> {
+        let pooled = Self::pooled_cls_embedding(&tensor.0)?;
         Ok(RbTensor(pooled))
     }
 
@@ -266,6 +280,26 @@ impl RbModel {
         Ok(tokenizer)
     }
 
+    /// Pools the embedding tensor by extracting the CLS token ([1, SEQLENGTH, DIM] -> [1, DIM])
+    /// &RETURNS&: Tensor
+    fn pooled_cls_embedding(result: &Tensor) -> Result<Tensor, Error> {
+        // 1) sanity-check that we have a 3D tensor
+        let (_batch, _seq_len, _hidden_size) = result.dims3().map_err(wrap_candle_err)?;
+    
+        // 2) slice out just the first token (CLS) along the sequence axis:
+        //    [B, seq_len, H] → [B, 1, H]
+        let first = result
+            .narrow(1, 0, 1)
+            .map_err(wrap_candle_err)?;
+    
+        // 3) remove that length-1 axis → [B, H]
+        let cls = first
+            .squeeze(1)
+            .map_err(wrap_candle_err)?;
+    
+        Ok(cls)
+    }
+
     fn pooled_embedding(result: &Tensor) -> Result<Tensor, Error> {
         let (_n_sentence, n_tokens, _hidden_size) = result.dims3().map_err(wrap_candle_err)?;
         let sum = result.sum(1).map_err(wrap_candle_err)?;
@@ -324,7 +358,7 @@ impl RbModel {
         tokenizer: &Tokenizer,
     ) -> Result<Tensor, Error> {
         let result = self.compute_embeddings(prompt, model, tokenizer)?;
-        Self::pooled_normalized_embedding(&result)
+        Self::pooled_embedding(&result)
     }
 
     #[allow(dead_code)]
