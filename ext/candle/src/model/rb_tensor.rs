@@ -120,6 +120,22 @@ impl RbTensor {
         Ok(RbTensor(self.0.sqr().map_err(wrap_candle_err)?))
     }
 
+    /// Returns the mean along the specified axis.
+    /// @param axis [Integer, optional] The axis to reduce over (default: 0)
+    /// @return [Candle::Tensor]
+    pub fn mean(&self, axis: Option<i64>) -> RbResult<Self> {
+        let axis = axis.unwrap_or(0) as usize;
+        Ok(RbTensor(self.0.mean(axis).map_err(wrap_candle_err)?))
+    }
+
+    /// Returns the sum along the specified axis.
+    /// @param axis [Integer, optional] The axis to reduce over (default: 0)
+    /// @return [Candle::Tensor]
+    pub fn sum(&self, axis: Option<i64>) -> RbResult<Self> {
+        let axis = axis.unwrap_or(0) as usize;
+        Ok(RbTensor(self.0.sum(axis).map_err(wrap_candle_err)?))
+    }
+
     /// Calculates the square root of the tensor.
     /// &RETURNS&: Tensor
     pub fn sqrt(&self) -> RbResult<Self> {
@@ -229,9 +245,23 @@ impl RbTensor {
 
     /// Divide two tensors.
     /// &RETURNS&: Tensor
-    // fn __truediv__(&self, rhs: &RbTensor) -> RbResult<Self> {
-    //     Ok(Self(self.0.div(&rhs.0).map_err(wrap_candle_err)?))
-    // }
+    /// Divides this tensor by another tensor or a scalar (Float/Integer).
+    /// @param rhs [Candle::Tensor, Float, or Integer]
+    /// @return [Candle::Tensor]
+    pub fn __truediv__(&self, rhs: magnus::Value) -> RbResult<Self> {
+        use magnus::{Float, Integer, TryConvert};
+        if let Ok(tensor) = <&RbTensor>::try_convert(rhs) {
+            Ok(Self(self.0.broadcast_div(&tensor.0).map_err(wrap_candle_err)?))
+        } else if let Ok(f) = <f64>::try_convert(rhs) {
+            let scalar = Tensor::from_vec(vec![f as f32], (1,), &self.0.device()).map_err(wrap_candle_err)?;
+            Ok(Self(self.0.broadcast_div(&scalar).map_err(wrap_candle_err)?))
+        } else if let Ok(i) = <i64>::try_convert(rhs) {
+            let scalar = Tensor::from_vec(vec![i as f32], (1,), &self.0.device()).map_err(wrap_candle_err)?;
+            Ok(Self(self.0.broadcast_div(&scalar).map_err(wrap_candle_err)?))
+        } else {
+            Err(magnus::Error::new(magnus::exception::type_error(), "Right-hand side must be a Candle::Tensor, Float, or Integer"))
+        }
+    }
 
     /// Reshapes the tensor to the given shape.
     /// &RETURNS&: Tensor

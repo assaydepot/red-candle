@@ -13,7 +13,7 @@ class ModelTest < Minitest::Test
     model = Candle::Model.new
     string = "Hi there"
     embeddings = model.embeddings(string)
-    pooled = model.pool_and_normalize_embedding(embeddings)
+    pooled = model.pool_embedding(embeddings)
     embedding = model.embedding(string)
     assert_equal pooled.first.to_a, embedding.first.to_a
   end

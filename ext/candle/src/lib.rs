@@ -27,7 +27,10 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_method("cos", method!(RbTensor::cos, 0))?;
     rb_tensor.define_method("log", method!(RbTensor::log, 0))?;
     rb_tensor.define_method("sqr", method!(RbTensor::sqr, 0))?;
+    rb_tensor.define_method("mean", method!(RbTensor::mean, 1))?;
+    rb_tensor.define_method("sum", method!(RbTensor::sum, 1))?;
     rb_tensor.define_method("sqrt", method!(RbTensor::sqrt, 0))?;
+    rb_tensor.define_method("/", method!(RbTensor::__truediv__, 1))?; // Accepts Tensor, Float, or Integer
     rb_tensor.define_method("recip", method!(RbTensor::recip, 0))?;
     rb_tensor.define_method("exp", method!(RbTensor::exp, 0))?;
     rb_tensor.define_method("powf", method!(RbTensor::powf, 1))?;
