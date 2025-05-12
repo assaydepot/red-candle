@@ -16,6 +16,7 @@ jobs:
         with:
           ruby-version: ruby
           bundler-cache: true
+      - run: free -h
       - run: bundle exec rake compile
       - run: bundle exec rake test
       - run: bundle exec yard --fail-on-warning
