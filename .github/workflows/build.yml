@@ -24,7 +24,7 @@ jobs:
       - name: Install Valgrind
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
-      - name: Run tests with Valgrind
-        run: valgrind --leak-check=full --track-origins=yes bundle exec rake test
+      - name: Run tests with Valgrind Massif (Peak Memory)
+        run: valgrind --tool=massif bundle exec rake test
 
       - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
