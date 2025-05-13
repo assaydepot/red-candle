@@ -12,11 +12,19 @@ jobs:
             ~/.cargo/git
             tmp
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby
           bundler-cache: true
+
       - run: free -h
       - run: bundle exec rake compile
-      - run: bundle exec rake test
-      - run: bundle exec yard --fail-on-warning
+
+      - name: Install Valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      - name: Run tests with Valgrind
+        run: valgrind --leak-check=full --track-origins=yes bundle exec rake test
+
+      - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
