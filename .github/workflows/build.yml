@@ -25,6 +25,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
       - name: Run tests with Valgrind Massif (Peak Memory)
-        run: valgrind --tool=massif bundle exec rake test
+        run: valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
+
+      - name: Display Peak Memory Usage
+        run: |
+          ms_print massif.out | head -n 30
 
       - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
