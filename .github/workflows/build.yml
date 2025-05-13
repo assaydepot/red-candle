@@ -18,8 +18,11 @@ jobs:
           ruby-version: ruby
           bundler-cache: true
 
-      - run: free -h
-      - run: bundle exec rake compile
+      - name: Display Memory Usage
+        run: free -h
+
+      - name: Display Disk Space Before Test
+        run: df -h
 
       - name: Install Valgrind
         run: sudo apt-get update && sudo apt-get install -y valgrind
@@ -30,5 +33,8 @@ jobs:
       - name: Display Peak Memory Usage
         run: |
           ms_print massif.out | head -n 30
+
+      - name: Display Disk Space After Test
+        run: df -h
 
       - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
