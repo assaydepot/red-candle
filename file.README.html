@@ -57,14 +57,14 @@
         <div class="clear"></div>
       </div>
 
-      <div id="content"><div id='filecontents'>
-<h1 id="label-red-candle">red-candle</h1>
+      <div id="content"><div id='filecontents'><h1 id="red-candle">red-candle</h1>
 
-<p><a href="https://github.com/assaydepot/red-candle/actions/workflows/build.yml"><img src="https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg"></a> <a href="https://badge.fury.io/rb/red-candle"><img src="https://badge.fury.io/rb/red-candle.svg"></a></p>
+<p><a href="https://github.com/assaydepot/red-candle/actions/workflows/build.yml"><img src="https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg" alt="build"></a>
+<a href="https://badge.fury.io/rb/red-candle"><img src="https://badge.fury.io/rb/red-candle.svg" alt="Gem Version"></a></p>
 
-<p>🕯️ <a href="https://github.com/huggingface/candle">candle</a> - Minimalist ML framework - for Ruby</p>
+<p><a href="https://github.com/huggingface/candle">candle</a> - Minimalist ML framework - for Ruby</p>
 
-<h2 id="label-Usage">Usage</h2>
+<h2 id="usage">Usage</h2>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&quot;</span></span>
 
@@ -77,13 +77,55 @@
 </span></code></pre>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
-<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+
+<span class='comment'># Default model (JinaBERT)
+</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Model.html" title="Candle::Model (class)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Model.html#new-class_method" title="Candle::Model.new (method)">new</a></span></span>
+<span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Specify a different model type
+</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Model.html" title="Candle::Model (class)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Model.html#new-class_method" title="Candle::Model.new (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>tokenizer_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>device:</span> <span class='kw'>nil</span><span class='comma'>,</span>  <span class='comment'># nil = CPU
+</span>  <span class='label'>model_type:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html" title="Candle::ModelType (module)">ModelType</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html#STANDARD_BERT-constant" title="Candle::ModelType::STANDARD_BERT (constant)">STANDARD_BERT</a></span></span>
+<span class='rparen'>)</span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
-<h2 id="label-A+note+on+memory+usage">A note on memory usage</h2>
+<h2 id="model-format-requirement-safetensors-only">⚠️ Model Format Requirement: Safetensors Only</h2>
 
-<p>The <code>Candle::Model</code> defaults to the <code>jinaai/jina-embeddings-v2-base-en</code> model with the <code>sentence-transformers/all-MiniLM-L6-v2</code> tokenizer (both from <a href="https://huggingface.co">HuggingFace</a>). With this configuration the model takes a little more than 3GB of memory running on my Mac. The memory stays with the instantiated <code>Candle::Model</code> class, if you instantiate more than one, you’ll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you’ll free the memory. For example:</p>
+<p>Red-Candle <strong>only supports embedding models that provide their weights in the <a href="https://github.com/huggingface/safetensors">safetensors</a> format</strong> (i.e., the model repo must contain a <code>model.safetensors</code> file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do <strong>not</strong> provide safetensors; many Sentence Transformers and JinaBERT models do.</p>
+
+<p><strong>If you encounter an error like:</strong></p>
+
+<pre class="code ruby"><code class="ruby">RuntimeError: model.safetensors not found after download. Only safetensors models are supported. Please ensure your model repo contains model.safetensors.
+</code></pre>
+
+<p>this means the selected model is not compatible. Please choose a model repo that provides the required file.</p>
+
+<h2 id="supported-embedding-models">Supported Embedding Models</h2>
+
+<p>Red-Candle supports the following embedding model types from Hugging Face:</p>
+
+<ol>
+<li><code>Candle::ModelType::JINA_BERT</code> - Jina BERT models (e.g., <code>jinaai/jina-embeddings-v2-base-en</code>) (<strong>safetensors required</strong>)</li>
+<li><code>Candle::ModelType::STANDARD_BERT</code> - Standard BERT models (e.g., <code>sentence-transformers/all-MiniLM-L6-v2</code>) (<strong>safetensors required</strong>)</li>
+<li><code>Candle::ModelType::DISTILBERT</code> - DistilBERT models (e.g., <code>distilbert-base-uncased-finetuned-sst-2-english</code>) (<strong>safetensors required</strong>)</li>
+</ol>
+
+<blockquote>
+<p><strong>Note:</strong> Most official BERT and DistilBERT models do <em>not</em> provide safetensors. Please check the model repo before use.</p>
+</blockquote>
+
+<p>You can get a list of all supported model types and suggested models paths:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html" title="Candle::ModelType (module)">ModelType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all'><span class='object_link'><a href="Candle/ModelType.html#all-class_method" title="Candle::ModelType.all (method)">all</a></span></span>  <span class='comment'># Returns all supported model types
+</span><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html" title="Candle::ModelType (module)">ModelType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_suggested_model_paths'><span class='object_link'><a href="Candle/ModelType.html#suggested_model_paths-class_method" title="Candle::ModelType.suggested_model_paths (method)">suggested_model_paths</a></span></span>  <span class='comment'># Returns hash of suggested models for each type
+</span></code></pre>
+
+<h2 id="a-note-on-memory-usage">A note on memory usage</h2>
+
+<p>The default model (<code>jinaai/jina-embeddings-v2-base-en</code> with the <code>sentence-transformers/all-MiniLM-L6-v2</code> tokenizer, both from <a href="https://huggingface.co">HuggingFace</a>) takes a little more than 3GB of memory running on a Mac. The memory stays with the instantiated <code>Candle::Model</code> class, if you instantiate more than one, you&#39;ll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you&#39;ll free the memory. For example:</p>
 
 <pre class="code ruby"><code class="ruby">&gt; require &#39;candle&#39;
 # Ruby memory = 25.9 MB
@@ -99,25 +141,25 @@
 # Ruby memory = 55.2 MB
 </code></pre>
 
-<h2 id="label-A+note+on+returned+embeddings">A note on returned embeddings</h2>
+<h2 id="a-note-on-returned-embeddings">A note on returned embeddings</h2>
 
-<p>The code should match the same embeddings when generated from the python <code>transformers</code> library. For instance, locally I was able to generate the same embedding for the text “Hi there!” using the python code:</p>
+<p>The code should match the same embeddings when generated from the python <code>transformers</code> library. For instance, locally I was able to generate the same embedding for the text &quot;Hi there!&quot; using the python code:</p>
 
-<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_from'>from</span> <span class='id identifier rubyid_transformers'>transformers</span> <span class='id identifier rubyid_import'>import</span> <span class='const'>AutoModel</span>
-<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'>AutoModel</span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>jinaai/jina-embeddings-v2-base-en</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_trust_remote_code'>trust_remote_code</span><span class='op'>=</span><span class='const'>True</span><span class='rparen'>)</span>
-<span class='id identifier rubyid_sentence'>sentence</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
-<span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_encode'>encode</span><span class='lparen'>(</span><span class='id identifier rubyid_sentence'>sentence</span><span class='rparen'>)</span>
-<span class='id identifier rubyid_print'>print</span><span class='lparen'>(</span><span class='id identifier rubyid_embedding'>embedding</span><span class='rparen'>)</span>
+<pre class="code python"><code class="python">from transformers import AutoModel
+model = AutoModel.from_pretrained(&#39;jinaai/jina-embeddings-v2-base-en&#39;, trust_remote_code=True)
+sentence = [&#39;Hi there!&#39;]
+embedding = model.encode(sentence)
+print(embedding)
 </code></pre>
 
 <p>And the following ruby:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
-<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Model.html" title="Candle::Model (class)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Model.html#new-class_method" title="Candle::Model.new (method)">new</a></span></span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
-<h2 id="label-Development">Development</h2>
+<h2 id="development">Development</h2>
 
 <p>FORK IT!</p>
 
@@ -131,18 +173,18 @@ bundle exec rake compile
 
 <p>Pull requests are welcome.</p>
 
-<h3 id="label-See+Also">See Also</h3>
-<ul><li>
-<p><a href="https://github.com/ruby-numo/numo-narray">Numo::NArray</a></p>
-</li><li>
-<p><a href="https://github.com/sonots/cumo">Cumo</a></p>
-</li></ul>
+<h3 id="see-also">See Also</h3>
+
+<ul>
+<li><a href="https://github.com/ruby-numo/numo-narray">Numo::NArray</a></li>
+<li><a href="https://github.com/sonots/cumo">Cumo</a></li>
+</ul>
 </div></div>
 
       <div id="footer">
-  Generated on Thu May  1 22:26:23 2025 by
+  Generated on Fri Jun  6 11:55:56 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.37 (ruby-3.4.3).
+  0.9.37 (ruby-3.4.4).
 </div>
 
     </div>
