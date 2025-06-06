@@ -1,8 +1,8 @@
 name: build
-on: [push, pull_request]
+on: pull_request
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: red-candle-runner
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -12,10 +12,29 @@ jobs:
             ~/.cargo/git
             tmp
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ruby
           bundler-cache: true
-      - run: bundle exec rake compile
-      - run: bundle exec rake test
-      - run: bundle exec yard --fail-on-warning
+
+      - name: Display Memory Usage
+        run: free -h
+
+      - name: Display Disk Space Before Test
+        run: df -h
+
+      - name: Install Valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      - name: Run tests with Valgrind Massif (Peak Memory)
+        run: valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
+
+      - name: Display Peak Memory Usage
+        run: |
+          ms_print massif.out | head -n 30
+
+      - name: Display Disk Space After Test
+        run: df -h
+
+      - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
