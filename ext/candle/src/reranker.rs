@@ -1,7 +1,7 @@
 use magnus::{class, function, method, prelude::*, Error, RModule, Float, RArray};
 use candle_transformers::models::bert::{BertModel, Config};
 use candle_core::{Device, Tensor, IndexOp, DType};
-use candle_nn::{VarBuilder, ops::sigmoid, Linear, Module};
+use candle_nn::{VarBuilder, Linear, Module, ops::sigmoid};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::{PaddingParams, Tokenizer, EncodeInput};
 use std::thread;
@@ -74,6 +74,14 @@ impl Reranker {
     }
 
     pub fn rerank(&self, query: String, documents: RArray) -> Result<RArray, Error> {
+        self.rerank_with_activation(query, documents, false)
+    }
+    
+    pub fn rerank_sigmoid(&self, query: String, documents: RArray) -> Result<RArray, Error> {
+        self.rerank_with_activation(query, documents, true)
+    }
+    
+    fn rerank_with_activation(&self, query: String, documents: RArray, apply_sigmoid: bool) -> Result<RArray, Error> {
         let documents: Vec<String> = documents.to_vec()?;
         
         // Create query-document pairs for cross-encoder
@@ -107,12 +115,19 @@ impl Reranker {
         let cls_embeddings = embeddings.i((.., 0))
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?;
         
-        // Apply linear layer and sigmoid to get relevance scores
+        // Apply linear layer to get relevance scores (raw logits)
         let logits = self.linear_layer.forward(&cls_embeddings)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Linear layer forward failed: {}", e)))?;
-        let scores = sigmoid(&logits.squeeze(1)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to squeeze tensor: {}", e)))?)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Sigmoid failed: {}", e)))?;
+        let scores = logits.squeeze(1)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to squeeze tensor: {}", e)))?;
+        
+        // Optionally apply sigmoid activation
+        let scores = if apply_sigmoid {
+            sigmoid(&scores)
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Sigmoid failed: {}", e)))?
+        } else {
+            scores
+        };
         
         let scores_vec: Vec<f32> = scores.to_vec1()
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to convert scores to vec: {}", e)))?;
@@ -138,5 +153,6 @@ pub fn init(rb_candle: RModule) -> Result<(), Error> {
     c_reranker.define_singleton_method("new", function!(Reranker::new, 1))?;
     c_reranker.define_singleton_method("new_cuda", function!(Reranker::new_cuda, 1))?;
     c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
+    c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
     Ok(())
 }

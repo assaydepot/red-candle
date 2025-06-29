@@ -12,11 +12,9 @@ class RerankerTest < Minitest::Test
     ranked_documents = reranker.rerank(query, documents)
     assert_equal(3, ranked_documents.length)
     assert_equal("The capital of France is Paris.", ranked_documents[0][0])
-    # Ensure the French capital document has the highest score
+    # Ensure the French capital document has the highest score (raw logits)
     assert(ranked_documents[0][1] > ranked_documents[1][1])
     assert(ranked_documents[0][1] > ranked_documents[2][1])
-    # Ensure scores are in valid range [0, 1]
-    assert(ranked_documents[0][1] >= 0.0 && ranked_documents[0][1] <= 1.0)
   end
   
   def test_new_cuda
