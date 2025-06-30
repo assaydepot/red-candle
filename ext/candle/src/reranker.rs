@@ -10,7 +10,8 @@ use std::thread;
 pub struct Reranker {
     model: BertModel,
     tokenizer: Tokenizer,
-    linear_layer: Linear,
+    pooler: Linear,
+    classifier: Linear,
     device: Device,
 }
 
@@ -28,7 +29,7 @@ impl Reranker {
     
     pub fn new_with_device(model_id: String, device: Device) -> Result<Self, Error> {
         let device_clone = device.clone();
-        let handle = thread::spawn(move || -> Result<(BertModel, Tokenizer, Linear), Box<dyn std::error::Error + Send + Sync>> {
+        let handle = thread::spawn(move || -> Result<(BertModel, Tokenizer, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
             let repo = api.repo(Repo::new(model_id.clone(), RepoType::Model));
             
@@ -57,16 +58,18 @@ impl Reranker {
             // Load BERT model
             let model = BertModel::load(vb.pp("bert"), &config)?;
             
-            // Initialize linear layer for cross-encoder (single output score)
-            // For cross-encoder models, the linear layer is typically at "classifier"
-            let linear_layer = candle_nn::linear(config.hidden_size, 1, vb.pp("classifier"))?;
+            // Load pooler layer (dense + tanh activation)
+            let pooler = candle_nn::linear(config.hidden_size, config.hidden_size, vb.pp("bert.pooler.dense"))?;
             
-            Ok((model, tokenizer, linear_layer))
+            // Load classifier layer for cross-encoder (single output score)
+            let classifier = candle_nn::linear(config.hidden_size, 1, vb.pp("classifier"))?;
+            
+            Ok((model, tokenizer, pooler, classifier))
         });
         
         match handle.join() {
-            Ok(Ok((model, tokenizer, linear_layer))) => {
-                Ok(Self { model, tokenizer, linear_layer, device })
+            Ok(Ok((model, tokenizer, pooler, classifier))) => {
+                Ok(Self { model, tokenizer, pooler, classifier, device })
             }
             Ok(Err(e)) => Err(Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e))),
             Err(_) => Err(Error::new(magnus::exception::runtime_error(), "Thread panicked while loading model")),
@@ -79,6 +82,30 @@ impl Reranker {
     
     pub fn rerank_sigmoid(&self, query: String, documents: RArray) -> Result<RArray, Error> {
         self.rerank_with_activation(query, documents, true)
+    }
+    
+    pub fn debug_tokenization(&self, query: String, document: String) -> Result<magnus::RHash, Error> {
+        // Create query-document pair for cross-encoder
+        let query_doc_pair: EncodeInput = (query.clone(), document.clone()).into();
+        
+        // Tokenize
+        let encoding = self.tokenizer.encode(query_doc_pair, true)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tokenization failed: {}", e)))?;
+        
+        // Get token information
+        let token_ids = encoding.get_ids().to_vec();
+        let token_type_ids = encoding.get_type_ids().to_vec();
+        let attention_mask = encoding.get_attention_mask().to_vec();
+        let tokens = encoding.get_tokens().iter().map(|t| t.to_string()).collect::<Vec<_>>();
+        
+        // Create result hash
+        let result = magnus::RHash::new();
+        result.aset("token_ids", RArray::from_vec(token_ids.iter().map(|&id| id as i64).collect::<Vec<_>>()))?;
+        result.aset("token_type_ids", RArray::from_vec(token_type_ids.iter().map(|&id| id as i64).collect::<Vec<_>>()))?;
+        result.aset("attention_mask", RArray::from_vec(attention_mask.iter().map(|&mask| mask as i64).collect::<Vec<_>>()))?;
+        result.aset("tokens", RArray::from_vec(tokens))?;
+        
+        Ok(result)
     }
     
     fn rerank_with_activation(&self, query: String, documents: RArray, apply_sigmoid: bool) -> Result<RArray, Error> {
@@ -99,11 +126,16 @@ impl Reranker {
             .iter()
             .map(|e| e.get_ids().to_vec())
             .collect::<Vec<_>>();
+            
+        let token_type_ids = encodings
+            .iter()
+            .map(|e| e.get_type_ids().to_vec())
+            .collect::<Vec<_>>();
 
         let token_ids = Tensor::new(token_ids, &self.device)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to create tensor: {}", e)))?;
-        let token_type_ids = token_ids.zeros_like()
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to create token type ids: {}", e)))?;
+        let token_type_ids = Tensor::new(token_type_ids, &self.device)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to create token type ids tensor: {}", e)))?;
         let attention_mask = token_ids.ne(0u32)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to create attention mask: {}", e)))?;
         
@@ -115,9 +147,15 @@ impl Reranker {
         let cls_embeddings = embeddings.i((.., 0))
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?;
         
-        // Apply linear layer to get relevance scores (raw logits)
-        let logits = self.linear_layer.forward(&cls_embeddings)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Linear layer forward failed: {}", e)))?;
+        // Apply pooler (dense + tanh activation)
+        let pooled = self.pooler.forward(&cls_embeddings)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Pooler forward failed: {}", e)))?;
+        let pooled = pooled.tanh()
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tanh activation failed: {}", e)))?;
+        
+        // Apply classifier to get relevance scores (raw logits)
+        let logits = self.classifier.forward(&pooled)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Classifier forward failed: {}", e)))?;
         let scores = logits.squeeze(1)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to squeeze tensor: {}", e)))?;
         
@@ -154,5 +192,6 @@ pub fn init(rb_candle: RModule) -> Result<(), Error> {
     c_reranker.define_singleton_method("new_cuda", function!(Reranker::new_cuda, 1))?;
     c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
     c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
+    c_reranker.define_method("debug_tokenization", method!(Reranker::debug_tokenization, 2))?;
     Ok(())
 }
