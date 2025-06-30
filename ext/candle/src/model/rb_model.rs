@@ -17,11 +17,12 @@ use candle_transformers::models::{
     jina_bert::{BertModel as JinaBertModel, Config as JinaConfig},
     distilbert::{DistilBertModel, Config as DistilBertConfig}
 };
-use magnus::Error;
+use magnus::{class, function, method, prelude::*, Error, RModule};
 use crate::model::RbResult;
 use std::path::Path;
 use tokenizers::Tokenizer;
 use serde_json;
+
 
 #[magnus::wrap(class = "Candle::Model", free_immediately, size)]
 pub struct RbModel(pub RbModelInner);
@@ -397,4 +398,19 @@ impl RbModel {
     pub fn __str__(&self) -> String {
         self.__repr__()
     }
+}
+
+pub fn init(rb_candle: RModule) -> Result<(), Error> {
+    let rb_model = rb_candle.define_class("Model", class::object())?;
+    rb_model.define_singleton_method("_create", function!(RbModel::new, 5))?;
+    // Expose embedding with an optional pooling_method argument (default: "pooled")
+    rb_model.define_method("_embedding", method!(RbModel::embedding, 2))?;
+    rb_model.define_method("embeddings", method!(RbModel::embeddings, 1))?;
+    rb_model.define_method("pool_embedding", method!(RbModel::pool_embedding, 1))?;
+    rb_model.define_method("pool_and_normalize_embedding", method!(RbModel::pool_and_normalize_embedding, 1))?;
+    rb_model.define_method("pool_cls_embedding", method!(RbModel::pool_cls_embedding, 1))?;
+    rb_model.define_method("model_type", method!(RbModel::model_type, 0))?;
+    rb_model.define_method("to_s", method!(RbModel::__str__, 0))?;
+    rb_model.define_method("inspect", method!(RbModel::__repr__, 0))?;
+    Ok(())
 }

@@ -1,12 +1,13 @@
 use magnus::{function, method, prelude::*, Ruby};
 
-use crate::model::{candle_utils, RbModel, RbDType, RbDevice, RbQTensor, RbResult, RbTensor};
+use crate::model::{candle_utils, RbDType, RbDevice, RbQTensor, RbResult, RbTensor};
 
 pub mod model;
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
+    model::init(rb_candle)?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(RbTensor::new, 2))?;
@@ -95,21 +96,6 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_qtensor.define_method("rank", method!(RbQTensor::rank, 0))?;
     rb_qtensor.define_method("shape", method!(RbQTensor::shape, 0))?;
     rb_qtensor.define_method("dequantize", method!(RbQTensor::dequantize, 0))?;
-
-    let rb_model = rb_candle.define_class("Model", Ruby::class_object(ruby))?;
-    rb_model.define_singleton_method(
-        "_create",
-        function!(RbModel::new, 5),
-    )?;
-    // Expose embedding with an optional pooling_method argument (default: "pooled")
-    rb_model.define_method("_embedding", method!(RbModel::embedding, 2))?;
-    rb_model.define_method("embeddings", method!(RbModel::embeddings, 1))?;
-    rb_model.define_method("pool_embedding", method!(RbModel::pool_embedding, 1))?;
-    rb_model.define_method("pool_and_normalize_embedding", method!(RbModel::pool_and_normalize_embedding, 1))?;
-    rb_model.define_method("pool_cls_embedding", method!(RbModel::pool_cls_embedding, 1))?;
-    rb_model.define_method("model_type", method!(RbModel::model_type, 0))?;
-    rb_model.define_method("to_s", method!(RbModel::__str__, 0))?;
-    rb_model.define_method("inspect", method!(RbModel::__repr__, 0))?;
 
     Ok(())
 }
