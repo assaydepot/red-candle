@@ -77,11 +77,19 @@ impl Reranker {
     }
 
     pub fn rerank(&self, query: String, documents: RArray) -> Result<RArray, Error> {
-        self.rerank_with_activation(query, documents, false)
+        self.rerank_with_options(query, documents, "pooler".to_string(), false)
     }
     
     pub fn rerank_sigmoid(&self, query: String, documents: RArray) -> Result<RArray, Error> {
-        self.rerank_with_activation(query, documents, true)
+        self.rerank_with_options(query, documents, "pooler".to_string(), true)
+    }
+    
+    pub fn rerank_with_pooling(&self, query: String, documents: RArray, pooling_method: String) -> Result<RArray, Error> {
+        self.rerank_with_options(query, documents, pooling_method, false)
+    }
+    
+    pub fn rerank_sigmoid_with_pooling(&self, query: String, documents: RArray, pooling_method: String) -> Result<RArray, Error> {
+        self.rerank_with_options(query, documents, pooling_method, true)
     }
     
     pub fn debug_tokenization(&self, query: String, document: String) -> Result<magnus::RHash, Error> {
@@ -108,7 +116,7 @@ impl Reranker {
         Ok(result)
     }
     
-    fn rerank_with_activation(&self, query: String, documents: RArray, apply_sigmoid: bool) -> Result<RArray, Error> {
+    pub fn rerank_with_options(&self, query: String, documents: RArray, pooling_method: String, apply_sigmoid: bool) -> Result<RArray, Error> {
         let documents: Vec<String> = documents.to_vec()?;
         
         // Create query-document pairs for cross-encoder
@@ -143,18 +151,37 @@ impl Reranker {
         let embeddings = self.model.forward(&token_ids, &token_type_ids, Some(&attention_mask))
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Model forward pass failed: {}", e)))?;
         
-        // Extract [CLS] token embeddings
-        let cls_embeddings = embeddings.i((.., 0))
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?;
-        
-        // Apply pooler (dense + tanh activation)
-        let pooled = self.pooler.forward(&cls_embeddings)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Pooler forward failed: {}", e)))?;
-        let pooled = pooled.tanh()
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tanh activation failed: {}", e)))?;
+        // Apply pooling based on the specified method
+        let pooled_embeddings = match pooling_method.as_str() {
+            "pooler" => {
+                // Extract [CLS] token and apply pooler (dense + tanh)
+                let cls_embeddings = embeddings.i((.., 0))
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?;
+                let pooled = self.pooler.forward(&cls_embeddings)
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Pooler forward failed: {}", e)))?;
+                pooled.tanh()
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tanh activation failed: {}", e)))?
+            },
+            "cls" => {
+                // Just use the [CLS] token embeddings directly (no pooler layer)
+                embeddings.i((.., 0))
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+            },
+            "mean" => {
+                // Mean pooling across all tokens
+                let (_batch, seq_len, _hidden) = embeddings.dims3()
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to get tensor dimensions: {}", e)))?;
+                let sum = embeddings.sum(1)
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to sum embeddings: {}", e)))?;
+                (sum / (seq_len as f64))
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to compute mean: {}", e)))?
+            },
+            _ => return Err(Error::new(magnus::exception::runtime_error(), 
+                format!("Unknown pooling method: {}. Use 'pooler', 'cls', or 'mean'", pooling_method)))
+        };
         
         // Apply classifier to get relevance scores (raw logits)
-        let logits = self.classifier.forward(&pooled)
+        let logits = self.classifier.forward(&pooled_embeddings)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Classifier forward failed: {}", e)))?;
         let scores = logits.squeeze(1)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to squeeze tensor: {}", e)))?;
@@ -200,6 +227,9 @@ pub fn init(rb_candle: RModule) -> Result<(), Error> {
     c_reranker.define_singleton_method("new_cuda", function!(Reranker::new_cuda, 1))?;
     c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
     c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
+    c_reranker.define_method("rerank_with_pooling", method!(Reranker::rerank_with_pooling, 3))?;
+    c_reranker.define_method("rerank_sigmoid_with_pooling", method!(Reranker::rerank_sigmoid_with_pooling, 3))?;
+    c_reranker.define_method("rerank_with_options", method!(Reranker::rerank_with_options, 4))?;
     c_reranker.define_method("debug_tokenization", method!(Reranker::debug_tokenization, 2))?;
     Ok(())
 }

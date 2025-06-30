@@ -165,6 +165,25 @@ The reranker returns an array of tuples containing `[document, score, doc_id]`:
 
 This format is compatible with the Informers gem, which returns results as hashes with `:doc_id` and `:score` keys. The `doc_id` allows you to map results back to your original data structure.
 
+### Pooling Methods
+
+The reranker supports different pooling strategies for aggregating BERT embeddings:
+
+```ruby
+# Use alternative pooling methods
+# "pooler" (default) - Uses the pooler layer with tanh activation (most accurate for cross-encoders)
+# "cls" - Uses raw [CLS] token embeddings without the pooler layer
+# "mean" - Mean pooling across all tokens (not recommended for cross-encoders)
+
+# With raw logits
+results = reranker.rerank_with_pooling(query, documents, "cls")
+
+# With sigmoid activation
+results = reranker.rerank_sigmoid_with_pooling(query, documents, "cls")
+```
+
+Note: The default "pooler" method is recommended as it matches how cross-encoder models are trained. Other pooling methods may produce different ranking results.
+
 ### CUDA Support
 
 For faster inference on NVIDIA GPUs:

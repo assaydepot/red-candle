@@ -28,4 +28,26 @@ class RerankerTest < Minitest::Test
     ranked_documents = reranker.rerank(query, documents)
     assert_equal(1, ranked_documents.length)
   end
+  
+  def test_pooling_methods
+    reranker = Candle::Reranker.new("cross-encoder/ms-marco-MiniLM-L-12-v2")
+    query = "What is the capital of France?"
+    documents = ["The capital of France is Paris.", "Berlin is the capital of Germany."]
+    
+    # Test pooler method (default, most accurate for cross-encoders)
+    ranked_documents = reranker.rerank_with_pooling(query, documents, "pooler")
+    assert_equal(2, ranked_documents.length)
+    assert_equal("The capital of France is Paris.", ranked_documents[0][0])
+    assert_equal(0, ranked_documents[0][2])  # doc_id
+    
+    # Test cls method (should also work well)
+    ranked_documents = reranker.rerank_with_pooling(query, documents, "cls")
+    assert_equal(2, ranked_documents.length)
+    assert_equal("The capital of France is Paris.", ranked_documents[0][0])
+    
+    # Test mean method (may give different results as it's not the intended pooling for this model)
+    ranked_documents = reranker.rerank_with_pooling(query, documents, "mean")
+    assert_equal(2, ranked_documents.length)
+    # Just verify we get results, not their order, as mean pooling isn't optimal for cross-encoders
+  end
 end
