@@ -11,7 +11,9 @@ class RerankerTest < Minitest::Test
     ]
     ranked_documents = reranker.rerank(query, documents)
     assert_equal(3, ranked_documents.length)
+    # Check structure: [document, score, doc_id]
     assert_equal("The capital of France is Paris.", ranked_documents[0][0])
+    assert_equal(0, ranked_documents[0][2])  # doc_id should be 0 (first in input)
     # Ensure the French capital document has the highest score (raw logits)
     assert(ranked_documents[0][1] > ranked_documents[1][1])
     assert(ranked_documents[0][1] > ranked_documents[2][1])

@@ -170,17 +170,25 @@ impl Reranker {
         let scores_vec: Vec<f32> = scores.to_vec1()
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to convert scores to vec: {}", e)))?;
 
-        // Sort documents by relevance score
-        let mut ranked_docs: Vec<(String, f32)> = documents.into_iter().zip(scores_vec).collect();
+        // Create tuples with document, score, and original index
+        let mut ranked_docs: Vec<(String, f32, usize)> = documents
+            .into_iter()
+            .zip(scores_vec)
+            .enumerate()
+            .map(|(idx, (doc, score))| (doc, score, idx))
+            .collect();
+        
+        // Sort documents by relevance score (descending)
         ranked_docs.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
-        // Build result array
+        // Build result array with [doc, score, doc_id]
         let result_array = RArray::new();
-        for (doc, score) in ranked_docs {
-            let pair = RArray::new();
-            pair.push(doc)?;
-            pair.push(Float::from_f64(score as f64))?;
-            result_array.push(pair)?;
+        for (doc, score, doc_id) in ranked_docs {
+            let tuple = RArray::new();
+            tuple.push(doc)?;
+            tuple.push(Float::from_f64(score as f64))?;
+            tuple.push(doc_id)?;
+            result_array.push(tuple)?;
         }
         Ok(result_array)
     }
