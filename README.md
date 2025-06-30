@@ -102,6 +102,93 @@ model = Candle::Model.new
 embedding = model.embedding("Hi there!")
 ```
 
+## Document Reranking
+
+Red-Candle includes support for cross-encoder reranking models, which can be used to reorder documents by relevance to a query. This is particularly useful for improving search results or implementing retrieval-augmented generation (RAG) systems.
+
+### Basic Usage
+
+```ruby
+require 'candle'
+
+# Initialize the reranker with a cross-encoder model
+reranker = Candle::Reranker.new("cross-encoder/ms-marco-MiniLM-L-12-v2")
+
+# Define your query and candidate documents
+query = "How many people live in London?"
+documents = [
+  "London is known for its financial district",
+  "Around 9 Million people live in London", 
+  "The weather in London is often rainy",
+  "London is the capital of England"
+]
+
+# Rerank documents by relevance to the query
+ranked_results = reranker.rerank(query, documents)
+
+# Results are returned as [document, score, doc_id] tuples, sorted by relevance
+# doc_id is the original 0-based index in the input array
+ranked_results.each do |doc, score, doc_id|
+  puts "Score: #{score.round(4)} - Doc ##{doc_id}: #{doc}"
+end
+# Output:
+# Score: 10.3918 - Doc #1: Around 9 Million people live in London
+# Score: -3.0829 - Doc #3: London is the capital of England
+# Score: -4.7619 - Doc #0: London is known for its financial district
+# Score: -7.5251 - Doc #2: The weather in London is often rainy
+```
+
+### Activation Functions
+
+By default, the reranker returns raw logit scores. You can optionally apply sigmoid activation to get scores between 0 and 1:
+
+```ruby
+# Get sigmoid-activated scores (0 to 1 range)
+ranked_results = reranker.rerank_sigmoid(query, documents)
+
+ranked_results.each do |doc, score, doc_id|
+  puts "Score: #{score.round(4)} - Doc ##{doc_id}: #{doc}"
+end
+# Output:
+# Score: 1.0000 - Doc #1: Around 9 Million people live in London
+# Score: 0.0438 - Doc #3: London is the capital of England
+# Score: 0.0085 - Doc #0: London is known for its financial district
+# Score: 0.0005 - Doc #2: The weather in London is often rainy
+```
+
+### Output Format
+
+The reranker returns an array of tuples containing `[document, score, doc_id]`:
+- `document`: The original document text
+- `score`: The relevance score (raw logit or sigmoid-activated)
+- `doc_id`: The original 0-based index of the document in the input array
+
+This format is compatible with the Informers gem, which returns results as hashes with `:doc_id` and `:score` keys. The `doc_id` allows you to map results back to your original data structure.
+
+### CUDA Support
+
+For faster inference on NVIDIA GPUs:
+
+```ruby
+# Initialize with CUDA if available (falls back to CPU if not)
+reranker = Candle::Reranker.new_cuda("cross-encoder/ms-marco-MiniLM-L-12-v2")
+```
+
+### How It Works
+
+Cross-encoder reranking models differ from bi-encoder embedding models:
+
+- **Bi-encoders** (like the embedding models above) encode queries and documents separately into dense vectors
+- **Cross-encoders** process the query and document together, allowing for more nuanced relevance scoring
+
+The reranker uses a BERT-based architecture that:
+1. Concatenates the query and document with special tokens: `[CLS] query [SEP] document [SEP]`
+2. Processes them jointly through BERT layers
+3. Applies a pooler layer (dense + tanh) to the [CLS] token
+4. Uses a classifier layer to produce a single relevance score
+
+This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.
+
 ## Development
 
 FORK IT!
