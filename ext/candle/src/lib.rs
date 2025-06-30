@@ -3,10 +3,12 @@ use magnus::{function, method, prelude::*, Ruby};
 use crate::model::{candle_utils, RbModel, RbDType, RbDevice, RbQTensor, RbResult, RbTensor};
 
 pub mod model;
+pub mod reranker;
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
+    reranker::init(rb_candle)?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
     rb_tensor.define_singleton_method("new", function!(RbTensor::new, 2))?;
