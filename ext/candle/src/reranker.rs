@@ -223,8 +223,8 @@ impl Reranker {
 
 pub fn init(rb_candle: RModule) -> Result<(), Error> {
     let c_reranker = rb_candle.define_class("Reranker", class::object())?;
-    c_reranker.define_singleton_method("new", function!(Reranker::new, 1))?;
-    c_reranker.define_singleton_method("new_cuda", function!(Reranker::new_cuda, 1))?;
+    c_reranker.define_singleton_method("_create", function!(Reranker::new, 1))?;
+    c_reranker.define_singleton_method("_create_cuda", function!(Reranker::new_cuda, 1))?;
     c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
     c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
     c_reranker.define_method("rerank_with_pooling", method!(Reranker::rerank_with_pooling, 3))?;
