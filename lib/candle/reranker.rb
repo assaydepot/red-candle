@@ -20,7 +20,9 @@ module Candle
     # @param pooling_method [String] Pooling method: "pooler", "cls", or "mean". Default: "pooler"
     # @param apply_sigmoid [Boolean] Whether to apply sigmoid to the scores. Default: true
     def rerank(query, documents, pooling_method: "pooler", apply_sigmoid: true)
-      rerank_with_options(query, documents, pooling_method, apply_sigmoid)
+      rerank_with_options(query, documents, pooling_method, apply_sigmoid).collect { |doc, score, doc_id|
+        { doc_id: doc_id, score: score, text: doc }
+      }
     end
   end
 end
