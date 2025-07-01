@@ -159,6 +159,130 @@ print(embedding)
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
+<h2 id="document-reranking">Document Reranking</h2>
+
+<p>Red-Candle includes support for cross-encoder reranking models, which can be used to reorder documents by relevance to a query. This is particularly useful for improving search results or implementing retrieval-augmented generation (RAG) systems.</p>
+
+<h3 id="basic-usage">Basic Usage</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
+
+<span class='comment'># Initialize the reranker with a cross-encoder model
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Define your query and candidate documents
+</span><span class='id identifier rubyid_query'>query</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>How many people live in London?</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_documents'>documents</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>London is known for its financial district</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Around 9 Million people live in London</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>The weather in London is often rainy</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>London is the capital of England</span><span class='tstring_end'>&quot;</span></span>
+<span class='rbracket'>]</span>
+
+<span class='comment'># Rerank documents by relevance to the query (raw logits)
+</span><span class='id identifier rubyid_ranked_results'>ranked_results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='comma'>,</span> <span class='label'>pooling_method:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>pooler</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>apply_sigmoid:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+
+<span class='comment'># Or apply sigmoid activation to get scores between 0 and 1
+</span><span class='id identifier rubyid_sigmoid_results'>sigmoid_results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='comma'>,</span> <span class='label'>pooling_method:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>pooler</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>apply_sigmoid:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+
+<span class='comment'># The pooler method is the default and is recommended for cross-encoders, as is apply_sigmod, so the above is the same as:
+</span><span class='id identifier rubyid_ranked_results'>ranked_results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='rparen'>)</span>
+
+<span class='comment'># Results are returned as an array of hashes, sorted by relevance
+</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_g'>g</span><span class='period'>.</span>
+<span class='id identifier rubyid_ranked_results'>ranked_results</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_result'>result</span><span class='op'>|</span>
+  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Score: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:score</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>4</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> - Doc #</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:doc_id</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:text</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span>
+<span class='comment'># Output:
+</span><span class='comment'># Score: 1.0 - Doc #1: Around 9 Million people live in London
+</span><span class='comment'># Score: 0.0438 - Doc #3: London is the capital of England
+</span><span class='comment'># Score: 0.0085 - Doc #0: London is known for its financial district
+</span><span class='comment'># Score: 0.0005 - Doc #2: The weather in London is often rainy
+</span></code></pre>
+
+<h3 id="arguments-activation-functions">Arguments &amp; Activation Functions</h3>
+
+<p>By default, <code>apply_sigmoid</code> is <code>true</code> (scores between 0 and 1). Set it to <code>false</code> to get raw logits. You can also select the pooling method:</p>
+
+<ul>
+<li><code>pooling_method: &quot;pooler&quot;</code> (default)</li>
+<li><code>pooling_method: &quot;cls&quot;</code></li>
+<li><code>pooling_method: &quot;mean&quot;</code></li>
+</ul>
+
+<p>Example without sigmoid activation:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Get raw logits
+</span><span class='id identifier rubyid_ranked_results'>ranked_results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='comma'>,</span> <span class='label'>apply_sigmoid:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+
+<span class='id identifier rubyid_ranked_results'>ranked_results</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_result'>result</span><span class='op'>|</span>
+  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Score: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:score</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>4</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> - Doc #</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:doc_id</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:text</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span>
+<span class='comment'># Output:
+</span><span class='comment'># Score: 10.3918 - Doc #1: Around 9 Million people live in London
+</span><span class='comment'># Score: -3.0829 - Doc #3: London is the capital of England
+</span><span class='comment'># Score: -4.7619 - Doc #0: London is known for its financial district
+</span><span class='comment'># Score: -7.5251 - Doc #2: The weather in London is often rainy
+</span></code></pre>
+
+<h3 id="output-format">Output Format</h3>
+
+<p>The reranker returns an array of hashes, each with the following keys:</p>
+
+<ul>
+<li><code>:text</code> – The original document text</li>
+<li><code>:score</code> – The relevance score (raw logit or sigmoid-activated)</li>
+<li><code>:doc_id</code> – The original 0-based index of the document in the input array</li>
+</ul>
+
+<p>This format is compatible with the Informers gem, which returns results as hashes with <code>:doc_id</code> and <code>:score</code> keys. The <code>doc_id</code> allows you to map results back to your original data structure.</p>
+
+<h3 id="pooling-methods">Pooling Methods</h3>
+
+<p>The reranker supports different pooling strategies for aggregating BERT embeddings:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Use alternative pooling methods
+</span><span class='comment'># &quot;pooler&quot; (default) - Uses the pooler layer with tanh activation (most accurate for cross-encoders)
+</span><span class='comment'># &quot;cls&quot; - Uses raw [CLS] token embeddings without the pooler layer
+</span><span class='comment'># &quot;mean&quot; - Mean pooling across all tokens (not recommended for cross-encoders)
+</span>
+<span class='comment'># With raw logits
+</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank_with_pooling'>rerank_with_pooling</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cls</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># With sigmoid activation
+</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank_sigmoid_with_pooling'>rerank_sigmoid_with_pooling</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cls</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</code></pre>
+
+<p>Note: The default &quot;pooler&quot; method is recommended as it matches how cross-encoder models are trained. Other pooling methods may produce different ranking results.</p>
+
+<h3 id="cuda-support">CUDA Support</h3>
+
+<p>For faster inference on NVIDIA GPUs:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Initialize with CUDA if available (falls back to CPU if not)
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>cuda:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="how-it-works">How It Works</h3>
+
+<p>Cross-encoder reranking models differ from bi-encoder embedding models:</p>
+
+<ul>
+<li><strong>Bi-encoders</strong> (like the embedding models above) encode queries and documents separately into dense vectors</li>
+<li><strong>Cross-encoders</strong> process the query and document together, allowing for more nuanced relevance scoring</li>
+</ul>
+
+<p>The reranker uses a BERT-based architecture that:</p>
+
+<ol>
+<li>Concatenates the query and document with special tokens: <code>[CLS] query [SEP] document [SEP]</code></li>
+<li>Processes them jointly through BERT layers</li>
+<li>Applies a pooler layer (dense + tanh) to the [CLS] token</li>
+<li>Uses a classifier layer to produce a single relevance score</li>
+</ol>
+
+<p>This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.</p>
+
 <h2 id="development">Development</h2>
 
 <p>FORK IT!</p>
@@ -182,7 +306,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Tue Jul  1 13:55:11 2025 by
+  Generated on Tue Jul  1 21:49:04 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>
