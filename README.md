@@ -138,10 +138,10 @@ ranked_results.each do |result|
   puts "Score: #{result[:score].round(4)} - Doc ##{result[:doc_id]}: #{result[:text]}"
 end
 # Output:
-# Score: 10.3918 - Doc #1: Around 9 Million people live in London
-# Score: -3.0829 - Doc #3: London is the capital of England
-# Score: -4.7619 - Doc #0: London is known for its financial district
-# Score: -7.5251 - Doc #2: The weather in London is often rainy
+# [{:doc_id=>1, :score=>0.9999693632125854, :text=>"Around 9 Million people live in London"},
+#  {:doc_id=>3, :score=>0.04381871595978737, :text=>"London is the capital of England"},
+#  {:doc_id=>0, :score=>0.008476530201733112, :text=>"London is known for its financial district"},
+#  {:doc_id=>2, :score=>0.0005390917649492621, :text=>"The weather in London is often rainy"}]
 ```
 
 ### Arguments & Activation Functions
