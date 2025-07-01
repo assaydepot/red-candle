@@ -123,13 +123,19 @@ documents = [
   "London is the capital of England"
 ]
 
-# Rerank documents by relevance to the query
+# Rerank documents by relevance to the query (raw logits)
+ranked_results = reranker.rerank(query, documents, pooling_method: "pooler", apply_sigmoid: false)
+
+# Or apply sigmoid activation to get scores between 0 and 1
+sigmoid_results = reranker.rerank(query, documents, pooling_method: "pooler", apply_sigmoid: true)
+
+# The pooler method is the default and is recommended for cross-encoders, as is apply_sigmod, so the above is the same as:
 ranked_results = reranker.rerank(query, documents)
 
-# Results are returned as [document, score, doc_id] tuples, sorted by relevance
-# doc_id is the original 0-based index in the input array
-ranked_results.each do |doc, score, doc_id|
-  puts "Score: #{score.round(4)} - Doc ##{doc_id}: #{doc}"
+# Results are returned as an array of hashes, sorted by relevance
+e.g.
+ranked_results.each do |result|
+  puts "Score: #{result[:score].round(4)} - Doc ##{result[:doc_id]}: #{result[:text]}"
 end
 # Output:
 # Score: 10.3918 - Doc #1: Around 9 Million people live in London
@@ -138,16 +144,22 @@ end
 # Score: -7.5251 - Doc #2: The weather in London is often rainy
 ```
 
-### Activation Functions
+### Arguments & Activation Functions
 
-By default, the reranker returns raw logit scores. You can optionally apply sigmoid activation to get scores between 0 and 1:
+By default, `apply_sigmoid` is `true` (scores between 0 and 1). Set it to `false` to get raw logits. You can also select the pooling method:
+
+- `pooling_method: "pooler"` (default)
+- `pooling_method: "cls"`
+- `pooling_method: "mean"`
+
+Example with sigmoid activation:
 
 ```ruby
 # Get sigmoid-activated scores (0 to 1 range)
-ranked_results = reranker.rerank_sigmoid(query, documents)
+ranked_results = reranker.rerank(query, documents, apply_sigmoid: true)
 
-ranked_results.each do |doc, score, doc_id|
-  puts "Score: #{score.round(4)} - Doc ##{doc_id}: #{doc}"
+ranked_results.each do |result|
+  puts "Score: #{result[:score].round(4)} - Doc ##{result[:doc_id]}: #{result[:text]}"
 end
 # Output:
 # Score: 1.0000 - Doc #1: Around 9 Million people live in London
@@ -158,10 +170,10 @@ end
 
 ### Output Format
 
-The reranker returns an array of tuples containing `[document, score, doc_id]`:
-- `document`: The original document text
-- `score`: The relevance score (raw logit or sigmoid-activated)
-- `doc_id`: The original 0-based index of the document in the input array
+The reranker returns an array of hashes, each with the following keys:
+- `:text` – The original document text
+- `:score` – The relevance score (raw logit or sigmoid-activated)
+- `:doc_id` – The original 0-based index of the document in the input array
 
 This format is compatible with the Informers gem, which returns results as hashes with `:doc_id` and `:score` keys. The `doc_id` allows you to map results back to your original data structure.
 
