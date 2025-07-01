@@ -112,7 +112,7 @@ Red-Candle includes support for cross-encoder reranking models, which can be use
 require 'candle'
 
 # Initialize the reranker with a cross-encoder model
-reranker = Candle::Reranker.new("cross-encoder/ms-marco-MiniLM-L-12-v2")
+reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
 
 # Define your query and candidate documents
 query = "How many people live in London?"
@@ -202,7 +202,7 @@ For faster inference on NVIDIA GPUs:
 
 ```ruby
 # Initialize with CUDA if available (falls back to CPU if not)
-reranker = Candle::Reranker.new_cuda("cross-encoder/ms-marco-MiniLM-L-12-v2")
+reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2", cuda: true)
 ```
 
 ### How It Works
