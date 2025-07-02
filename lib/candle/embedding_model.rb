@@ -24,8 +24,8 @@ module Candle
     end
     # Returns the embedding for a string using the specified pooling method.
     # @param str [String] The input text
-    # @param pooling_method [String] Pooling method: "pooled", "pooled_normalized", or "cls". Default: "pooled"
-    def embedding(str, pooling_method = "pooled")
+    # @param pooling_method [String] Pooling method: "pooled", "pooled_normalized", or "cls". Default: "pooled_normalized"
+    def embedding(str, pooling_method: "pooled_normalized")
       _embedding(str, pooling_method)
     end
   end
