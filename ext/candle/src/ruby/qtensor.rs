@@ -1,25 +1,23 @@
-use magnus::Error;
 use std::sync::Arc;
 
-use crate::model::{errors::wrap_candle_err, rb_tensor::RbTensor};
-use ::candle_core::{quantized::QTensor, Device};
-
-type RbResult<T> = Result<T, Error>;
+use crate::ruby::errors::wrap_candle_err;
+use crate::ruby::{Tensor, Result as RbResult};
+use ::candle_core::{quantized::QTensor as CoreQTensor, Device as CoreDevice};
 
 #[derive(Debug)]
 #[magnus::wrap(class = "Candle::QTensor", free_immediately, size)]
 /// A quantized tensor.
-pub struct RbQTensor(Arc<QTensor>);
+pub struct QTensor(Arc<CoreQTensor>);
 
-impl std::ops::Deref for RbQTensor {
-    type Target = QTensor;
+impl std::ops::Deref for QTensor {
+    type Target = CoreQTensor;
 
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
     }
 }
 
-impl RbQTensor {
+impl QTensor {
     ///Gets the tensors quantized dtype.
     /// &RETURNS&: str
     pub fn ggml_dtype(&self) -> String {
@@ -48,14 +46,14 @@ impl RbQTensor {
 
     /// Dequantizes the tensor.
     /// &RETURNS&: Tensor
-    pub fn dequantize(&self) -> RbResult<RbTensor> {
-        let tensor = self.0.dequantize(&Device::Cpu).map_err(wrap_candle_err)?;
-        Ok(RbTensor(tensor))
+    pub fn dequantize(&self) -> RbResult<Tensor> {
+        let tensor = self.0.dequantize(&CoreDevice::Cpu).map_err(wrap_candle_err)?;
+        Ok(Tensor(tensor))
     }
 
-    // fn matmul_t(&self, lhs: &RbTensor) -> RbResult<RbTensor> {
+    // fn matmul_t(&self, lhs: &Tensor) -> RbResult<Tensor> {
     //     let qmatmul = ::candle_core::quantized::QMatMul::from_arc(self.0.clone());
     //     let res = qmatmul.forward(lhs).map_err(wrap_candle_err)?;
-    //     Ok(RbTensor(res))
+    //     Ok(Tensor(res))
     // }
 }
