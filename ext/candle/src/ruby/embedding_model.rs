@@ -22,33 +22,33 @@ use tokenizers::Tokenizer;
 use serde_json;
 
 
-#[magnus::wrap(class = "Candle::Model", free_immediately, size)]
-pub struct Model(pub ModelInner);
+#[magnus::wrap(class = "Candle::EmbeddingModel", free_immediately, size)]
+pub struct EmbeddingModel(pub EmbeddingModelInner);
 
 /// Supported model types for embedding generation
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ModelType {
+pub enum EmbeddingModelType {
     JinaBert,
     StandardBert,
     DistilBert,
     MiniLM,
 }
 
-impl ModelType {
+impl EmbeddingModelType {
     pub fn from_string(model_type: &str) -> Option<Self> {
         match model_type.to_lowercase().as_str() {
-            "jina_bert" | "jinabert" | "jina" => Some(ModelType::JinaBert),
-            "bert" | "standard_bert" | "standardbert" => Some(ModelType::StandardBert),
-            "minilm" => Some(ModelType::MiniLM),
+            "jina_bert" | "jinabert" | "jina" => Some(EmbeddingModelType::JinaBert),
+            "bert" | "standard_bert" | "standardbert" => Some(EmbeddingModelType::StandardBert),
+            "minilm" => Some(EmbeddingModelType::MiniLM),
     
-            "distilbert" => Some(ModelType::DistilBert),
+            "distilbert" => Some(EmbeddingModelType::DistilBert),
             _ => None
         }
     }
 }
 
 /// Model variants that can produce embeddings
-pub enum ModelVariant {
+pub enum EmbeddingModelVariant {
     JinaBert(JinaBertModel),
     StandardBert(StdBertModel),
     DistilBert(DistilBertModel),
@@ -56,41 +56,41 @@ pub enum ModelVariant {
 
 }
 
-impl ModelVariant {
-    pub fn model_type(&self) -> ModelType {
+impl EmbeddingModelVariant {
+    pub fn embedding_model_type(&self) -> EmbeddingModelType {
         match self {
-            ModelVariant::JinaBert(_) => ModelType::JinaBert,
-            ModelVariant::StandardBert(_) => ModelType::StandardBert,
-            ModelVariant::DistilBert(_) => ModelType::DistilBert,
-            ModelVariant::MiniLM(_) => ModelType::MiniLM,
+            EmbeddingModelVariant::JinaBert(_) => EmbeddingModelType::JinaBert,
+            EmbeddingModelVariant::StandardBert(_) => EmbeddingModelType::StandardBert,
+            EmbeddingModelVariant::DistilBert(_) => EmbeddingModelType::DistilBert,
+            EmbeddingModelVariant::MiniLM(_) => EmbeddingModelType::MiniLM,
     
         }
     }
 }
 
-pub struct ModelInner {
+pub struct EmbeddingModelInner {
     device: CoreDevice,
     tokenizer_path: Option<String>,
     model_path: Option<String>,
-    model_type: Option<ModelType>,
-    model: Option<ModelVariant>,
+    embedding_model_type: Option<EmbeddingModelType>,
+    model: Option<EmbeddingModelVariant>,
     tokenizer: Option<Tokenizer>,
     embedding_size: Option<usize>,
 }
 
-impl Model {
-    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, model_type: Option<String>, embedding_size: Option<usize>) -> RbResult<Self> {
+impl EmbeddingModel {
+    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> RbResult<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
-        let model_type = model_type
-            .and_then(|mt| ModelType::from_string(&mt))
-            .unwrap_or(ModelType::JinaBert);
-        Ok(Model(ModelInner {
+        let embedding_model_type = embedding_model_type
+            .and_then(|mt| EmbeddingModelType::from_string(&mt))
+            .unwrap_or(EmbeddingModelType::JinaBert);
+        Ok(EmbeddingModel(EmbeddingModelInner {
             device: device.clone(),
             model_path: model_path.clone(),
             tokenizer_path: tokenizer_path.clone(),
-            model_type: Some(model_type),
+            embedding_model_type: Some(embedding_model_type),
             model: match model_path {
-                Some(mp) => Some(Self::build_model(Path::new(&mp), device, model_type, embedding_size)?),
+                Some(mp) => Some(Self::build_embedding_model(Path::new(&mp), device, embedding_model_type, embedding_size)?),
                 None => None
             },
             tokenizer: match tokenizer_path {
@@ -174,12 +174,12 @@ impl Model {
         }
     }
 
-    fn build_model(model_path: &Path, device: CoreDevice, model_type: ModelType, embedding_size: Option<usize>) -> RbResult<ModelVariant> {
+    fn build_embedding_model(model_path: &Path, device: CoreDevice, embedding_model_type: EmbeddingModelType, embedding_size: Option<usize>) -> RbResult<EmbeddingModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let api = Api::new().map_err(wrap_hf_err)?;
         let repo = Repo::new(model_path.to_str().unwrap().to_string(), RepoType::Model);
-        match model_type {
-            ModelType::JinaBert => {
+        match embedding_model_type {
+            EmbeddingModelType::JinaBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
                 if !std::path::Path::new(&model_path).exists() {
                     return Err(magnus::Error::new(
@@ -195,9 +195,9 @@ impl Model {
                         .map_err(wrap_candle_err)?
                 };
                 let model = JinaBertModel::new(vb, &config).map_err(wrap_candle_err)?;
-                Ok(ModelVariant::JinaBert(model))
+                Ok(EmbeddingModelVariant::JinaBert(model))
             },
-            ModelType::StandardBert => {
+            EmbeddingModelType::StandardBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
                 if !std::path::Path::new(&model_path).exists() {
                     return Err(magnus::Error::new(
@@ -213,9 +213,9 @@ impl Model {
                         .map_err(wrap_candle_err)?
                 };
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
-                Ok(ModelVariant::StandardBert(model))
+                Ok(EmbeddingModelVariant::StandardBert(model))
             },
-            ModelType::DistilBert => {
+            EmbeddingModelType::DistilBert => {
                 let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
                 if !std::path::Path::new(&model_path).exists() {
                     return Err(magnus::Error::new(
@@ -234,9 +234,9 @@ impl Model {
                         .map_err(wrap_candle_err)?
                 };
                 let model = DistilBertModel::load(vb, &config).map_err(wrap_candle_err)?;
-                Ok(ModelVariant::DistilBert(model))
+                Ok(EmbeddingModelVariant::DistilBert(model))
             },
-            ModelType::MiniLM => {
+            EmbeddingModelType::MiniLM => {
                 let model_path = api.repo(repo.clone()).get("model.safetensors").map_err(wrap_hf_err)?;
                 if !std::path::Path::new(&model_path).exists() {
                     return Err(magnus::Error::new(
@@ -255,7 +255,7 @@ impl Model {
                         .map_err(wrap_candle_err)?
                 };
                 let model = StdBertModel::load(vb, &config).map_err(wrap_candle_err)?;
-                Ok(ModelVariant::MiniLM(model))
+                Ok(EmbeddingModelVariant::MiniLM(model))
             },
 
         }
@@ -318,7 +318,7 @@ impl Model {
     fn compute_embeddings(
         &self,
         prompt: String,
-        model: &ModelVariant,
+        model: &EmbeddingModelVariant,
         tokenizer: &Tokenizer,
     ) -> Result<CoreTensor, Error> {
         let tokens = tokenizer
@@ -337,16 +337,16 @@ impl Model {
         let attention_mask = CoreTensor::ones(&[batch_size, seq_len], CoreDType::U32, &self.0.device)
             .map_err(wrap_candle_err)?;
         match model {
-            ModelVariant::JinaBert(model) => {
+            EmbeddingModelVariant::JinaBert(model) => {
                 model.forward(&token_ids).map_err(wrap_candle_err)
             },
-            ModelVariant::StandardBert(model) => {
+            EmbeddingModelVariant::StandardBert(model) => {
                 model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
             },
-            ModelVariant::DistilBert(model) => {
+            EmbeddingModelVariant::DistilBert(model) => {
                 model.forward(&token_ids, &attention_mask).map_err(wrap_candle_err)
             },
-            ModelVariant::MiniLM(model) => {
+            EmbeddingModelVariant::MiniLM(model) => {
                 model.forward(&token_ids, &token_type_ids, Some(&attention_mask)).map_err(wrap_candle_err)
             },
 
@@ -358,7 +358,7 @@ impl Model {
     fn compute_embedding(
         &self,
         prompt: String,
-        model: &ModelVariant,
+        model: &EmbeddingModelVariant,
         tokenizer: &Tokenizer,
         pooling_method: &str,
     ) -> Result<CoreTensor, Error> {
@@ -376,8 +376,8 @@ impl Model {
         v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
 
-    pub fn model_type(&self) -> String {
-        match self.0.model_type {
+    pub fn embedding_model_type(&self) -> String {
+        match self.0.embedding_model_type {
             Some(model_type) => format!("{:?}", model_type),
             None => "nil".to_string(),
         }
@@ -385,8 +385,8 @@ impl Model {
 
     pub fn __repr__(&self) -> String {
         format!(
-            "#<Candle::Model model_type: {}, model_path: {}, tokenizer_path: {}, embedding_size: {}>", 
-            self.model_type(), 
+            "#<Candle::EmbeddingModel embedding_model_type: {}, model_path: {}, tokenizer_path: {}, embedding_size: {}>",
+            self.embedding_model_type(), 
             self.0.model_path.as_deref().unwrap_or("nil"), 
             self.0.tokenizer_path.as_deref().unwrap_or("nil"),
             self.0.embedding_size.map(|x| x.to_string()).unwrap_or("nil".to_string())
@@ -399,16 +399,16 @@ impl Model {
 }
 
 pub fn init(rb_candle: RModule) -> Result<(), Error> {
-    let rb_model = rb_candle.define_class("Model", class::object())?;
-    rb_model.define_singleton_method("_create", function!(Model::new, 5))?;
+    let rb_embedding_model = rb_candle.define_class("EmbeddingModel", class::object())?;
+    rb_embedding_model.define_singleton_method("_create", function!(EmbeddingModel::new, 5))?;
     // Expose embedding with an optional pooling_method argument (default: "pooled")
-    rb_model.define_method("_embedding", method!(Model::embedding, 2))?;
-    rb_model.define_method("embeddings", method!(Model::embeddings, 1))?;
-    rb_model.define_method("pool_embedding", method!(Model::pool_embedding, 1))?;
-    rb_model.define_method("pool_and_normalize_embedding", method!(Model::pool_and_normalize_embedding, 1))?;
-    rb_model.define_method("pool_cls_embedding", method!(Model::pool_cls_embedding, 1))?;
-    rb_model.define_method("model_type", method!(Model::model_type, 0))?;
-    rb_model.define_method("to_s", method!(Model::__str__, 0))?;
-    rb_model.define_method("inspect", method!(Model::__repr__, 0))?;
+    rb_embedding_model.define_method("_embedding", method!(EmbeddingModel::embedding, 2))?;
+    rb_embedding_model.define_method("embeddings", method!(EmbeddingModel::embeddings, 1))?;
+    rb_embedding_model.define_method("pool_embedding", method!(EmbeddingModel::pool_embedding, 1))?;
+    rb_embedding_model.define_method("pool_and_normalize_embedding", method!(EmbeddingModel::pool_and_normalize_embedding, 1))?;
+    rb_embedding_model.define_method("pool_cls_embedding", method!(EmbeddingModel::pool_cls_embedding, 1))?;
+    rb_embedding_model.define_method("embedding_model_type", method!(EmbeddingModel::embedding_model_type, 0))?;
+    rb_embedding_model.define_method("to_s", method!(EmbeddingModel::__str__, 0))?;
+    rb_embedding_model.define_method("inspect", method!(EmbeddingModel::__repr__, 0))?;
     Ok(())
 }

@@ -1,6 +1,6 @@
 module Candle
   # Enum for the supported embedding model types
-  module ModelType
+  module EmbeddingModelType
     # Jina Bert embedding models (e.g., jina-embeddings-v2-base-en)
     JINA_BERT = "jina_bert"
     

@@ -1,8 +1,8 @@
 require_relative "test_helper"
 
-class ModelTest < Minitest::Test
+class EmbeddingModelTest < Minitest::Test
   def test_pooled_embeddings_shape
-    model = Candle::Model.new
+    model = Candle::EmbeddingModel.new
     string = "Hi there"
     embeddings = model.embeddings(string)
     pooled = model.pool_and_normalize_embedding(embeddings)
@@ -10,7 +10,7 @@ class ModelTest < Minitest::Test
   end
 
   def test_pooled_embeddings
-    model = Candle::Model.new
+    model = Candle::EmbeddingModel.new
     string = "Hi there"
     embeddings = model.embeddings(string)
     pooled = model.pool_embedding(embeddings)

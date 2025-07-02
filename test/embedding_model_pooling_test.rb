@@ -1,8 +1,8 @@
 require_relative "test_helper"
 
-class ModelPoolingTest < Minitest::Test
+class EmbeddingModelPoolingTest < Minitest::Test
   def setup
-    @model = Candle::Model.new
+    @model = Candle::EmbeddingModel.new
     @string = "The quick brown fox jumps over the lazy dog."
     @embeddings = @model.embeddings(@string)
   end

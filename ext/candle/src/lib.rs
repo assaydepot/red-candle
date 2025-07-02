@@ -9,7 +9,7 @@ pub mod ruby;
 #[magnus::init]
 fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
-    ruby::init_model(rb_candle)?;
+    ruby::init_embedding_model(rb_candle)?;
     reranker::init(rb_candle)?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;

@@ -22,15 +22,15 @@ x = x.reshape([3, 2])
 require 'candle'
 
 # Default model (JinaBERT)
-model = Candle::Model.new
+model = Candle::EmbeddingModel.new
 embedding = model.embedding("Hi there!")
 
 # Specify a different model type
-model = Candle::Model.new(
+model = Candle::EmbeddingModel.new(
   model_path: "sentence-transformers/all-MiniLM-L6-v2",
   tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
   device: nil,  # nil = CPU
-  model_type: Candle::ModelType::STANDARD_BERT
+  model_type: Candle::EmbeddingModelType::MINILM
 )
 embedding = model.embedding("Hi there!")
 ```
@@ -51,28 +51,28 @@ this means the selected model is not compatible. Please choose a model repo that
 
 Red-Candle supports the following embedding model types from Hugging Face:
 
-1. `Candle::ModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`) (**safetensors required**)
-2. `Candle::ModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`) (**safetensors required**)
-3. `Candle::ModelType::DISTILBERT` - DistilBERT models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`) (**safetensors required**)
+1. `Candle::EmbeddingModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`) (**safetensors required**)
+2. `Candle::EmbeddingModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`) (**safetensors required**)
+3. `Candle::EmbeddingModelType::DISTILBERT` - DistilBERT models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`) (**safetensors required**)
 
 > **Note:** Most official BERT and DistilBERT models do _not_ provide safetensors. Please check the model repo before use.
 
 You can get a list of all supported model types and suggested models paths:
 
 ```ruby
-Candle::ModelType.all  # Returns all supported model types
-Candle::ModelType.suggested_model_paths  # Returns hash of suggested models for each type
+Candle::EmbeddingModelType.all  # Returns all supported model types
+Candle::EmbeddingModelType.suggested_model_paths  # Returns hash of suggested models for each type
 ```
 
 ## A note on memory usage
-The default model (`jinaai/jina-embeddings-v2-base-en` with the `sentence-transformers/all-MiniLM-L6-v2` tokenizer, both from [HuggingFace](https://huggingface.co)) takes a little more than 3GB of memory running on a Mac. The memory stays with the instantiated `Candle::Model` class, if you instantiate more than one, you'll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you'll free the memory. For example:
+The default model (`jinaai/jina-embeddings-v2-base-en` with the `sentence-transformers/all-MiniLM-L6-v2` tokenizer, both from [HuggingFace](https://huggingface.co)) takes a little more than 3GB of memory running on a Mac. The memory stays with the instantiated `Candle::EmbeddingModel` class, if you instantiate more than one, you'll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you'll free the memory. For example:
 
 ```ruby
 > require 'candle'
 # Ruby memory = 25.9 MB
-> model = Candle::Model.new
+> model = Candle::EmbeddingModel.new
 # Ruby memory = 3.50 GB
-> model2 = Candle::Model.new
+> model2 = Candle::EmbeddingModel.new
 # Ruby memory = 7.04 GB
 > model2 = nil
 > GC.start
@@ -98,7 +98,7 @@ And the following ruby:
 
 ```ruby
 require 'candle'
-model = Candle::Model.new
+model = Candle::EmbeddingModel.new
 embedding = model.embedding("Hi there!")
 ```
 
