@@ -30,6 +30,9 @@ pub trait TextGenerator: Send + Sync {
 
     /// Get the device the model is running on
     fn device(&self) -> &Device;
+    
+    /// Clear any cached state (like KV cache)
+    fn clear_cache(&mut self);
 }
 
 /// Common structure for managing tokenizer

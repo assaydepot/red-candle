@@ -16,6 +16,11 @@ pub struct Mistral {
 }
 
 impl Mistral {
+    /// Clear the KV cache between generations
+    pub fn clear_kv_cache(&mut self) {
+        self.model.clear_kv_cache();
+    }
+    
     /// Load a Mistral model from HuggingFace Hub
     pub async fn from_pretrained(model_id: &str, device: Device) -> CandleResult<Self> {
         let api = Api::new()
@@ -225,5 +230,9 @@ impl TextGenerator for Mistral {
 
     fn device(&self) -> &Device {
         &self.device
+    }
+    
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
     }
 }

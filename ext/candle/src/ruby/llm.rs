@@ -34,6 +34,12 @@ impl ModelType {
             ModelType::Mistral(m) => m.model_name(),
         }
     }
+    
+    fn clear_cache(&mut self) {
+        match self {
+            ModelType::Mistral(m) => m.clear_cache(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -252,6 +258,14 @@ impl LLM {
     pub fn device(&self) -> RbDevice {
         self.device
     }
+    
+    /// Clear the model's cache (e.g., KV cache for transformers)
+    pub fn clear_cache(&self) -> RbResult<()> {
+        let model = self.model.lock().unwrap();
+        let mut model_ref = model.borrow_mut();
+        model_ref.clear_cache();
+        Ok(())
+    }
 }
 
 pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
@@ -277,6 +291,7 @@ pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
     rb_llm.define_method("generate_stream", method!(LLM::generate_stream, 2))?;
     rb_llm.define_method("model_name", method!(LLM::model_name, 0))?;
     rb_llm.define_method("device", method!(LLM::device, 0))?;
+    rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;
     
     Ok(())
 }
