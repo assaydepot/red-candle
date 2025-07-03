@@ -2,7 +2,8 @@ use magnus::{function, Error, Module, Object};
 
 use ::candle_core::Tensor;
 
-use crate::model::{errors::wrap_candle_err, rb_result::RbResult, rb_tensor::RbTensor};
+use crate::ruby::errors::wrap_candle_err;
+use crate::ruby::{Result as RbResult, Tensor as RbTensor};
 
 pub fn actual_index(t: &Tensor, dim: usize, index: i64) -> candle_core::Result<usize> {
     let dim = t.dim(dim)?;

@@ -1,8 +1,8 @@
 require_relative "test_helper"
 
-class ModelPoolingTest < Minitest::Test
+class EmbeddingModelPoolingTest < Minitest::Test
   def setup
-    @model = Candle::Model.new
+    @model = Candle::EmbeddingModel.new
     @string = "The quick brown fox jumps over the lazy dog."
     @embeddings = @model.embeddings(@string)
   end
@@ -15,7 +15,7 @@ class ModelPoolingTest < Minitest::Test
   end
 
   def test_pool_and_normalize_embedding_matches_manual
-    pooled_norm_ruby = @model.pool_and_normalize_embedding(@embeddings)
+    pooled_norm_ruby = @model.embedding(@string, pooling_method: "pooled_normalized")
     # Manually pool and then normalize
     pooled_manual = @embeddings.mean(1)
     norm = pooled_manual / Math.sqrt(pooled_manual.sqr.sum(1).values.first)
@@ -23,7 +23,7 @@ class ModelPoolingTest < Minitest::Test
   end
 
   def test_pool_cls_embedding
-    cls_ruby = @model.pool_cls_embedding(@embeddings)
+    cls_ruby = @model.embedding(@string, pooling_method: "cls")
     # Manually extract CLS token (index 0)
     # For shape [batch, seq, hidden], get first token of first batch
     cls_manual = @embeddings.get(0).get(0)
@@ -31,16 +31,16 @@ class ModelPoolingTest < Minitest::Test
   end
 
   def test_embedding_calls_correct_pooling
-    pooled = @model.embedding(@string, "pooled")
-    pooled_norm = @model.embedding(@string, "pooled_normalized")
-    cls = @model.embedding(@string, "cls")
+    pooled = @model.embedding(@string, pooling_method: "pooled")
+    pooled_norm = @model.embedding(@string, pooling_method: "pooled_normalized")
+    cls = @model.embedding(@string, pooling_method: "cls")
     refute_equal pooled.first.to_a, pooled_norm.first.to_a
     refute_equal pooled.first.to_a, cls.first.to_a
     refute_equal pooled_norm.first.to_a, cls.first.to_a
   end
 
   def test_embedding_default_is_pooled
-    pooled = @model.embedding(@string, "pooled")
+    pooled = @model.embedding(@string, pooling_method: "pooled_normalized")
     default = @model.embedding(@string)
     assert_equal pooled.first.to_a, default.first.to_a
   end
