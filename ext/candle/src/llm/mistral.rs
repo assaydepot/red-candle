@@ -142,15 +142,27 @@ impl Mistral {
         let start_gen = all_tokens.len();
         
         for index in 0..config.max_length {
-            let context_tokens = if index == 0 {
-                all_tokens.as_slice()
+            let context_size = if index > 0 { 1 } else { all_tokens.len() };
+            let start_pos = all_tokens.len().saturating_sub(context_size);
+            let ctxt = &all_tokens[start_pos..];
+            
+            let input = Tensor::new(ctxt, &self.device)?.unsqueeze(0)?;
+            let logits = self.model.forward(&input, start_pos)?;
+            
+            // The model returns logits of shape [batch_size, seq_len, vocab_size]
+            // We need to get the logits for the last token only
+            let logits = logits.squeeze(0)?; // Remove batch dimension
+            let logits = if logits.dims().len() == 2 {
+                // If we still have [seq_len, vocab_size], take the last token
+                let seq_len = logits.dim(0)?;
+                logits.narrow(0, seq_len - 1, 1)?.squeeze(0)?
             } else {
-                &all_tokens[all_tokens.len().saturating_sub(1)..]
+                // Already [vocab_size]
+                logits
             };
             
-            let input = Tensor::new(context_tokens, &self.device)?;
-            let logits = self.model.forward(&input, all_tokens.len())?;
-            let logits = logits.squeeze(0)?;
+            // Convert to F32 for sampling if needed
+            let logits = logits.to_dtype(DType::F32)?;
             
             let next_token = text_gen.sample_next_token(
                 &logits,
