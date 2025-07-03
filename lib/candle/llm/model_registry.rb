@@ -33,6 +33,18 @@ module Candle
 
     # Pre-register known models
     ModelRegistry.register(
+      /mistral.*7b.*instruct.*v0\.[123]/i,
+      {
+        name: "Mistral 7B Instruct",
+        type: :mistral,
+        size: "7B",
+        context_length: 32768,
+        supports_chat: true,
+        notes: "Uses sharded safetensors format"
+      }
+    )
+    
+    ModelRegistry.register(
       /mistral.*7b.*instruct/i,
       {
         name: "Mistral 7B Instruct",
