@@ -4,7 +4,7 @@
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
-  Class: Candle::Model
+  Class: Candle::EmbeddingModel
   
     &mdash; Documentation by YARD 0.9.37
   
@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="../css/common.css" type="text/css" />
 
 <script type="text/javascript">
-  pathId = "Candle::Model";
+  pathId = "Candle::EmbeddingModel";
   relpath = '../';
 </script>
 
@@ -36,10 +36,10 @@
       <div id="header">
         <div id="menu">
   
-    <a href="../_index.html">Index (M)</a> &raquo;
+    <a href="../_index.html">Index (E)</a> &raquo;
     <span class='title'><span class='object_link'><a href="../Candle.html" title="Candle (module)">Candle</a></span></span>
      &raquo; 
-    <span class="title">Model</span>
+    <span class="title">EmbeddingModel</span>
   
 </div>
 
@@ -59,7 +59,7 @@
         <div class="clear"></div>
       </div>
 
-      <div id="content"><h1>Class: Candle::Model
+      <div id="content"><h1>Class: Candle::EmbeddingModel
   
   
   
@@ -74,7 +74,7 @@
         <ul class="fullTree">
           <li>Object</li>
           
-            <li class="next">Candle::Model</li>
+            <li class="next">Candle::EmbeddingModel</li>
           
         </ul>
         <a href="#" class="inheritanceTree">show all</a>
@@ -94,7 +94,7 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/candle/model.rb</dd>
+    <dd>lib/candle/embedding_model.rb</dd>
   </dl>
   
 </div>
@@ -140,11 +140,11 @@
         </dt>
         <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span></pre></dd>
       
-        <dt id="DEFAULT_MODEL_TYPE-constant" class="">DEFAULT_MODEL_TYPE =
+        <dt id="DEFAULT_EMBEDDING_MODEL_TYPE-constant" class="">DEFAULT_EMBEDDING_MODEL_TYPE =
           <div class="docstring">
   <div class="discussion">
     
-<p>Default model type</p>
+<p>Default embedding model type</p>
 
 
   </div>
@@ -176,7 +176,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#new-class_method" title="new (class method)">.<strong>new</strong>(model_path: DEFAULT_MODEL_PATH, tokenizer_path: DEFAULT_TOKENIZER_PATH, device: nil, model_type: DEFAULT_MODEL_TYPE, embedding_size: nil)  &#x21d2; Object </a>
+      <a href="#new-class_method" title="new (class method)">.<strong>new</strong>(model_path: DEFAULT_MODEL_PATH, tokenizer_path: DEFAULT_TOKENIZER_PATH, device: nil, model_type: DEFAULT_EMBEDDING_MODEL_TYPE, embedding_size: nil)  &#x21d2; Object </a>
     
 
     
@@ -191,7 +191,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Constructor for creating a new Model with optional parameters.</p>
+<p>Constructor for creating a new EmbeddingModel with optional parameters.</p>
 </div></span>
   
 </li>
@@ -209,7 +209,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#embedding-instance_method" title="#embedding (instance method)">#<strong>embedding</strong>(str, pooling_method = &quot;pooled&quot;)  &#x21d2; Object </a>
+      <a href="#embedding-instance_method" title="#embedding (instance method)">#<strong>embedding</strong>(str, pooling_method: &quot;pooled_normalized&quot;)  &#x21d2; Object </a>
     
 
     
@@ -242,7 +242,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="new-class_method">
   
-    .<strong>new</strong>(model_path: DEFAULT_MODEL_PATH, tokenizer_path: DEFAULT_TOKENIZER_PATH, device: nil, model_type: DEFAULT_MODEL_TYPE, embedding_size: nil)  &#x21d2; <tt>Object</tt> 
+    .<strong>new</strong>(model_path: DEFAULT_MODEL_PATH, tokenizer_path: DEFAULT_TOKENIZER_PATH, device: nil, model_type: DEFAULT_EMBEDDING_MODEL_TYPE, embedding_size: nil)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -251,7 +251,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Constructor for creating a new Model with optional parameters</p>
+<p>Constructor for creating a new EmbeddingModel with optional parameters</p>
 
 
   </div>
@@ -322,12 +322,12 @@
         <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
       
       
-        <em class="default">(defaults to: <tt>DEFAULT_MODEL_TYPE</tt>)</em>
+        <em class="default">(defaults to: <tt>DEFAULT_EMBEDDING_MODEL_TYPE</tt>)</em>
       
       
         &mdash;
         <div class='inline'>
-<p>The type of model to use</p>
+<p>The type of embedding model to use</p>
 </div>
       
     </li>
@@ -368,12 +368,12 @@
 24</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/model.rb', line 18</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/embedding_model.rb', line 18</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_MODEL_PATH-constant" title="Candle::Model::DEFAULT_MODEL_PATH (constant)">DEFAULT_MODEL_PATH</a></span></span><span class='comma'>,</span>
-  <span class='label'>tokenizer_path:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_TOKENIZER_PATH-constant" title="Candle::Model::DEFAULT_TOKENIZER_PATH (constant)">DEFAULT_TOKENIZER_PATH</a></span></span><span class='comma'>,</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_MODEL_PATH-constant" title="Candle::EmbeddingModel::DEFAULT_MODEL_PATH (constant)">DEFAULT_MODEL_PATH</a></span></span><span class='comma'>,</span>
+  <span class='label'>tokenizer_path:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_TOKENIZER_PATH-constant" title="Candle::EmbeddingModel::DEFAULT_TOKENIZER_PATH (constant)">DEFAULT_TOKENIZER_PATH</a></span></span><span class='comma'>,</span>
   <span class='label'>device:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>model_type:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_MODEL_TYPE-constant" title="Candle::Model::DEFAULT_MODEL_TYPE (constant)">DEFAULT_MODEL_TYPE</a></span></span><span class='comma'>,</span>
+  <span class='label'>model_type:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_EMBEDDING_MODEL_TYPE-constant" title="Candle::EmbeddingModel::DEFAULT_EMBEDDING_MODEL_TYPE (constant)">DEFAULT_EMBEDDING_MODEL_TYPE</a></span></span><span class='comma'>,</span>
   <span class='label'>embedding_size:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid__create'>_create</span><span class='lparen'>(</span><span class='id identifier rubyid_model_path'>model_path</span><span class='comma'>,</span> <span class='id identifier rubyid_tokenizer_path'>tokenizer_path</span><span class='comma'>,</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> <span class='id identifier rubyid_model_type'>model_type</span><span class='comma'>,</span> <span class='id identifier rubyid_embedding_size'>embedding_size</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
@@ -391,7 +391,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="embedding-instance_method">
   
-    #<strong>embedding</strong>(str, pooling_method = &quot;pooled&quot;)  &#x21d2; <tt>Object</tt> 
+    #<strong>embedding</strong>(str, pooling_method: &quot;pooled_normalized&quot;)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -433,12 +433,12 @@
         <span class='type'>(<tt>String</tt>)</span>
       
       
-        <em class="default">(defaults to: <tt>&quot;pooled&quot;</tt>)</em>
+        <em class="default">(defaults to: <tt>&quot;pooled_normalized&quot;</tt>)</em>
       
       
         &mdash;
         <div class='inline'>
-<p>Pooling method: “pooled”, “pooled_normalized”, or “cls”. Default: “pooled”</p>
+<p>Pooling method: “pooled”, “pooled_normalized”, or “cls”. Default: “pooled_normalized”</p>
 </div>
       
     </li>
@@ -457,9 +457,9 @@
 30</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/model.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/embedding_model.rb', line 28</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='comma'>,</span> <span class='id identifier rubyid_pooling_method'>pooling_method</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>pooled</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='comma'>,</span> <span class='label'>pooling_method:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>pooled_normalized</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid__embedding'>_embedding</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='comma'>,</span> <span class='id identifier rubyid_pooling_method'>pooling_method</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -472,7 +472,7 @@
 </div>
 
       <div id="footer">
-  Generated on Tue Jul  1 21:49:04 2025 by
+  Generated on Thu Jul  3 22:42:33 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>

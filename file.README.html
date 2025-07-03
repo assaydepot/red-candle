@@ -79,15 +79,15 @@
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
 
 <span class='comment'># Default model (JinaBERT)
-</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Model.html" title="Candle::Model (class)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Model.html#new-class_method" title="Candle::Model.new (method)">new</a></span></span>
+</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Specify a different model type
-</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Model.html" title="Candle::Model (class)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Model.html#new-class_method" title="Candle::Model.new (method)">new</a></span></span><span class='lparen'>(</span>
+</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span><span class='lparen'>(</span>
   <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
   <span class='label'>tokenizer_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
   <span class='label'>device:</span> <span class='kw'>nil</span><span class='comma'>,</span>  <span class='comment'># nil = CPU
-</span>  <span class='label'>model_type:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html" title="Candle::ModelType (module)">ModelType</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html#STANDARD_BERT-constant" title="Candle::ModelType::STANDARD_BERT (constant)">STANDARD_BERT</a></span></span>
+</span>  <span class='label'>model_type:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModelType.html" title="Candle::EmbeddingModelType (module)">EmbeddingModelType</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModelType.html#MINILM-constant" title="Candle::EmbeddingModelType::MINILM (constant)">MINILM</a></span></span>
 <span class='rparen'>)</span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
@@ -108,9 +108,9 @@
 <p>Red-Candle supports the following embedding model types from Hugging Face:</p>
 
 <ol>
-<li><code>Candle::ModelType::JINA_BERT</code> - Jina BERT models (e.g., <code>jinaai/jina-embeddings-v2-base-en</code>) (<strong>safetensors required</strong>)</li>
-<li><code>Candle::ModelType::STANDARD_BERT</code> - Standard BERT models (e.g., <code>sentence-transformers/all-MiniLM-L6-v2</code>) (<strong>safetensors required</strong>)</li>
-<li><code>Candle::ModelType::DISTILBERT</code> - DistilBERT models (e.g., <code>distilbert-base-uncased-finetuned-sst-2-english</code>) (<strong>safetensors required</strong>)</li>
+<li><code>Candle::EmbeddingModelType::JINA_BERT</code> - Jina BERT models (e.g., <code>jinaai/jina-embeddings-v2-base-en</code>) (<strong>safetensors required</strong>)</li>
+<li><code>Candle::EmbeddingModelType::STANDARD_BERT</code> - Standard BERT models (e.g., <code>sentence-transformers/all-MiniLM-L6-v2</code>) (<strong>safetensors required</strong>)</li>
+<li><code>Candle::EmbeddingModelType::DISTILBERT</code> - DistilBERT models (e.g., <code>distilbert-base-uncased-finetuned-sst-2-english</code>) (<strong>safetensors required</strong>)</li>
 </ol>
 
 <blockquote>
@@ -119,19 +119,19 @@
 
 <p>You can get a list of all supported model types and suggested models paths:</p>
 
-<pre class="code ruby"><code class="ruby"><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html" title="Candle::ModelType (module)">ModelType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all'><span class='object_link'><a href="Candle/ModelType.html#all-class_method" title="Candle::ModelType.all (method)">all</a></span></span>  <span class='comment'># Returns all supported model types
-</span><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/ModelType.html" title="Candle::ModelType (module)">ModelType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_suggested_model_paths'><span class='object_link'><a href="Candle/ModelType.html#suggested_model_paths-class_method" title="Candle::ModelType.suggested_model_paths (method)">suggested_model_paths</a></span></span>  <span class='comment'># Returns hash of suggested models for each type
+<pre class="code ruby"><code class="ruby"><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModelType.html" title="Candle::EmbeddingModelType (module)">EmbeddingModelType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all'><span class='object_link'><a href="Candle/EmbeddingModelType.html#all-class_method" title="Candle::EmbeddingModelType.all (method)">all</a></span></span>  <span class='comment'># Returns all supported model types
+</span><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModelType.html" title="Candle::EmbeddingModelType (module)">EmbeddingModelType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_suggested_model_paths'><span class='object_link'><a href="Candle/EmbeddingModelType.html#suggested_model_paths-class_method" title="Candle::EmbeddingModelType.suggested_model_paths (method)">suggested_model_paths</a></span></span>  <span class='comment'># Returns hash of suggested models for each type
 </span></code></pre>
 
 <h2 id="a-note-on-memory-usage">A note on memory usage</h2>
 
-<p>The default model (<code>jinaai/jina-embeddings-v2-base-en</code> with the <code>sentence-transformers/all-MiniLM-L6-v2</code> tokenizer, both from <a href="https://huggingface.co">HuggingFace</a>) takes a little more than 3GB of memory running on a Mac. The memory stays with the instantiated <code>Candle::Model</code> class, if you instantiate more than one, you&#39;ll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you&#39;ll free the memory. For example:</p>
+<p>The default model (<code>jinaai/jina-embeddings-v2-base-en</code> with the <code>sentence-transformers/all-MiniLM-L6-v2</code> tokenizer, both from <a href="https://huggingface.co">HuggingFace</a>) takes a little more than 3GB of memory running on a Mac. The memory stays with the instantiated <code>Candle::EmbeddingModel</code> class, if you instantiate more than one, you&#39;ll use more memory. Likewise, if you let it go out of scope and call the garbage collector, you&#39;ll free the memory. For example:</p>
 
 <pre class="code ruby"><code class="ruby">&gt; require &#39;candle&#39;
 # Ruby memory = 25.9 MB
-&gt; model = Candle::Model.new
+&gt; model = Candle::EmbeddingModel.new
 # Ruby memory = 3.50 GB
-&gt; model2 = Candle::Model.new
+&gt; model2 = Candle::EmbeddingModel.new
 # Ruby memory = 7.04 GB
 &gt; model2 = nil
 &gt; GC.start
@@ -155,7 +155,7 @@ print(embedding)
 <p>And the following ruby:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
-<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Model.html" title="Candle::Model (class)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Model.html#new-class_method" title="Candle::Model.new (method)">new</a></span></span>
+<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
@@ -306,7 +306,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Tue Jul  1 21:49:04 2025 by
+  Generated on Thu Jul  3 22:42:32 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>
