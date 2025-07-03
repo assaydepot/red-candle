@@ -71,7 +71,7 @@ impl TextGeneration {
         }
 
         let device = logits.device();
-        let (_b_size, vocab_size) = logits.dims2()?;
+        let vocab_size = logits.dims1()?;
         
         // Get the context tokens to apply penalty to
         let start = self.tokens.len().saturating_sub(context_size);
