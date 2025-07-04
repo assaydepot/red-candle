@@ -5,8 +5,24 @@ Gem::Specification.new do |spec|
   spec.version     = Candle::VERSION
   spec.summary     = "huggingface/candle for ruby"
   spec.description = "huggingface/candle for Ruby"
-  spec.files       = Dir["lib/**/*.rb", "ext/candle/src/lib.rs", "ext/candle/Cargo.toml", "Cargo.toml", "Cargo.lock",
-                         "README.md"]
+  spec.files = Dir[
+    "lib/**/*.rb",
+    "ext/candle/extconf.rb",
+    "ext/candle/rustfmt.toml",
+    "ext/candle/Cargo.toml",
+    "ext/candle/src/**/*.rs",
+    "ext/candle/src/**/*.toml",
+    "ext/candle/src/**/*.md",
+    "ext/candle/src/**/*.txt",
+    "ext/candle/src/**/*.rb",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "LICENSE",
+    "Rakefile",
+    "Gemfile",
+    "bin/*"
+  ]
   spec.extensions  = ["ext/candle/extconf.rb"]
   spec.authors     = ["Christopher Petersen", "kojix2"]
   spec.email       = ["christopher.petersen@gmail.com", "2xijok@gmail.com"]
