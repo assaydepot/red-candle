@@ -268,6 +268,25 @@ impl LLM {
     }
 }
 
+// Define a standalone function for from_pretrained that handles variable arguments
+fn from_pretrained_wrapper(args: &[Value]) -> RbResult<LLM> {
+    match args.len() {
+        1 => {
+            let model_id: String = TryConvert::try_convert(args[0])?;
+            LLM::from_pretrained(model_id, None)
+        },
+        2 => {
+            let model_id: String = TryConvert::try_convert(args[0])?;
+            let device: RbDevice = TryConvert::try_convert(args[1])?;
+            LLM::from_pretrained(model_id, Some(device))
+        },
+        _ => Err(Error::new(
+            magnus::exception::arg_error(),
+            "wrong number of arguments (expected 1..2)"
+        ))
+    }
+}
+
 pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
     let rb_generation_config = rb_candle.define_class("GenerationConfig", magnus::class::object())?;
     rb_generation_config.define_singleton_method("new", function!(GenerationConfig::new, 1))?;
@@ -286,7 +305,7 @@ pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
-    rb_llm.define_singleton_method("from_pretrained", function!(LLM::from_pretrained, 2))?;
+    rb_llm.define_singleton_method("from_pretrained", function!(from_pretrained_wrapper, -1))?;
     rb_llm.define_method("generate", method!(LLM::generate, 2))?;
     rb_llm.define_method("generate_stream", method!(LLM::generate_stream, 2))?;
     rb_llm.define_method("model_name", method!(LLM::model_name, 0))?;

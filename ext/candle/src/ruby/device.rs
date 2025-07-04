@@ -16,6 +16,21 @@ pub enum Device {
 }
 
 impl Device {
+    /// Create a CPU device
+    pub fn cpu() -> Self {
+        Self::Cpu
+    }
+
+    /// Create a CUDA device (GPU)
+    pub fn cuda() -> Self {
+        Self::Cuda
+    }
+
+    /// Create a Metal device (Apple GPU)
+    pub fn metal() -> Self {
+        Self::Metal
+    }
+
     pub fn from_device(device: &CoreDevice) -> Self {
         match device {
             CoreDevice::Cpu => Self::Cpu,
@@ -63,11 +78,18 @@ impl Device {
 
 impl magnus::TryConvert for Device {
     fn try_convert(val: magnus::Value) -> RbResult<Self> {
+        // First check if it's already a wrapped Device object
+        if let Ok(device) = <magnus::typed_data::Obj<Device> as magnus::TryConvert>::try_convert(val) {
+            return Ok(*device);
+        }
+
+        // Otherwise try to convert from string
         let device = magnus::RString::try_convert(val)?;
         let device = unsafe { device.as_str() }.unwrap();
         let device = match device {
             "cpu" => Device::Cpu,
             "cuda" => Device::Cuda,
+            "metal" => Device::Metal,
             _ => return Err(Error::new(magnus::exception::arg_error(), "invalid device")),
         };
         Ok(device)

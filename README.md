@@ -35,6 +35,55 @@ model = Candle::EmbeddingModel.new(
 embedding = model.embedding("Hi there!")
 ```
 
+## LLM Support
+
+Red-Candle now supports Large Language Models (LLMs) with GPU acceleration:
+
+```ruby
+require 'candle'
+
+# Choose your device
+device = Candle::Device.cpu     # CPU (default)
+device = Candle::Device.metal   # Apple GPU (Metal)
+device = Candle::Device.cuda    # NVIDIA GPU (CUDA)
+
+# Load a model
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+
+# Generate text
+response = llm.generate("What is Ruby?", temperature: 0.7, max_length: 100)
+
+# Stream generation
+llm.generate_stream("Tell me a story") do |token|
+  print token
+end
+
+# Chat interface
+messages = [
+  { role: "system", content: "You are a helpful assistant." },
+  { role: "user", content: "Explain Ruby in one sentence." }
+]
+response = llm.chat(messages)
+```
+
+### GPU Acceleration
+
+⚠️ **Metal Support Status**: While Metal device support is available, some operations required by certain models (like RMS normalization used in Mistral) are not yet implemented in the Metal backend. This means that currently, Mistral models will only work on CPU. Metal support for these operations is being added to Candle.
+
+```ruby
+# CPU works for all models
+device = Candle::Device.cpu
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+
+# Metal device is available but has limited operation support
+device = Candle::Device.metal  # Will error with "no metal implementation for rms-norm" for Mistral
+
+# CUDA support (for NVIDIA GPUs)
+device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
+```
+
+Future updates to Candle will add Metal implementations for missing operations.
+
 ## ⚠️ Model Format Requirement: Safetensors Only
 
 Red-Candle **only supports embedding models that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do.

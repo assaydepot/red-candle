@@ -93,6 +93,9 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_dtype.define_method("inspect", method!(DType::__repr__, 0))?;
 
     let rb_device = rb_candle.define_class("Device", Ruby::class_object(ruby))?;
+    rb_device.define_singleton_method("cpu", function!(Device::cpu, 0))?;
+    rb_device.define_singleton_method("cuda", function!(Device::cuda, 0))?;
+    rb_device.define_singleton_method("metal", function!(Device::metal, 0))?;
     rb_device.define_method("to_s", method!(Device::__str__, 0))?;
     rb_device.define_method("inspect", method!(Device::__repr__, 0))?;
 
