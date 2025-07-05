@@ -1,10 +1,11 @@
 use magnus::{class, function, method, prelude::*, Error, RModule, Float, RArray};
 use candle_transformers::models::bert::{BertModel, Config};
-use candle_core::{Device, Tensor, IndexOp, DType};
+use candle_core::{Device as CoreDevice, Tensor, IndexOp, DType};
 use candle_nn::{VarBuilder, Linear, Module, ops::sigmoid};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::{PaddingParams, Tokenizer, EncodeInput};
 use std::thread;
+use crate::ruby::{Device as RbDevice, Result as RbResult};
 
 #[magnus::wrap(class = "Candle::Reranker", free_immediately, size)]
 pub struct Reranker {
@@ -12,22 +13,16 @@ pub struct Reranker {
     tokenizer: Tokenizer,
     pooler: Linear,
     classifier: Linear,
-    device: Device,
+    device: CoreDevice,
 }
 
 impl Reranker {
-    pub fn new(model_id: String) -> Result<Self, Error> {
-        Self::new_with_device(model_id, Device::Cpu)
+    pub fn new(model_id: String, device: Option<RbDevice>) -> RbResult<Self> {
+        let device = device.unwrap_or(RbDevice::Cpu).as_device()?;
+        Self::new_with_core_device(model_id, device)
     }
-    
-    pub fn new_cuda(model_id: String) -> Result<Self, Error> {
-        match Device::cuda_if_available(0) {
-            Ok(device) => Self::new_with_device(model_id, device),
-            Err(_) => Self::new_with_device(model_id, Device::Cpu),
-        }
-    }
-    
-    pub fn new_with_device(model_id: String, device: Device) -> Result<Self, Error> {
+        
+    fn new_with_core_device(model_id: String, device: CoreDevice) -> Result<Self, Error> {
         let device_clone = device.clone();
         let handle = thread::spawn(move || -> Result<(BertModel, Tokenizer, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
@@ -223,8 +218,7 @@ impl Reranker {
 
 pub fn init(rb_candle: RModule) -> Result<(), Error> {
     let c_reranker = rb_candle.define_class("Reranker", class::object())?;
-    c_reranker.define_singleton_method("_create", function!(Reranker::new, 1))?;
-    c_reranker.define_singleton_method("_create_cuda", function!(Reranker::new_cuda, 1))?;
+    c_reranker.define_singleton_method("_create", function!(Reranker::new, 2))?;
     c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
     c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
     c_reranker.define_method("rerank_with_pooling", method!(Reranker::rerank_with_pooling, 3))?;

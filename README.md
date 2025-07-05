@@ -21,18 +21,24 @@ x = x.reshape([3, 2])
 ```ruby
 require 'candle'
 
-# Default model (JinaBERT)
+# Default model (JinaBERT) on CPU
 model = Candle::EmbeddingModel.new
 embedding = model.embedding("Hi there!")
 
-# Specify a different model type
+# Specify device (CPU, Metal, or CUDA)
+device = Candle::Device.cpu     # or Candle::Device.metal, Candle::Device.cuda
 model = Candle::EmbeddingModel.new(
-  model_path: "sentence-transformers/all-MiniLM-L6-v2",
-  tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
-  device: nil,  # nil = CPU
-  model_type: Candle::EmbeddingModelType::MINILM
+  model_path: "jinaai/jina-embeddings-v2-base-en",
+  device: device
 )
 embedding = model.embedding("Hi there!")
+
+# Reranker also supports device selection
+reranker = Candle::Reranker.new(
+  model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2",
+  device: device
+)
+results = reranker.rerank("query", ["doc1", "doc2", "doc3"])
 ```
 
 ## LLM Support
