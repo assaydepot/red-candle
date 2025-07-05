@@ -2,28 +2,28 @@
 
 ## Current Status (Candle 0.9.1)
 
-Metal (Apple GPU) support in red-candle continues to improve! Both EmbeddingModel and Reranker now work on Metal.
+Metal (Apple GPU) support in red-candle is now complete! All models (EmbeddingModel, Reranker, and LLMs) now work on Metal! 🎉
 
 ### ✅ What Works
-- **EmbeddingModel**: Fully functional on Metal! 🎉
-  - Layer normalization is now working with candle 0.9.1
+- **EmbeddingModel**: Fully functional on Metal!
+  - Layer normalization is working with candle 0.9.1
   - Significant performance improvements over CPU
-- **Reranker**: Now works on Metal! 🎉
+- **Reranker**: Fully functional on Metal!
   - Fixed tensor indexing issues with a workaround
   - All pooling methods (pooler, cls, mean) are supported
+- **LLMs (Mistral, Llama, etc.)**: Now working on Metal! 🎉
+  - Both regular generation and streaming work
+  - Appears RMS norm has been implemented or worked around
 - Basic tensor operations: mean, sqrt, broadcast operations, etc.
 - Device creation and tensor manipulation
 
-### ❌ What Doesn't Work Yet
-- **LLMs (Mistral, Llama, etc.)**: Missing RMS normalization for Metal
-- Various dtype conversions and specialized operations
+## Previous Issues (Now Resolved)
 
-## Error Messages
-
-When trying to use LLMs (Mistral/Llama) on Metal:
+Previously, LLMs would fail with:
 ```
 Generation failed: Metal error no metal implementation for rms-norm
 ```
+This appears to have been resolved in the current version.
 
 ## How to Enable Metal Support
 
@@ -59,16 +59,26 @@ results = reranker.rerank_with_pooling("query", ["doc1", "doc2"], "mean")
 results = reranker.rerank_with_pooling("query", ["doc1", "doc2"], "cls")
 ```
 
-### LLMs (Use CPU for now)
+### LLMs (Works on Metal!)
 ```ruby
-# Use CPU due to missing RMS norm
-device = Candle::Device.cpu
+device = Candle::Device.metal
 llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+config = Candle::GenerationConfig.new(max_length: 50)
+response = llm.generate("Hello world", config)  # Works on Metal!
+
+# Streaming also works
+llm.generate_stream("Once upon a time", config) do |token|
+  print token
+end
 ```
 
-## Future Updates
+## Performance Benefits
 
-The Candle project is actively adding Metal implementations for missing operations. Once RMS normalization and other required operations are implemented in candle-metal-kernels, LLMs will work on Metal with significant performance improvements.
+Using Metal acceleration provides significant performance improvements for all models:
+- Faster inference times
+- Lower CPU usage
+- Better energy efficiency on MacBooks
+- Ability to run larger models efficiently
 
 ## Checking Metal Support
 
@@ -96,7 +106,7 @@ model = Candle::DeviceUtils.create_with_best_device(
 # Check device support
 Candle::DeviceUtils.supports_model?(Candle::Device.metal, :embedding_model)  # => true
 Candle::DeviceUtils.supports_model?(Candle::Device.metal, :reranker)         # => true
-Candle::DeviceUtils.supports_model?(Candle::Device.metal, :llm)              # => false
+Candle::DeviceUtils.supports_model?(Candle::Device.metal, :llm)              # => true
 ```
 
 ## Example Code

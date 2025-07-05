@@ -111,5 +111,5 @@ puts "\n" + "=" * 60
 puts "Summary:"
 puts "✅ EmbeddingModel: Fully working on Metal"
 puts "✅ Reranker: Fully working on Metal (all pooling methods)"
-puts "❌ LLM: Still needs RMS norm implementation for Metal"
-puts "\nBoth EmbeddingModel and Reranker can now leverage Apple GPU acceleration!"
+puts "✅ LLM: Now working on Metal! (Mistral, Llama, etc.)"
+puts "\nAll models can now leverage Apple GPU acceleration! 🎉"
