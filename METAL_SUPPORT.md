@@ -88,25 +88,28 @@ To check if a model will work on Metal, you can:
 2. If you get "no metal implementation" errors, fall back to CPU
 3. Monitor Candle updates for improved Metal support
 
-## Smart Device Selection
+## Automatic Device Selection
 
-Red-candle now includes utilities for automatic device selection based on model compatibility:
+Red-candle includes a simple utility for automatic device selection:
 
 ```ruby
 require 'candle'
 
-# Automatically selects the best device for your model
+# Get the best available device (Metal > CUDA > CPU)
+best_device = Candle::DeviceUtils.best_device
+
+# Automatically create models with the best device
 model = Candle::DeviceUtils.create_with_best_device(
   Candle::EmbeddingModel,
-  :embedding_model,
-  model_path: "jinaai/jina-embeddings-v2-base-en",
-  device: Candle::Device.metal  # Will fallback to CPU automatically
+  model_path: "jinaai/jina-embeddings-v2-base-en"
 )
 
-# Check device support
-Candle::DeviceUtils.supports_model?(Candle::Device.metal, :embedding_model)  # => true
-Candle::DeviceUtils.supports_model?(Candle::Device.metal, :reranker)         # => true
-Candle::DeviceUtils.supports_model?(Candle::Device.metal, :llm)              # => true
+reranker = Candle::DeviceUtils.create_with_best_device(Candle::Reranker)
+
+llm = Candle::DeviceUtils.create_with_best_device(
+  Candle::LLM,
+  model_id: "mistralai/Mistral-7B-Instruct-v0.1"
+)
 ```
 
 ## Example Code

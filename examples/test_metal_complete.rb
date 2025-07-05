@@ -6,11 +6,28 @@ require 'candle'
 puts "Metal Support Test - Complete"
 puts "=" * 60
 
-# Test 1: Device support checks
-puts "\n--- Device Support Checks ---"
-[:embedding_model, :reranker, :llm].each do |model_type|
-  metal_support = Candle::DeviceUtils.supports_model?(Candle::Device.metal, model_type)
-  puts "#{model_type}: #{metal_support ? '✅ Metal supported' : '❌ Metal not supported'}"
+# Test 1: Check available devices
+puts "\n--- Available Devices ---"
+begin
+  puts "CPU: ✅ Always available"
+  
+  begin
+    Candle::Device.metal
+    puts "Metal: ✅ Available"
+  rescue
+    puts "Metal: ❌ Not available"
+  end
+  
+  begin
+    Candle::Device.cuda
+    puts "CUDA: ✅ Available"
+  rescue
+    puts "CUDA: ❌ Not available"
+  end
+  
+  puts "\nBest device: #{Candle::DeviceUtils.best_device.inspect}"
+rescue => e
+  puts "Error checking devices: #{e.message}"
 end
 
 # Test 2: EmbeddingModel on Metal
@@ -72,17 +89,19 @@ end
 # Test 4: Smart device selection
 puts "\n--- Smart Device Selection ---"
 begin
-  # Should automatically use Metal
+  # Get the best available device
+  best = Candle::DeviceUtils.best_device
+  puts "Best available device: #{best.inspect}"
+  
+  # Should automatically use the best device (Metal on Mac)
   model = Candle::DeviceUtils.create_with_best_device(
     Candle::EmbeddingModel,
-    :embedding_model,
     model_path: "jinaai/jina-embeddings-v2-base-en"
   )
   puts "✅ Created EmbeddingModel with best device"
   
   reranker = Candle::DeviceUtils.create_with_best_device(
-    Candle::Reranker,
-    :reranker
+    Candle::Reranker
   )
   puts "✅ Created Reranker with best device"
 rescue => e
