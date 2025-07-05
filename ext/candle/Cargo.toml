@@ -8,8 +8,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candle-core = { version = "0.9.1", features = ["metal"] }
-candle-nn = "0.9.1"
-candle-transformers = "0.9.1"
+candle-nn = { version = "0.9.1", features = ["metal"] }
+candle-transformers = { version = "0.9.1", features = ["metal"] }
 tokenizers = { version = "0.21.1", default-features = true, features = ["fancy-regex"] }
 hf-hub = "0.4.2"
 half = "2.6.0"
