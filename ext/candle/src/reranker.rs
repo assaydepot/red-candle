@@ -150,8 +150,34 @@ impl Reranker {
         let pooled_embeddings = match pooling_method.as_str() {
             "pooler" => {
                 // Extract [CLS] token and apply pooler (dense + tanh)
-                let cls_embeddings = embeddings.i((.., 0))
-                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?;
+                // Work around Metal indexing issue by using narrow instead of i((.., 0))
+                let cls_embeddings = if self.device.is_metal() {
+                    // Metal has issues with tensor indexing, use a different approach
+                    let (batch_size, _seq_len, hidden_size) = embeddings.dims3()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to get dims: {}", e)))?;
+                    
+                    // Reshape to [batch * seq_len, hidden] then take first hidden vectors for each batch
+                    let reshaped = embeddings.reshape((batch_size * _seq_len, hidden_size))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to reshape: {}", e)))?;
+                    
+                    // Extract CLS tokens (first token of each sequence)
+                    let mut cls_vecs = Vec::new();
+                    for i in 0..batch_size {
+                        let start_idx = i * _seq_len;
+                        let cls_vec = reshaped.narrow(0, start_idx, 1)
+                            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS: {}", e)))?;
+                        cls_vecs.push(cls_vec);
+                    }
+                    
+                    // Stack the CLS vectors
+                    Tensor::cat(&cls_vecs, 0)
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to cat CLS tokens: {}", e)))?
+                        .contiguous()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make contiguous: {}", e)))?
+                } else {
+                    embeddings.i((.., 0))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+                };
                 let pooled = self.pooler.forward(&cls_embeddings)
                     .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Pooler forward failed: {}", e)))?;
                 pooled.tanh()
@@ -159,8 +185,31 @@ impl Reranker {
             },
             "cls" => {
                 // Just use the [CLS] token embeddings directly (no pooler layer)
-                embeddings.i((.., 0))
-                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+                // Work around Metal indexing issue
+                if self.device.is_metal() {
+                    // Use same approach as pooler method
+                    let (batch_size, _seq_len, hidden_size) = embeddings.dims3()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to get dims: {}", e)))?;
+                    
+                    let reshaped = embeddings.reshape((batch_size * _seq_len, hidden_size))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to reshape: {}", e)))?;
+                    
+                    let mut cls_vecs = Vec::new();
+                    for i in 0..batch_size {
+                        let start_idx = i * _seq_len;
+                        let cls_vec = reshaped.narrow(0, start_idx, 1)
+                            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS: {}", e)))?;
+                        cls_vecs.push(cls_vec);
+                    }
+                    
+                    Tensor::cat(&cls_vecs, 0)
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to cat CLS tokens: {}", e)))?
+                        .contiguous()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make contiguous: {}", e)))?
+                } else {
+                    embeddings.i((.., 0))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+                }
             },
             "mean" => {
                 // Mean pooling across all tokens
