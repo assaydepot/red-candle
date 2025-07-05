@@ -2,16 +2,8 @@ module Candle
   module DeviceUtils
     # Check if a device supports all required operations for a model type
     def self.supports_model?(device, model_type)
-      case model_type
-      when :embedding_model, :reranker
-        # Both now work on Metal with candle 0.9.1!
-        true
-      when :llm
-        # LLMs require RMS norm
-        device.inspect != "metal" # RMS norm not implemented for Metal
-      else
-        true
-      end
+      # All models now work on Metal with candle 0.9.1!
+      true
     end
     
     # Get the best available device for a model type
