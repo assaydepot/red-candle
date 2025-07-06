@@ -31,6 +31,31 @@ task bench: :compile do
   ruby "test/bench.rb"
 end
 
+desc "Run device compatibility tests"
+task device_test: :compile do
+  puts "Running comprehensive device tests..."
+  sh "ruby examples/comprehensive_device_test.rb --verbose"
+end
+
+desc "Run device compatibility tests with benchmarks"
+task "device_test:benchmark" => :compile do
+  puts "Running device tests with performance benchmarks..."
+  sh "ruby examples/comprehensive_device_test.rb --verbose --benchmark"
+end
+
+desc "Run device tests on specific devices"
+task "device_test:cpu" => :compile do
+  sh "ruby examples/comprehensive_device_test.rb --devices cpu --verbose"
+end
+
+task "device_test:metal" => :compile do
+  sh "ruby examples/comprehensive_device_test.rb --devices metal --verbose"
+end
+
+task "device_test:cuda" => :compile do
+  sh "ruby examples/comprehensive_device_test.rb --devices cuda --verbose"
+end
+
 namespace :doc do
   task default: %i[rustdoc yard]
 
