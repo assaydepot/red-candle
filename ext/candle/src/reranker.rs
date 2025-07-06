@@ -70,22 +70,6 @@ impl Reranker {
             Err(_) => Err(Error::new(magnus::exception::runtime_error(), "Thread panicked while loading model")),
         }
     }
-
-    pub fn rerank(&self, query: String, documents: RArray) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, "pooler".to_string(), false)
-    }
-    
-    pub fn rerank_sigmoid(&self, query: String, documents: RArray) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, "pooler".to_string(), true)
-    }
-    
-    pub fn rerank_with_pooling(&self, query: String, documents: RArray, pooling_method: String) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, pooling_method, false)
-    }
-    
-    pub fn rerank_sigmoid_with_pooling(&self, query: String, documents: RArray, pooling_method: String) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, pooling_method, true)
-    }
     
     pub fn debug_tokenization(&self, query: String, document: String) -> Result<magnus::RHash, Error> {
         // Create query-document pair for cross-encoder
@@ -268,10 +252,6 @@ impl Reranker {
 pub fn init(rb_candle: RModule) -> Result<(), Error> {
     let c_reranker = rb_candle.define_class("Reranker", class::object())?;
     c_reranker.define_singleton_method("_create", function!(Reranker::new, 2))?;
-    c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
-    c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
-    c_reranker.define_method("rerank_with_pooling", method!(Reranker::rerank_with_pooling, 3))?;
-    c_reranker.define_method("rerank_sigmoid_with_pooling", method!(Reranker::rerank_sigmoid_with_pooling, 3))?;
     c_reranker.define_method("rerank_with_options", method!(Reranker::rerank_with_options, 4))?;
     c_reranker.define_method("debug_tokenization", method!(Reranker::debug_tokenization, 2))?;
     Ok(())
