@@ -9,11 +9,21 @@ module Candle
         yield self.item
       when 1
         # 1D tensor - yield each value
-        if dtype.to_s == "f32" && respond_to?(:values_f32)
-          # Use f32 extraction if available to avoid conversion
-          values_f32.each { |value| yield value }
+        # Check if we can use f32 values to avoid conversion
+        if dtype.to_s.downcase == "f32"
+          begin
+            values_f32.each { |value| yield value }
+          rescue NoMethodError
+            # If values_f32 isn't available yet (not recompiled), fall back
+            if device.to_s != "cpu"
+              # Move to CPU to avoid Metal F32->F64 conversion issue
+              to_device(Candle::Device.cpu).values.each { |value| yield value }
+            else
+              values.each { |value| yield value }
+            end
+          end
         else
-          # Fall back to regular values (may need CPU transfer for Metal)
+          # For non-F32 dtypes, use regular values
           values.each { |value| yield value }
         end
       else
