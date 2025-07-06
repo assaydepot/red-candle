@@ -26,34 +26,45 @@ Rake::ExtensionTask.new("candle", spec) do |c|
   ]
 end
 
-desc "benchmark"
-task bench: :compile do
-  ruby "test/bench.rb"
-end
+desc "Run benchmarks (alias for test:benchmark)"
+task bench: "test:benchmark"
 
 desc "Run device compatibility tests"
-task device_test: :compile do
-  puts "Running comprehensive device tests..."
-  sh "ruby examples/comprehensive_device_test.rb --verbose"
+Rake::TestTask.new("test:device") do |t|
+  t.deps << :compile
+  t.libs << "test"
+  t.test_files = FileList["test/device_compatibility_test.rb"]
+  t.verbose = true
 end
 
-desc "Run device compatibility tests with benchmarks"
-task "device_test:benchmark" => :compile do
-  puts "Running device tests with performance benchmarks..."
-  sh "ruby examples/comprehensive_device_test.rb --verbose --benchmark"
+desc "Run benchmark tests"
+Rake::TestTask.new("test:benchmark") do |t|
+  t.deps << :compile
+  t.libs << "test"
+  t.test_files = FileList["test/benchmarks/**/*_test.rb"]
+  t.verbose = true
 end
 
-desc "Run device tests on specific devices"
-task "device_test:cpu" => :compile do
-  sh "ruby examples/comprehensive_device_test.rb --devices cpu --verbose"
+desc "Run all tests including benchmarks"
+task "test:all" => [:test, "test:benchmark"]
+
+desc "Run tests on specific devices"
+namespace :test do
+  %w[cpu metal cuda].each do |device|
+    desc "Run tests on #{device.upcase} only"
+    task "device:#{device}" => :compile do
+      ENV['CANDLE_TEST_DEVICES'] = device
+      Rake::Task["test:device"].invoke
+    end
+  end
 end
 
-task "device_test:metal" => :compile do
-  sh "ruby examples/comprehensive_device_test.rb --devices metal --verbose"
-end
-
-task "device_test:cuda" => :compile do
-  sh "ruby examples/comprehensive_device_test.rb --devices cuda --verbose"
+desc "Run benchmarks with device tests"
+task "test:device:benchmark" => :compile do
+  ENV['CANDLE_RUN_BENCHMARKS'] = 'true'
+  ENV['CANDLE_TEST_VERBOSE'] = 'true'
+  Rake::Task["test:device"].invoke
+  Rake::Task["test:benchmark"].invoke
 end
 
 namespace :doc do
