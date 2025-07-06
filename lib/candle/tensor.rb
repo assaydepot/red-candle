@@ -6,11 +6,15 @@ module Candle
       case self.rank
       when 0
         # Scalar tensor - yield the single value
-        yield self.values.first
+        yield self.item
       when 1
         # 1D tensor - yield each value
-        self.values.each do |value|
-          yield value
+        if dtype.to_s == "f32" && respond_to?(:values_f32)
+          # Use f32 extraction if available to avoid conversion
+          values_f32.each { |value| yield value }
+        else
+          # Fall back to regular values (may need CPU transfer for Metal)
+          values.each { |value| yield value }
         end
       else
         # Multi-dimensional tensor - yield each sub-tensor
@@ -23,7 +27,8 @@ module Candle
     # Convert scalar tensor to float
     def to_f
       if rank == 0
-        values.first
+        # Use item method which handles dtype conversion properly
+        item
       else
         raise ArgumentError, "to_f can only be called on scalar tensors (rank 0), but this tensor has rank #{rank}"
       end
@@ -33,6 +38,7 @@ module Candle
     def to_i
       to_f.to_i
     end
+    
     
     # Override class methods to support keyword arguments for device
     class << self

@@ -23,6 +23,8 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     rb_tensor.define_singleton_method("ones", function!(Tensor::ones, 2))?;
     rb_tensor.define_singleton_method("zeros", function!(Tensor::zeros, 2))?;
     rb_tensor.define_method("values", method!(Tensor::values, 0))?;
+    rb_tensor.define_method("values_f32", method!(Tensor::values_f32, 0))?;
+    rb_tensor.define_method("item", method!(Tensor::item, 0))?;
     rb_tensor.define_method("shape", method!(Tensor::shape, 0))?;
     rb_tensor.define_method("stride", method!(Tensor::stride, 0))?;
     rb_tensor.define_method("dtype", method!(Tensor::dtype, 0))?;

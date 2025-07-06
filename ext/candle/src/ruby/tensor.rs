@@ -51,6 +51,56 @@ impl Tensor {
         Ok(values)
     }
 
+    /// Get values as f32 without dtype conversion
+    pub fn values_f32(&self) -> RbResult<Vec<f32>> {
+        match self.0.dtype() {
+            CoreDType::F32 => {
+                let values = self
+                    .0
+                    .flatten_all()
+                    .map_err(wrap_candle_err)?
+                    .to_vec1()
+                    .map_err(wrap_candle_err)?;
+                Ok(values)
+            }
+            _ => Err(magnus::Error::new(
+                magnus::exception::runtime_error(),
+                "Tensor must be F32 dtype for values_f32",
+            )),
+        }
+    }
+
+    /// Get a single scalar value from a rank-0 tensor
+    pub fn item(&self) -> RbResult<f64> {
+        if self.0.rank() != 0 {
+            return Err(magnus::Error::new(
+                magnus::exception::runtime_error(),
+                format!("item() can only be called on scalar tensors (rank 0), but tensor has rank {}", self.0.rank()),
+            ));
+        }
+        
+        // Try to get the value based on dtype
+        match self.0.dtype() {
+            CoreDType::F32 => {
+                let val: f32 = self.0.to_vec0().map_err(wrap_candle_err)?;
+                Ok(val as f64)
+            }
+            CoreDType::F64 => {
+                let val: f64 = self.0.to_vec0().map_err(wrap_candle_err)?;
+                Ok(val)
+            }
+            _ => {
+                // For other dtypes, convert to F64 first
+                let val: f64 = self.0
+                    .to_dtype(CoreDType::F64)
+                    .map_err(wrap_candle_err)?
+                    .to_vec0()
+                    .map_err(wrap_candle_err)?;
+                Ok(val)
+            }
+        }
+    }
+
     /// Gets the tensor's shape.
     /// &RETURNS&: Tuple[int]
     pub fn shape(&self) -> Vec<usize> {
