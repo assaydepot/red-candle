@@ -3,15 +3,35 @@ module Candle
     include Enumerable
 
     def each
-      if self.rank == 1
+      case self.rank
+      when 0
+        # Scalar tensor - yield the single value
+        yield self.values.first
+      when 1
+        # 1D tensor - yield each value
         self.values.each do |value|
           yield value
         end
       else
+        # Multi-dimensional tensor - yield each sub-tensor
         shape.first.times do |i|
           yield self[i]
         end
       end
+    end
+    
+    # Convert scalar tensor to float
+    def to_f
+      if rank == 0
+        values.first
+      else
+        raise ArgumentError, "to_f can only be called on scalar tensors (rank 0), but this tensor has rank #{rank}"
+      end
+    end
+    
+    # Convert scalar tensor to integer
+    def to_i
+      to_f.to_i
     end
     
     # Override class methods to support keyword arguments for device
