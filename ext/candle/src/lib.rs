@@ -15,13 +15,13 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     reranker::init(rb_candle)?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;
-    rb_tensor.define_singleton_method("new", function!(Tensor::new, 2))?;
+    rb_tensor.define_singleton_method("new", function!(Tensor::new, 3))?;
     // rb_tensor.define_singleton_method("cat", function!(Tensor::cat, 2))?;
     // rb_tensor.define_singleton_method("stack", function!(Tensor::stack, 2))?;
-    rb_tensor.define_singleton_method("rand", function!(Tensor::rand, 1))?;
-    rb_tensor.define_singleton_method("randn", function!(Tensor::randn, 1))?;
-    rb_tensor.define_singleton_method("ones", function!(Tensor::ones, 1))?;
-    rb_tensor.define_singleton_method("zeros", function!(Tensor::zeros, 1))?;
+    rb_tensor.define_singleton_method("rand", function!(Tensor::rand, 2))?;
+    rb_tensor.define_singleton_method("randn", function!(Tensor::randn, 2))?;
+    rb_tensor.define_singleton_method("ones", function!(Tensor::ones, 2))?;
+    rb_tensor.define_singleton_method("zeros", function!(Tensor::zeros, 2))?;
     rb_tensor.define_method("values", method!(Tensor::values, 0))?;
     rb_tensor.define_method("shape", method!(Tensor::shape, 0))?;
     rb_tensor.define_method("stride", method!(Tensor::stride, 0))?;
