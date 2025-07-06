@@ -4,27 +4,6 @@
 
 Metal (Apple GPU) support in red-candle is now complete! All models (EmbeddingModel, Reranker, and LLMs) now work on Metal! 🎉
 
-### ✅ What Works
-- **EmbeddingModel**: Fully functional on Metal!
-  - Layer normalization is working with candle 0.9.1
-  - Significant performance improvements over CPU
-- **Reranker**: Fully functional on Metal!
-  - Fixed tensor indexing issues with a workaround
-  - All pooling methods (pooler, cls, mean) are supported
-- **LLMs (Mistral, Llama, etc.)**: Now working on Metal! 🎉
-  - Both regular generation and streaming work
-  - Appears RMS norm has been implemented or worked around
-- Basic tensor operations: mean, sqrt, broadcast operations, etc.
-- Device creation and tensor manipulation
-
-## Previous Issues (Now Resolved)
-
-Previously, LLMs would fail with:
-```
-Generation failed: Metal error no metal implementation for rms-norm
-```
-This appears to have been resolved in the current version.
-
 ## How to Enable Metal Support
 
 To use Metal acceleration, ensure all candle crates have the `metal` feature enabled in your `Cargo.toml`:
