@@ -4,7 +4,6 @@ class EmbeddingModelTest < Minitest::Test
   def test_pooled_embeddings_shape
     model = Candle::EmbeddingModel.new
     string = "Hi there"
-    embeddings = model.embeddings(string)
     pooled = model.embedding(string, pooling_method: "pooled_normalized")
     assert_equal pooled.shape, [1, 768]
   end
