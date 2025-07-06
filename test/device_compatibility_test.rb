@@ -22,10 +22,10 @@ class DeviceCompatibilityTest < Minitest::Test
       assert_equal device.to_s, tensor2.device.to_s
       
       sum = tensor2.sum(0)
-      assert_in_delta 10.0, sum, 0.001
+      assert_in_delta 10.0, sum.to_f, 0.001
       
       mean = tensor2.mean(0)
-      assert_in_delta 2.5, mean, 0.001
+      assert_in_delta 2.5, mean.to_f, 0.001
       
       reshaped = tensor2.reshape([2, 2])
       assert_equal [2, 2], reshaped.shape
