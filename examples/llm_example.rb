@@ -17,7 +17,7 @@ begin
   llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3", device)
 
   # Generate text with default config
-  response = llm.generate("What is Ruby programming language?")
+  response = llm.generate("What is Ruby programming language?", Candle::GenerationConfig.balanced)
   puts "Response: #{response}"
 
   # Generate with custom configuration
@@ -41,7 +41,7 @@ begin
   llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device)
 
   print "Streaming response: "
-  llm.generate_stream("Tell me a short story about a robot") do |token|
+  llm.generate_stream("Tell me a short story about a robot", Candle::GenerationConfig.balanced) do |token|
     print token
     $stdout.flush
   end
