@@ -22,10 +22,10 @@ class DeviceCompatibilityTest < Minitest::Test
       assert_equal device.to_s, tensor2.device.to_s
       
       sum = tensor2.sum(0)
-      assert_in_delta 10.0, sum.to_vec0, 0.001
+      assert_in_delta 10.0, sum, 0.001
       
       mean = tensor2.mean(0)
-      assert_in_delta 2.5, mean.to_vec0, 0.001
+      assert_in_delta 2.5, mean, 0.001
       
       reshaped = tensor2.reshape([2, 2])
       assert_equal [2, 2], reshaped.shape
@@ -55,8 +55,8 @@ class DeviceCompatibilityTest < Minitest::Test
       embedding2 = model.embedding(text)
       
       # Convert to arrays and compare
-      emb1_array = embedding.to_vec2
-      emb2_array = embedding2.to_vec2
+      emb1_array = embedding.to_a
+      emb2_array = embedding2.to_a
       
       emb1_array[0].zip(emb2_array[0]).each do |v1, v2|
         assert_in_delta v1, v2, 0.0001
