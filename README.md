@@ -74,21 +74,17 @@ response = llm.chat(messages)
 
 ### GPU Acceleration
 
-⚠️ **Metal Support Status**: While Metal device support is available, some operations required by certain models (like RMS normalization used in Mistral) are not yet implemented in the Metal backend. This means that currently, Mistral models will only work on CPU. Metal support for these operations is being added to Candle.
-
 ```ruby
 # CPU works for all models
 device = Candle::Device.cpu
 llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
 
-# Metal device is available but has limited operation support
-device = Candle::Device.metal  # Will error with "no metal implementation for rms-norm" for Mistral
+# Metal
+device = Candle::Device.metal 
 
-# CUDA support (for NVIDIA GPUs)
+# CUDA support (for NVIDIA GPUs COMING SOON)
 device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
 ```
-
-Future updates to Candle will add Metal implementations for missing operations.
 
 ## ⚠️ Model Format Requirement: Safetensors Only
 
