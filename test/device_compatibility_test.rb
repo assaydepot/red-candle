@@ -132,6 +132,7 @@ class DeviceCompatibilityTest < Minitest::Test
   # Test LLM on each device
   DeviceTestHelper.devices_to_test.each do |device_type|
     define_method "test_llm_generation_on_#{device_type}" do
+      skip("LLM tests skipped via CANDLE_TEST_SKIP_LLM") if ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
       skip_unless_device_available(device_type)
       
       device = create_device(device_type)
@@ -159,6 +160,7 @@ class DeviceCompatibilityTest < Minitest::Test
   # Test LLM streaming on each device
   DeviceTestHelper.devices_to_test.each do |device_type|
     define_method "test_llm_streaming_on_#{device_type}" do
+      skip("LLM tests skipped via CANDLE_TEST_SKIP_LLM") if ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
       skip_unless_device_available(device_type)
       
       device = create_device(device_type)
@@ -211,11 +213,13 @@ class DeviceCompatibilityTest < Minitest::Test
     assert_kind_of Candle::Reranker, reranker
     
     # Test LLM
-    llm = Candle::DeviceUtils.create_with_best_device(
-      Candle::LLM,
-      model_id: "mistralai/Mistral-7B-Instruct-v0.1"
-    )
-    assert_kind_of Candle::LLM, llm
+    unless ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
+      llm = Candle::DeviceUtils.create_with_best_device(
+        Candle::LLM,
+        model_id: "mistralai/Mistral-7B-Instruct-v0.1"
+      )
+      assert_kind_of Candle::LLM, llm
+    end
   end
   
   # Test error handling
