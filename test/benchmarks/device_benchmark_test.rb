@@ -18,7 +18,7 @@ class DeviceBenchmarkTest < Minitest::Test
   def test_tensor_operation_performance
     results = {}
     
-    devices_to_test.each do |device_type|
+    DeviceTestHelper.devices_to_test.each do |device_type|
       next unless available_devices[device_type]
       
       device = create_device(device_type)
@@ -45,10 +45,11 @@ class DeviceBenchmarkTest < Minitest::Test
           end
         end
         
-        results[device_type][size] = {
-          creation: creation_time,
-          operations: operation_time
-        }
+        results[device_type][size] = creation_time + operation_time
+        # results[device_type][size] = {
+        #   creation: creation_time,
+        #   operations: operation_time
+        # }
       end
     end
     
@@ -64,7 +65,7 @@ class DeviceBenchmarkTest < Minitest::Test
       "This is a much longer text that should take more time to process. " * 10
     ]
     
-    devices_to_test.each do |device_type|
+    DeviceTestHelper.devices_to_test.each do |device_type|
       next unless available_devices[device_type]
       
       device = create_device(device_type)
@@ -104,7 +105,7 @@ class DeviceBenchmarkTest < Minitest::Test
       large: Array.new(100) { |i| "Document #{i}: Machine learning is a field of AI." }
     }
     
-    devices_to_test.each do |device_type|
+    DeviceTestHelper.devices_to_test.each do |device_type|
       next unless available_devices[device_type]
       
       device = create_device(device_type)
@@ -143,7 +144,7 @@ class DeviceBenchmarkTest < Minitest::Test
       long: "Explain the theory of relativity in simple terms."
     }
     
-    devices_to_test.each do |device_type|
+    DeviceTestHelper.devices_to_test.each do |device_type|
       next unless available_devices[device_type]
       
       device = create_device(device_type)
@@ -181,7 +182,7 @@ class DeviceBenchmarkTest < Minitest::Test
     sizes = [100, 1000, 10000, 100000]
     
     # Test CPU to GPU transfers
-    devices_to_test.reject { |d| d == :cpu }.each do |device_type|
+    DeviceTestHelper.devices_to_test.reject { |d| d == :cpu }.each do |device_type|
       next unless available_devices[device_type]
       
       device = create_device(device_type)
