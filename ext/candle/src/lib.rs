@@ -3,6 +3,7 @@ use magnus::{function, method, prelude::*, Ruby};
 use crate::ruby::candle_utils;
 use crate::ruby::{DType, Device, QTensor, Result as RbResult, Tensor};
 
+pub mod llm;
 pub mod reranker;
 pub mod ruby;
 
@@ -10,6 +11,7 @@ pub mod ruby;
 fn init(ruby: &Ruby) -> RbResult<()> {
     let rb_candle = ruby.define_module("Candle")?;
     ruby::init_embedding_model(rb_candle)?;
+    ruby::init_llm(rb_candle)?;
     reranker::init(rb_candle)?;
     candle_utils(rb_candle)?;
     let rb_tensor = rb_candle.define_class("Tensor", Ruby::class_object(ruby))?;

@@ -16,6 +16,9 @@ half = "2.6.0"
 magnus = "0.7.1"
 safetensors = "0.3"
 serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.45", features = ["rt", "macros"] }
+rand = "0.8"
 
 [features]
 mkl = []
