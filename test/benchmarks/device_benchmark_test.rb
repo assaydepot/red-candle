@@ -46,10 +46,6 @@ class DeviceBenchmarkTest < Minitest::Test
         end
         
         results[device_type][size] = creation_time + operation_time
-        # results[device_type][size] = {
-        #   creation: creation_time,
-        #   operations: operation_time
-        # }
       end
     end
     
