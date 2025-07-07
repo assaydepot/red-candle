@@ -26,9 +26,6 @@ Rake::ExtensionTask.new("candle", spec) do |c|
   ]
 end
 
-desc "Run benchmarks (alias for test:benchmark)"
-task bench: "test:benchmark"
-
 desc "Run device compatibility tests"
 Rake::TestTask.new("test:device") do |t|
   t.deps << :compile
@@ -39,6 +36,7 @@ end
 
 desc "Run benchmark tests"
 Rake::TestTask.new("test:benchmark") do |t|
+  ENV['CANDLE_RUN_BENCHMARKS'] = 'true'
   t.deps << :compile
   t.libs << "test"
   t.test_files = FileList["test/benchmarks/**/*_test.rb"]
