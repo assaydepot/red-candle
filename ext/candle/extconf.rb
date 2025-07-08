@@ -54,17 +54,20 @@ if ENV['CANDLE_FEATURES']
   features = manual_features
 end
 
-# Set the cargo features environment variable
+# Display selected features
 unless features.empty?
-  ENV['RB_SYS_CARGO_FEATURES'] = features.join(',')
   puts "Building with features: #{features.join(', ')}"
 else
   puts "Building CPU-only version (no acceleration features detected)"
 end
 
-# Pass through any additional cargo flags
-if ENV['CANDLE_CARGO_FLAGS']
-  ENV['RB_SYS_CARGO_FLAGS'] = ENV['CANDLE_CARGO_FLAGS']
+# Create the Rust makefile with proper feature configuration
+create_rust_makefile("candle/candle") do |r|
+  # Pass the features to rb_sys
+  r.features = features unless features.empty?
+  
+  # Pass through any additional cargo flags
+  if ENV['CANDLE_CARGO_FLAGS']
+    r.extra_cargo_args = ENV['CANDLE_CARGO_FLAGS'].split(' ')
+  end
 end
-
-create_rust_makefile("candle/candle")
