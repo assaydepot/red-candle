@@ -152,6 +152,8 @@ impl Mistral {
             let ctxt = &all_tokens[start_pos..];
             
             let input = Tensor::new(ctxt, &self.device)?.unsqueeze(0)?;
+            // Ensure input tensor is contiguous for Metal backend
+            let input = input.contiguous()?;
             let logits = self.model.forward(&input, start_pos)?;
             
             // The model returns logits of shape [batch_size, seq_len, vocab_size]
