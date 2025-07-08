@@ -12,6 +12,18 @@ module Candle
       generate_stream(prompt, **options, &block)
     end
 
+    def generate(prompt, config: GenerationConfig.balanced)
+      _generate(prompt, config)
+    end
+
+    def generate_stream(prompt, config: GenerationConfig.balanced, &block)
+      _generate_stream(prompt, config, &block)
+    end
+
+    def self.from_pretrained(model_id, device: Candle::Device.cpu)
+      _from_pretrained(model_id, device)
+    end
+
     private
 
     # Format messages into a prompt string

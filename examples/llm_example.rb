@@ -14,10 +14,10 @@ begin
   puts "Using device: #{device.inspect}"
 
   # Load a Mistral model
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3", device: device)
 
   # Generate text with default config
-  response = llm.generate("What is Ruby programming language?", Candle::GenerationConfig.balanced)
+  response = llm.generate("What is Ruby programming language?", config: Candle::GenerationConfig.balanced)
   puts "Response: #{response}"
 
   # Generate with custom configuration
@@ -26,7 +26,7 @@ begin
     max_length: 100,
     top_p: 0.9
   )
-  response = llm.generate("Write a haiku about coding", config)
+  response = llm.generate("Write a haiku about coding", config: config)
   puts "\nHaiku: #{response}"
 rescue => e
   puts "Error loading model: #{e.message}"
@@ -38,10 +38,10 @@ puts "\n\n=== Streaming Generation Example ==="
 begin
   # Use Metal for better performance if available
   device = Candle::Device.metal rescue Candle::Device.cpu
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device: device)
 
   print "Streaming response: "
-  llm.generate_stream("Tell me a short story about a robot", Candle::GenerationConfig.balanced) do |token|
+  llm.generate_stream("Tell me a short story about a robot", config: Candle::GenerationConfig.balanced) do |token|
     print token
     $stdout.flush
   end
@@ -54,7 +54,7 @@ end
 puts "\n\n=== Chat Interface Example ==="
 begin
   device = Candle::Device.cpu  # Or use Metal/CUDA
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device: device)
 
   messages = [
     { role: "system", content: "You are a helpful Ruby programming assistant." },
@@ -71,21 +71,21 @@ end
 puts "\n\n=== Generation Config Examples ==="
 begin
   device = Candle::Device.cpu  # Or use Metal/CUDA
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device: device)
 
   # Deterministic (temperature = 0)
   deterministic_config = Candle::GenerationConfig.deterministic
-  response = llm.generate("The capital of France is", deterministic_config)
+  response = llm.generate("The capital of France is", config: deterministic_config)
   puts "Deterministic: #{response}"
 
   # Creative (higher temperature)
   creative_config = Candle::GenerationConfig.creative
-  response = llm.generate("Once upon a time", creative_config)
+  response = llm.generate("Once upon a time", config: creative_config)
   puts "Creative: #{response}"
 
   # Balanced
   balanced_config = Candle::GenerationConfig.balanced
-  response = llm.generate("Ruby is", balanced_config)
+  response = llm.generate("Ruby is", config: balanced_config)
   puts "Balanced: #{response}"
 rescue => e
   puts "Config example error: #{e.message}"

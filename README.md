@@ -54,13 +54,13 @@ device = Candle::Device.metal   # Apple GPU (Metal)
 device = Candle::Device.cuda    # NVIDIA GPU (CUDA)
 
 # Load a model
-llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
 
 # Generate text
-response = llm.generate("What is Ruby?", temperature: 0.7, max_length: 100)
+response = llm.generate("What is Ruby?", config: Candle::GenerationConfig.balanced)
 
 # Stream generation
-llm.generate_stream("Tell me a story") do |token|
+llm.generate_stream("Tell me a story", config: Candle::GenerationConfig.balanced) do |token|
   print token
 end
 
@@ -77,7 +77,7 @@ response = llm.chat(messages)
 ```ruby
 # CPU works for all models
 device = Candle::Device.cpu
-llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
 
 # Metal
 device = Candle::Device.metal 

@@ -25,7 +25,7 @@ test_models.each do |model_info|
   
   begin
     print "Loading model... "
-    llm = Candle::LLM.from_pretrained(model_info[:id], nil)
+    llm = Candle::LLM.from_pretrained(model_info[:id])
     puts "✓ Success!"
     
     # Try a simple generation to verify it works
@@ -34,7 +34,7 @@ test_models.each do |model_info|
       temperature: 0.1,
       max_length: 10
     )
-    response = llm.generate("Hello", config)
+    response = llm.generate("Hello", config: config)
     puts "✓ Generated: #{response.strip}"
     
   rescue => e

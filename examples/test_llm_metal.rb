@@ -11,7 +11,7 @@ puts "\n--- Mistral-7B on Metal ---"
 begin
   device = Candle::Device.metal
   puts "Creating Mistral LLM on Metal..."
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
   puts "✅ Model loaded successfully!"
   
   config = Candle::GenerationConfig.new(
@@ -24,7 +24,7 @@ begin
   puts "\nPrompt: #{prompt}"
   puts "Generating..."
   
-  response = llm.generate(prompt, config)
+  response = llm.generate(prompt, config: config)
   puts "Response: #{response}"
   puts "\n✅ LLM works on Metal! This is unexpected but great!"
   
@@ -39,12 +39,12 @@ end
 puts "\n--- Testing Streaming on Metal ---"
 begin
   device = Candle::Device.metal
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
   
   config = Candle::GenerationConfig.new(max_length: 30)
   
   print "Streaming response: "
-  llm.generate_stream("Once upon a time", config) do |token|
+  llm.generate_stream("Once upon a time", config: config) do |token|
     print token
   end
   puts "\n✅ Streaming works on Metal too!"

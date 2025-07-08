@@ -41,12 +41,12 @@ results = reranker.rerank_with_pooling("query", ["doc1", "doc2"], "cls")
 ### LLMs (Works on Metal!)
 ```ruby
 device = Candle::Device.metal
-llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
 config = Candle::GenerationConfig.new(max_length: 50)
-response = llm.generate("Hello world", config)  # Works on Metal!
+response = llm.generate("Hello world", config: config)  # Works on Metal!
 
 # Streaming also works
-llm.generate_stream("Once upon a time", config) do |token|
+llm.generate_stream("Once upon a time", config: config) do |token|
   print token
 end
 ```
