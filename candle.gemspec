@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
                          "README.md"]
   spec.extensions  = ["ext/candle/extconf.rb"]
   spec.authors     = ["Christopher Petersen", "kojix2"]
-  spec.email       = ["christopher.petersen@gmail.com", "2xijok@gmail.com"]
+  spec.email       = ["chris@petersen.com", "2xijok@gmail.com"]
   spec.homepage    = "https://github.com/assaydepot/red-candle"
   spec.license     = "MIT"
 

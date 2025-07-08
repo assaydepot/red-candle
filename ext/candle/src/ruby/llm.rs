@@ -119,24 +119,6 @@ impl GenerationConfig {
         }
     }
 
-    pub fn deterministic() -> Self {
-        Self {
-            inner: RustGenerationConfig::deterministic(),
-        }
-    }
-
-    pub fn creative() -> Self {
-        Self {
-            inner: RustGenerationConfig::creative(),
-        }
-    }
-
-    pub fn balanced() -> Self {
-        Self {
-            inner: RustGenerationConfig::balanced(),
-        }
-    }
-
     // Getters
     pub fn max_length(&self) -> usize {
         self.inner.max_length
@@ -291,9 +273,6 @@ pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
     let rb_generation_config = rb_candle.define_class("GenerationConfig", magnus::class::object())?;
     rb_generation_config.define_singleton_method("new", function!(GenerationConfig::new, 1))?;
     rb_generation_config.define_singleton_method("default", function!(GenerationConfig::default, 0))?;
-    rb_generation_config.define_singleton_method("deterministic", function!(GenerationConfig::deterministic, 0))?;
-    rb_generation_config.define_singleton_method("creative", function!(GenerationConfig::creative, 0))?;
-    rb_generation_config.define_singleton_method("balanced", function!(GenerationConfig::balanced, 0))?;
     
     rb_generation_config.define_method("max_length", method!(GenerationConfig::max_length, 0))?;
     rb_generation_config.define_method("temperature", method!(GenerationConfig::temperature, 0))?;
