@@ -41,7 +41,7 @@ puts "\n5. Working with models and devices:"
 puts "   Models accept device parameter directly:"
 puts "   ✓ Candle::EmbeddingModel.new(model_path: 'path', device: device)"
 puts "   ✓ Candle::Reranker.new(device: device)"
-puts "   ✓ Candle::LLM.from_pretrained('model-id', device)"
+puts "   ✓ Candle::LLM.from_pretrained('model-id', device: device)"
 
 puts "\n6. Device utilities:"
 best_device = Candle::DeviceUtils.best_device

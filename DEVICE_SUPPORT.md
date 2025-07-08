@@ -48,13 +48,13 @@ reranker = Candle::Reranker.new(device: Candle::Device.cuda)
 
 ```ruby
 # CPU (always works)
-llm = Candle::LLM.from_pretrained("model-name", Candle::Device.cpu)
+llm = Candle::LLM.from_pretrained("model-name", device: Candle::Device.cpu)
 
 # Metal
-llm = Candle::LLM.from_pretrained("model-name", Candle::Device.metal)
+llm = Candle::LLM.from_pretrained("model-name", device: Candle::Device.metal)
 
 # CUDA (if available)
-llm = Candle::LLM.from_pretrained("model-name", Candle::Device.cuda)
+llm = Candle::LLM.from_pretrained("model-name", device: Candle::Device.cuda)
 ```
 
 ## Checking Device Availability

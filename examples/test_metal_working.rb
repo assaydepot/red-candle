@@ -78,9 +78,9 @@ end
 puts "\n--- Testing LLM on Metal ---"
 begin
   device = Candle::Device.metal
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
   config = Candle::GenerationConfig.new(max_length: 10)
-  response = llm.generate("Hello", config)
+  response = llm.generate("Hello", config: config)
   puts "✓ LLM works on Metal!"
 rescue => e
   puts "✗ LLM failed: #{e.message}"

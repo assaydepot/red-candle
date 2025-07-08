@@ -60,7 +60,7 @@ device = select_best_device
 # Load model on selected device
 puts "\nLoading model on #{device.inspect}..."
 begin
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
   puts "✓ Model loaded successfully!"
   puts "Model is running on: #{llm.device.inspect}"
   
@@ -81,7 +81,7 @@ begin
     llm.clear_cache
     
     start_time = Time.now
-    response = llm.generate(prompt, config)
+    response = llm.generate(prompt, config: config)
     elapsed = Time.now - start_time
     
     puts "\nPrompt: #{prompt}"
@@ -121,7 +121,7 @@ puts "- May use AVX/AVX2 instructions if available"
 puts "\n--- Manual Device Selection ---"
 puts <<~RUBY
   # Always use CPU
-  cpu_llm = Candle::LLM.from_pretrained("model_name", Candle::Device.cpu)
+  cpu_llm = Candle::LLM.from_pretrained("model_name", device: Candle::Device.cpu)
   
   # Try Metal, fallback to CPU
   device = begin
@@ -129,7 +129,7 @@ puts <<~RUBY
   rescue
     Candle::Device.cpu
   end
-  llm = Candle::LLM.from_pretrained("model_name", device)
+  llm = Candle::LLM.from_pretrained("model_name", device: device)
   
   # Check device of loaded model
   puts llm.device  # => #<Candle::Device:Metal> or #<Candle::Device:Cpu>

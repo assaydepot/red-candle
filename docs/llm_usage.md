@@ -31,7 +31,7 @@ config = Candle::GenerationConfig.new(
   max_length: 200,
   top_p: 0.9
 )
-response = llm.generate("Tell me about Ruby", config)
+response = llm.generate("Tell me about Ruby", config: config)
 ```
 
 ### Streaming Generation

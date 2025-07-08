@@ -305,9 +305,9 @@ pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
-    rb_llm.define_singleton_method("from_pretrained", function!(from_pretrained_wrapper, -1))?;
-    rb_llm.define_method("generate", method!(LLM::generate, 2))?;
-    rb_llm.define_method("generate_stream", method!(LLM::generate_stream, 2))?;
+    rb_llm.define_singleton_method("_from_pretrained", function!(from_pretrained_wrapper, -1))?;
+    rb_llm.define_method("_generate", method!(LLM::generate, 2))?;
+    rb_llm.define_method("_generate_stream", method!(LLM::generate_stream, 2))?;
     rb_llm.define_method("model_name", method!(LLM::model_name, 0))?;
     rb_llm.define_method("device", method!(LLM::device, 0))?;
     rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;

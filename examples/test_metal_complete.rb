@@ -113,10 +113,10 @@ puts "\n--- LLM on Metal (Expected to Fail) ---"
 begin
   device = Candle::Device.metal
   puts "Creating LLM on Metal device..."
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
   puts "LLM created successfully! Attempting generation..."
   config = Candle::GenerationConfig.new(max_length: 10)
-  response = llm.generate("Hello", config)
+  response = llm.generate("Hello", config: config)
   puts "✅ Surprisingly, LLM works on Metal! Response: #{response}"
 rescue => e
   if e.message.include?("rms-norm")
