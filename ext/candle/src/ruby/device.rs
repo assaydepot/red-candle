@@ -35,15 +35,21 @@ pub fn available_devices() -> Vec<String> {
 
 /// Get the default device based on what's available
 pub fn default_device() -> Device {
-    // Use compile-time defaults
-    #[cfg(all(has_metal, not(force_cpu)))]
-    return Device::Metal;
+    // Return based on compiled features, not detection
+    #[cfg(all(feature = "metal", not(force_cpu)))]
+    {
+        Device::Metal
+    }
     
-    #[cfg(all(has_cuda, not(has_metal), not(force_cpu)))]
-    return Device::Cuda;
+    #[cfg(all(feature = "cuda", not(feature = "metal"), not(force_cpu)))]
+    {
+        Device::Cuda
+    }
     
-    #[cfg(not(any(all(has_metal, not(force_cpu)), all(has_cuda, not(has_metal), not(force_cpu)))))]
-    Device::Cpu
+    #[cfg(not(any(all(feature = "metal", not(force_cpu)), all(feature = "cuda", not(feature = "metal"), not(force_cpu)))))]
+    {
+        Device::Cpu
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -61,13 +67,31 @@ impl Device {
     }
 
     /// Create a CUDA device (GPU)
-    pub fn cuda() -> Self {
-        Self::Cuda
+    pub fn cuda() -> RbResult<Self> {
+        #[cfg(not(feature = "cuda"))]
+        {
+            return Err(Error::new(
+                magnus::exception::runtime_error(),
+                "CUDA support not compiled in. Rebuild with CUDA available.",
+            ));
+        }
+        
+        #[cfg(feature = "cuda")]
+        Ok(Self::Cuda)
     }
 
     /// Create a Metal device (Apple GPU)
-    pub fn metal() -> Self {
-        Self::Metal
+    pub fn metal() -> RbResult<Self> {
+        #[cfg(not(feature = "metal"))]
+        {
+            return Err(Error::new(
+                magnus::exception::runtime_error(),
+                "Metal support not compiled in. Rebuild on macOS.",
+            ));
+        }
+        
+        #[cfg(feature = "metal")]
+        Ok(Self::Metal)
     }
 
     pub fn from_device(device: &CoreDevice) -> Self {
