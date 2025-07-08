@@ -71,5 +71,37 @@ module Candle
       
       self.class.new(current_config.merge(overrides))
     end
+
+    # Create a deterministic configuration (temperature = 0, fixed seed)
+    def self.deterministic(**opts)
+      defaults = {
+        temperature: 0.0,
+        top_p: nil,
+        top_k: 1,
+        seed: 42
+      }
+      new(defaults.merge(opts))
+    end
+
+    # Create a creative configuration (higher temperature, random seed)
+    def self.creative(**opts)
+      defaults = {
+        temperature: 1.0,
+        top_p: 0.95,
+        top_k: 50,
+        repetition_penalty: 1.2
+      }
+      new(defaults.merge(opts))
+    end
+
+    # Create a balanced configuration (moderate temperature, random seed)
+    def self.balanced(**opts)
+      defaults = {
+        temperature: 0.7,
+        top_p: 0.9,
+        top_k: 40
+      }
+      new(defaults.merge(opts))
+    end
   end
 end
