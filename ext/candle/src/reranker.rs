@@ -162,6 +162,9 @@ impl Reranker {
                     embeddings.i((.., 0))
                         .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
                 };
+                // Ensure tensor is contiguous before linear layer
+                let cls_embeddings = cls_embeddings.contiguous()
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make cls_embeddings contiguous: {}", e)))?;
                 let pooled = self.pooler.forward(&cls_embeddings)
                     .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Pooler forward failed: {}", e)))?;
                 pooled.tanh()
@@ -170,7 +173,7 @@ impl Reranker {
             "cls" => {
                 // Just use the [CLS] token embeddings directly (no pooler layer)
                 // Work around Metal indexing issue
-                if self.device.is_metal() {
+                let cls_embeddings = if self.device.is_metal() {
                     // Use same approach as pooler method
                     let (batch_size, _seq_len, hidden_size) = embeddings.dims3()
                         .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to get dims: {}", e)))?;
@@ -193,7 +196,10 @@ impl Reranker {
                 } else {
                     embeddings.i((.., 0))
                         .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
-                }
+                };
+                // Ensure contiguous for classifier
+                cls_embeddings.contiguous()
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make CLS embeddings contiguous: {}", e)))?
             },
             "mean" => {
                 // Mean pooling across all tokens
@@ -209,6 +215,9 @@ impl Reranker {
         };
         
         // Apply classifier to get relevance scores (raw logits)
+        // Ensure tensor is contiguous before linear layer
+        let pooled_embeddings = pooled_embeddings.contiguous()
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make pooled_embeddings contiguous: {}", e)))?;
         let logits = self.classifier.forward(&pooled_embeddings)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Classifier forward failed: {}", e)))?;
         let scores = logits.squeeze(1)
