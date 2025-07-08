@@ -12,12 +12,20 @@ module Candle
       generate_stream(prompt, **options, &block)
     end
 
-    def generate(prompt, config: GenerationConfig.balanced)
-      _generate(prompt, config)
+    def generate(prompt, config: GenerationConfig.balanced, reset_cache: true)
+      begin
+        _generate(prompt, config)
+      ensure
+        clear_cache if reset_cache
+      end
     end
 
-    def generate_stream(prompt, config: GenerationConfig.balanced, &block)
-      _generate_stream(prompt, config, &block)
+    def generate_stream(prompt, config: GenerationConfig.balanced, reset_cache: true, &block)
+      begin
+        _generate_stream(prompt, config, &block)
+      ensure
+        clear_cache if reset_cache
+      end
     end
 
     def self.from_pretrained(model_id, device: Candle::Device.cpu)
