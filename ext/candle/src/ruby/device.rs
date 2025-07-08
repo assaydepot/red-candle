@@ -3,7 +3,7 @@ use magnus::Error;
 use ::candle_core::Device as CoreDevice;
 use crate::ruby::Result as RbResult;
 
-#[cfg(feature = "cuda")]
+#[cfg(any(feature = "cuda", feature = "metal"))]
 use crate::ruby::errors::wrap_candle_err;
 
 #[cfg(feature = "cuda")]
