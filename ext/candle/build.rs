@@ -2,6 +2,13 @@ use std::env;
 use std::path::Path;
 
 fn main() {
+    // Register our custom cfg flags with rustc
+    println!("cargo::rustc-check-cfg=cfg(force_cpu)");
+    println!("cargo::rustc-check-cfg=cfg(has_cuda)");
+    println!("cargo::rustc-check-cfg=cfg(has_metal)");
+    println!("cargo::rustc-check-cfg=cfg(has_mkl)");
+    println!("cargo::rustc-check-cfg=cfg(has_accelerate)");
+    
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=CANDLE_FORCE_CPU");
     println!("cargo:rerun-if-env-changed=CANDLE_CUDA_PATH");

@@ -1,25 +1,34 @@
 use magnus::Error;
 
-use crate::ruby::errors::wrap_candle_err;
 use ::candle_core::Device as CoreDevice;
 use crate::ruby::Result as RbResult;
 
+#[cfg(feature = "cuda")]
+use crate::ruby::errors::wrap_candle_err;
+
+#[cfg(feature = "cuda")]
 static CUDA_DEVICE: std::sync::Mutex<Option<CoreDevice>> = std::sync::Mutex::new(None);
+
+#[cfg(feature = "metal")]
 static METAL_DEVICE: std::sync::Mutex<Option<CoreDevice>> = std::sync::Mutex::new(None);
 
 /// Get list of available devices based on compile-time features
 pub fn available_devices() -> Vec<String> {
-    let mut devices = vec!["cpu".to_string()];
+    let devices = vec!["cpu".to_string()];
     
     #[cfg(all(feature = "cuda", not(force_cpu)))]
-    {
+    let devices = {
+        let mut devices = devices;
         devices.push("cuda".to_string());
-    }
+        devices
+    };
     
     #[cfg(all(feature = "metal", not(force_cpu)))]
-    {
+    let devices = {
+        let mut devices = devices;
         devices.push("metal".to_string());
-    }
+        devices
+    };
     
     devices
 }
@@ -28,15 +37,12 @@ pub fn available_devices() -> Vec<String> {
 pub fn default_device() -> Device {
     // Use compile-time defaults
     #[cfg(all(has_metal, not(force_cpu)))]
-    {
-        return Device::Metal;
-    }
+    return Device::Metal;
     
     #[cfg(all(has_cuda, not(has_metal), not(force_cpu)))]
-    {
-        return Device::Cuda;
-    }
+    return Device::Cuda;
     
+    #[cfg(not(any(all(has_metal, not(force_cpu)), all(has_cuda, not(has_metal), not(force_cpu)))))]
     Device::Cpu
 }
 
