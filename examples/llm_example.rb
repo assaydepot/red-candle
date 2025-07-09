@@ -77,15 +77,3 @@ begin
 rescue => e
   puts "Loading error: #{e.message}"
 end
-
-# Example 5: Model registry
-puts "\n\n=== Model Registry Example ==="
-puts "Supported models:"
-Candle::LLM::ModelRegistry.registered_models.each do |model|
-  status = model[:status] || :available
-  puts "  - #{model[:name]} (#{model[:size]}) - Status: #{status}"
-  puts "    Pattern: #{model[:pattern]}"
-  puts "    Context length: #{model[:context_length]}"
-  puts "    Supports chat: #{model[:supports_chat]}"
-  puts
-end
