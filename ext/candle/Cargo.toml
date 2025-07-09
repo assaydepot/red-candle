@@ -12,7 +12,7 @@ candle-core = { version = "0.9.1" }
 candle-nn = { version = "0.9.1" }
 candle-transformers = { version = "0.9.1" }
 tokenizers = { version = "0.21.1", default-features = true, features = ["fancy-regex"] }
-hf-hub = "0.4.2"
+hf-hub = "0.4.3"
 half = "2.6.0"
 magnus = "0.7.1"
 safetensors = "0.3"
