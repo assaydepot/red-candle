@@ -68,7 +68,7 @@
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&quot;</span></span>
 
-<span class='id identifier rubyid_x'>x</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Tensor.html" title="Candle::Tensor (class)">Tensor</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='int'>1</span><span class='comma'>,</span> <span class='int'>2</span><span class='comma'>,</span> <span class='int'>3</span><span class='comma'>,</span> <span class='int'>4</span><span class='comma'>,</span> <span class='int'>5</span><span class='comma'>,</span> <span class='int'>6</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='symbol'>:i64</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_x'>x</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Tensor.html" title="Candle::Tensor (class)">Tensor</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Tensor.html#new-class_method" title="Candle::Tensor.new (method)">new</a></span></span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='int'>1</span><span class='comma'>,</span> <span class='int'>2</span><span class='comma'>,</span> <span class='int'>3</span><span class='comma'>,</span> <span class='int'>4</span><span class='comma'>,</span> <span class='int'>5</span><span class='comma'>,</span> <span class='int'>6</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='symbol'>:i64</span><span class='rparen'>)</span>
 <span class='id identifier rubyid_x'>x</span> <span class='op'>=</span> <span class='id identifier rubyid_x'>x</span><span class='period'>.</span><span class='id identifier rubyid_reshape'>reshape</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='int'>3</span><span class='comma'>,</span> <span class='int'>2</span><span class='rbracket'>]</span><span class='rparen'>)</span>
 <span class='comment'># [[1., 2.],
 </span><span class='comment'>#  [3., 4.],
@@ -78,19 +78,82 @@
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
 
-<span class='comment'># Default model (JinaBERT)
+<span class='comment'># Default model (JinaBERT) on CPU
 </span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
-<span class='comment'># Specify a different model type
+<span class='comment'># Specify device (CPU, Metal, or CUDA)
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>     <span class='comment'># or Candle::Device.metal, Candle::Device.cuda
 </span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span><span class='lparen'>(</span>
-  <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-  <span class='label'>tokenizer_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sentence-transformers/all-MiniLM-L6-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-  <span class='label'>device:</span> <span class='kw'>nil</span><span class='comma'>,</span>  <span class='comment'># nil = CPU
-</span>  <span class='label'>model_type:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModelType.html" title="Candle::EmbeddingModelType (module)">EmbeddingModelType</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModelType.html#MINILM-constant" title="Candle::EmbeddingModelType::MINILM (constant)">MINILM</a></span></span>
+  <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>jinaai/jina-embeddings-v2-base-en</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span>
 <span class='rparen'>)</span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Reranker also supports device selection
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span>
+<span class='rparen'>)</span>
+<span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>query</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>doc1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>doc2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>doc3</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
 </code></pre>
+
+<h2 id="llm-support">LLM Support</h2>
+
+<p>Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!</p>
+
+<blockquote>
+<h3 id="huggingface-login-warning">⚠️ Huggingface login warning</h3>
+
+<p>Many models, including the one below, require you to agree to the terms. You&#39;ll need to:</p>
+
+<ol>
+<li>Login to <a href="https://huggingface.co">Huggingface</a></li>
+<li>Agree to the terms. For example: <a href="https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1">here</a></li>
+<li>Authenticate your session. Simplest way is with <code>huggingface-cli login</code>. Detail here: <a href="https://huggingface.co/docs/huggingface_hub/en/guides/cli">Huggingface CLI</a></li>
+</ol>
+
+<p>More details here: <a href="HUGGINGFACE.md">Huggingface Authentication</a></p>
+</blockquote>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
+
+<span class='comment'># Choose your device
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>     <span class='comment'># CPU (default)
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span>   <span class='comment'># Apple GPU (Metal)
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>    <span class='comment'># NVIDIA GPU (CUDA)
+</span>
+<span class='comment'># Load a model
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>mistralai/Mistral-7B-Instruct-v0.1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
+
+<span class='comment'># Generate text
+</span><span class='id identifier rubyid_response'>response</span> <span class='op'>=</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>What is Ruby?</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="Candle/GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='rparen'>)</span>
+
+<span class='comment'># Stream generation
+</span><span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_generate_stream'>generate_stream</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tell me a story</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="Candle/GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_token'>token</span><span class='op'>|</span>
+  <span class='id identifier rubyid_print'>print</span> <span class='id identifier rubyid_token'>token</span>
+<span class='kw'>end</span>
+
+<span class='comment'># Chat interface
+</span><span class='id identifier rubyid_messages'>messages</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='lbrace'>{</span> <span class='label'>role:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>system</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>content:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>You are a helpful assistant.</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='lbrace'>{</span> <span class='label'>role:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>user</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>content:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Explain Ruby in one sentence.</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+<span class='rbracket'>]</span>
+<span class='id identifier rubyid_response'>response</span> <span class='op'>=</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_chat'>chat</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="gpu-acceleration">GPU Acceleration</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># CPU works for all models
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>
+<span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>mistralai/Mistral-7B-Instruct-v0.1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
+
+<span class='comment'># Metal
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span> 
+
+<span class='comment'># CUDA support (for NVIDIA GPUs COMING SOON)
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>   <span class='comment'># Linux/Windows with NVIDIA GPU
+</span></code></pre>
 
 <h2 id="model-format-requirement-safetensors-only">⚠️ Model Format Requirement: Safetensors Only</h2>
 
@@ -306,7 +369,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Mon Jul  7 15:56:29 2025 by
+  Generated on Wed Jul  9 19:34:41 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>

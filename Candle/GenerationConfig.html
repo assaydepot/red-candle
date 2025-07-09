@@ -108,6 +108,87 @@
 
   
     <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#balanced-class_method" title="balanced (class method)">.<strong>balanced</strong>(**opts)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create a balanced configuration (moderate temperature, random seed).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#creative-class_method" title="creative (class method)">.<strong>creative</strong>(**opts)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create a creative configuration (higher temperature, random seed).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#deterministic-class_method" title="deterministic (class method)">.<strong>deterministic</strong>(**opts)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create a deterministic configuration (temperature = 0, fixed seed).</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
       Instance Method Summary
       <small><a href="#" class="summary_toggle">collapse</a></small>
     </h2>
@@ -143,6 +224,169 @@
 
 
 
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="balanced-class_method">
+  
+    .<strong>balanced</strong>(**opts)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create a balanced configuration (moderate temperature, random seed)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+98
+99
+100
+101
+102
+103
+104
+105</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 98</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_balanced'>balanced</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_defaults'>defaults</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>temperature:</span> <span class='float'>0.7</span><span class='comma'>,</span>
+    <span class='label'>top_p:</span> <span class='float'>0.9</span><span class='comma'>,</span>
+    <span class='label'>top_k:</span> <span class='int'>40</span>
+  <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_defaults'>defaults</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="creative-class_method">
+  
+    .<strong>creative</strong>(**opts)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create a creative configuration (higher temperature, random seed)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+87
+88
+89
+90
+91
+92
+93
+94
+95</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 87</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_creative'>creative</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_defaults'>defaults</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>temperature:</span> <span class='float'>1.0</span><span class='comma'>,</span>
+    <span class='label'>top_p:</span> <span class='float'>0.95</span><span class='comma'>,</span>
+    <span class='label'>top_k:</span> <span class='int'>50</span><span class='comma'>,</span>
+    <span class='label'>repetition_penalty:</span> <span class='float'>1.2</span>
+  <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_defaults'>defaults</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="deterministic-class_method">
+  
+    .<strong>deterministic</strong>(**opts)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create a deterministic configuration (temperature = 0, fixed seed)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+76
+77
+78
+79
+80
+81
+82
+83
+84</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 76</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_deterministic'>deterministic</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_defaults'>defaults</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>temperature:</span> <span class='float'>0.0</span><span class='comma'>,</span>
+    <span class='label'>top_p:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+    <span class='label'>top_k:</span> <span class='int'>1</span><span class='comma'>,</span>
+    <span class='label'>seed:</span> <span class='int'>42</span>
+  <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_defaults'>defaults</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
 
@@ -173,23 +417,23 @@
       <pre class="lines">
 
 
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53</pre>
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 40</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_with'>with</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_overrides'>overrides</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_config'>current_config</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -215,7 +459,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jul  7 15:56:29 2025 by
+  Generated on Wed Jul  9 19:34:42 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>

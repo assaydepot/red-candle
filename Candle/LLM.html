@@ -94,30 +94,49 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/candle/llm.rb<span class="defines">,<br />
-  lib/candle/llm/model_registry.rb</span>
-</dd>
+    <dd>lib/candle/llm.rb</dd>
   </dl>
   
 </div>
 
-<h2>Defined Under Namespace</h2>
-<p class="children">
+
+
+
+
+
+
+
   
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
     
+      <a href="#from_pretrained-class_method" title="from_pretrained (class method)">.<strong>from_pretrained</strong>(model_id, device: Candle::Device.cpu)  &#x21d2; Object </a>
+    
+
+    
+  </span>
   
-    
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LLM/ModelRegistry.html" title="Candle::LLM::ModelRegistry (class)">ModelRegistry</a></span>
-    
   
-</p>
+  
+  
+  
+  
+  
 
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
 
-
-
-
-
-
+      
+    </ul>
   
     <h2>
       Instance Method Summary
@@ -174,10 +193,90 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#generate-instance_method" title="#generate (instance method)">#<strong>generate</strong>(prompt, config: GenerationConfig.balanced, reset_cache: true)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#generate_stream-instance_method" title="#generate_stream (instance method)">#<strong>generate_stream</strong>(prompt, config: GenerationConfig.balanced, reset_cache: true, &amp;block)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
     </ul>
   
 
 
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="from_pretrained-class_method">
+  
+    .<strong>from_pretrained</strong>(model_id, device: Candle::Device.cpu)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+31
+32
+33</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 31</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='label'>device:</span> <span class='const'><span class='object_link'><a href="../Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__from_pretrained'>_from_pretrained</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
@@ -269,12 +368,88 @@
 </table>
 </div>
     
+      <div class="method_details ">
+  <h3 class="signature " id="generate-instance_method">
+  
+    #<strong>generate</strong>(prompt, config: GenerationConfig.balanced, reset_cache: true)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+15
+16
+17
+18
+19
+20
+21</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 15</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='comma'>,</span> <span class='label'>reset_cache:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='kw'>begin</span>
+    <span class='id identifier rubyid__generate'>_generate</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
+  <span class='kw'>ensure</span>
+    <span class='id identifier rubyid_clear_cache'>clear_cache</span> <span class='kw'>if</span> <span class='id identifier rubyid_reset_cache'>reset_cache</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="generate_stream-instance_method">
+  
+    #<strong>generate_stream</strong>(prompt, config: GenerationConfig.balanced, reset_cache: true, &amp;block)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+23
+24
+25
+26
+27
+28
+29</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 23</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_generate_stream'>generate_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='comma'>,</span> <span class='label'>reset_cache:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>begin</span>
+    <span class='id identifier rubyid__generate_stream'>_generate_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>ensure</span>
+    <span class='id identifier rubyid_clear_cache'>clear_cache</span> <span class='kw'>if</span> <span class='id identifier rubyid_reset_cache'>reset_cache</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Mon Jul  7 15:56:29 2025 by
+  Generated on Wed Jul  9 19:34:42 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>
