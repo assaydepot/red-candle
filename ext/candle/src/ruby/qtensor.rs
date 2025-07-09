@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use magnus::{method, class, RModule, Error, Module};
 
 use crate::ruby::errors::wrap_candle_err;
 use crate::ruby::{Tensor, Result as RbResult};
@@ -56,4 +57,13 @@ impl QTensor {
     //     let res = qmatmul.forward(lhs).map_err(wrap_candle_err)?;
     //     Ok(Tensor(res))
     // }
+}
+
+pub fn init(rb_candle: RModule) -> Result<(), Error> {
+    let rb_qtensor = rb_candle.define_class("QTensor", class::object())?;
+    rb_qtensor.define_method("ggml_dtype", method!(QTensor::ggml_dtype, 0))?;
+    rb_qtensor.define_method("rank", method!(QTensor::rank, 0))?;
+    rb_qtensor.define_method("shape", method!(QTensor::shape, 0))?;
+    rb_qtensor.define_method("dequantize", method!(QTensor::dequantize, 0))?;
+    Ok(())
 }

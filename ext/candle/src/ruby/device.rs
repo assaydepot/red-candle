@@ -1,4 +1,5 @@
 use magnus::Error;
+use magnus::{function, method, class, RModule, Module, Object};
 
 use ::candle_core::Device as CoreDevice;
 use crate::ruby::Result as RbResult;
@@ -181,4 +182,16 @@ impl magnus::TryConvert for Device {
         };
         Ok(device)
     }
+}
+
+pub fn init(rb_candle: RModule) -> Result<(), Error> {
+    let rb_device = rb_candle.define_class("Device", class::object())?;
+    rb_device.define_singleton_method("cpu", function!(Device::cpu, 0))?;
+    rb_device.define_singleton_method("cuda", function!(Device::cuda, 0))?;
+    rb_device.define_singleton_method("metal", function!(Device::metal, 0))?;
+    rb_device.define_singleton_method("available_devices", function!(available_devices, 0))?;
+    rb_device.define_singleton_method("default", function!(default_device, 0))?;
+    rb_device.define_method("to_s", method!(Device::__str__, 0))?;
+    rb_device.define_method("inspect", method!(Device::__repr__, 0))?;
+    Ok(())
 }
