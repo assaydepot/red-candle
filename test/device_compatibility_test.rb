@@ -199,29 +199,7 @@ class DeviceCompatibilityTest < Minitest::Test
       assert_equal "cpu", best.to_s
     end
   end
-  
-  def test_device_utils_create_with_best_device
-    # Test EmbeddingModel
-    model = Candle::DeviceUtils.create_with_best_device(
-      Candle::EmbeddingModel,
-      model_path: "jinaai/jina-embeddings-v2-base-en"
-    )
-    assert_kind_of Candle::EmbeddingModel, model
-    
-    # Test Reranker
-    reranker = Candle::DeviceUtils.create_with_best_device(Candle::Reranker)
-    assert_kind_of Candle::Reranker, reranker
-    
-    # Test LLM
-    unless ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
-      llm = Candle::DeviceUtils.create_with_best_device(
-        Candle::LLM,
-        model_id: "mistralai/Mistral-7B-Instruct-v0.1"
-      )
-      assert_kind_of Candle::LLM, llm
-    end
-  end
-  
+
   # Test error handling
   def test_unsupported_device_operations
     skip("This test is for documentation purposes")

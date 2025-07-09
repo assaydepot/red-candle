@@ -94,14 +94,14 @@ begin
   puts "Best available device: #{best.inspect}"
   
   # Should automatically use the best device (Metal on Mac)
-  model = Candle::DeviceUtils.create_with_best_device(
-    Candle::EmbeddingModel,
-    model_path: "jinaai/jina-embeddings-v2-base-en"
+  model = Candle::EmbeddingModel.new(
+    model_path: "jinaai/jina-embeddings-v2-base-en",
+    device: best
   )
   puts "✅ Created EmbeddingModel with best device"
   
-  reranker = Candle::DeviceUtils.create_with_best_device(
-    Candle::Reranker
+  reranker = Candle::Reranker.new(
+    device: best
   )
   puts "✅ Created Reranker with best device"
 rescue => e
