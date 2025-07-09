@@ -7,14 +7,14 @@ require 'candle'
 puts "Testing minimal generation..."
 
 begin
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", nil)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
   
   config = Candle::GenerationConfig.new(
     temperature: 0.7,
     max_length: 20  # Keep it short for testing
   )
   
-  response = llm.generate("Hello", config)
+  response = llm.generate("Hello", config: config)
   puts "Generated: #{response}"
   
   puts "\nSuccess! The model is generating text."

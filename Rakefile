@@ -4,6 +4,8 @@ require "bundler/gem_tasks"
 require "rake/testtask"
 require "rake/extensiontask"
 
+ENV['CANDLE_TEST_SKIP_LLM'] = 'true'
+
 task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
@@ -26,9 +28,43 @@ Rake::ExtensionTask.new("candle", spec) do |c|
   ]
 end
 
-desc "benchmark"
-task bench: :compile do
-  ruby "test/bench.rb"
+desc "Run device compatibility tests"
+Rake::TestTask.new("test:device") do |t|
+  t.deps << :compile
+  t.libs << "test"
+  t.test_files = FileList["test/device_compatibility_test.rb"]
+  t.verbose = true
+end
+
+desc "Run benchmark tests"
+Rake::TestTask.new("test:benchmark") do |t|
+  ENV['CANDLE_RUN_BENCHMARKS'] = 'true'
+  t.deps << :compile
+  t.libs << "test"
+  t.test_files = FileList["test/benchmarks/**/*_test.rb"]
+  t.verbose = true
+end
+
+desc "Run all tests including benchmarks"
+task "test:all" => [:test, "test:benchmark"]
+
+desc "Run tests on specific devices"
+namespace :test do
+  %w[cpu metal cuda].each do |device|
+    desc "Run tests on #{device.upcase} only"
+    task "device:#{device}" => :compile do
+      ENV['CANDLE_TEST_DEVICES'] = device
+      Rake::Task["test:device"].invoke
+    end
+  end
+end
+
+desc "Run benchmarks with device tests"
+task "test:device:benchmark" => :compile do
+  ENV['CANDLE_RUN_BENCHMARKS'] = 'true'
+  ENV['CANDLE_TEST_VERBOSE'] = 'true'
+  Rake::Task["test:device"].invoke
+  Rake::Task["test:benchmark"].invoke
 end
 
 namespace :doc do

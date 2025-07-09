@@ -10,7 +10,7 @@ puts "=" * 60
 # about which files it tried to find
 begin
   puts "\nAttempting to load mistralai/Mistral-7B-Instruct-v0.1..."
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", nil)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
   puts "Success! (This is unexpected for a 13GB model)"
 rescue => e
   puts "Error (expected): #{e.message}"

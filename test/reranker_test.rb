@@ -19,16 +19,6 @@ class RerankerTest < Minitest::Test
     assert(ranked_documents[0][:score] > ranked_documents[2][:score])
   end
   
-  def test_new_cuda
-    # This should work regardless of whether CUDA is available
-    # If CUDA is not available, it should fall back to CPU
-    reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2", cuda: true)
-    query = "Test query"
-    documents = ["Test document"]
-    ranked_documents = reranker.rerank(query, documents)
-    assert_equal(1, ranked_documents.length)
-  end
-  
   def test_pooling_methods
     reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
     query = "What is the capital of France?"

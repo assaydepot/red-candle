@@ -2,16 +2,17 @@
 name = "candle"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-candle-core = "0.9.0"
-candle-nn = "0.9.0"
-candle-transformers = "0.9.0"
+candle-core = { version = "0.9.1" }
+candle-nn = { version = "0.9.1" }
+candle-transformers = { version = "0.9.1" }
 tokenizers = { version = "0.21.1", default-features = true, features = ["fancy-regex"] }
-hf-hub = "0.4.2"
+hf-hub = "0.4.3"
 half = "2.6.0"
 magnus = "0.7.1"
 safetensors = "0.3"
@@ -21,5 +22,9 @@ tokio = { version = "1.45", features = ["rt", "macros"] }
 rand = "0.8"
 
 [features]
-mkl = []
-accelerate = []
+default = []
+metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
+cudnn = ["candle-core/cudnn", "cuda"]
+mkl = ["candle-core/mkl"]
+accelerate = ["candle-core/accelerate"]

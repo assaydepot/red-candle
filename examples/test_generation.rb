@@ -10,7 +10,7 @@ begin
   # Note: This assumes you've already downloaded the model
   # If not, it will download ~13GB of data
   puts "\nLoading model (this may take a moment)..."
-  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", nil)
+  llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
   puts "✓ Model loaded successfully!"
   
   # Test basic generation
@@ -25,7 +25,7 @@ begin
   puts "Prompt: #{prompt}"
   print "Response: "
   
-  response = llm.generate(prompt, config)
+  response = llm.generate(prompt, config: config)
   puts response
   
   # Test streaming generation
@@ -34,7 +34,7 @@ begin
   puts "Prompt: #{prompt}"
   print "Response: "
   
-  llm.generate_stream(prompt, config) do |token|
+  llm.generate_stream(prompt, config: config) do |token|
     print token
     $stdout.flush
   end
@@ -47,7 +47,7 @@ begin
   puts "Prompt: #{prompt}"
   print "Response: "
   
-  response = llm.generate(prompt, det_config)
+  response = llm.generate(prompt, config: det_config)
   puts response
   
 rescue => e

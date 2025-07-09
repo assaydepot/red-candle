@@ -5,13 +5,9 @@ module Candle
     
     # Constructor for creating a new Reranker with optional parameters
     # @param model_path [String, nil] The path to the model on Hugging Face
-    # @param cuda [Boolean, nil] Whether to use CUDA for computation (nil = false)
-    def self.new(model_path: DEFAULT_MODEL_PATH, cuda: false)
-      if cuda
-        _create_cuda(model_path)
-      else
-        _create(model_path)
-      end
+    # @param device [Candle::Device, Candle::Device.cpu] The device to use for computation
+    def self.new(model_path: DEFAULT_MODEL_PATH, device: Candle::Device.cpu)
+      _create(model_path, device)
     end
 
     # Returns the embedding for a string using the specified pooling method.

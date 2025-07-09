@@ -1,8 +1,4 @@
-#[cfg(feature = "mkl")]
-extern crate intel_mkl_src;
-
-#[cfg(feature = "accelerate")]
-extern crate accelerate_src;
+// MKL and Accelerate are handled by candle-core when their features are enabled
 
 use crate::ruby::{
     errors::{wrap_candle_err, wrap_hf_err, wrap_std_err},

@@ -1,10 +1,11 @@
 use magnus::{class, function, method, prelude::*, Error, RModule, Float, RArray};
 use candle_transformers::models::bert::{BertModel, Config};
-use candle_core::{Device, Tensor, IndexOp, DType};
+use candle_core::{Device as CoreDevice, Tensor, IndexOp, DType};
 use candle_nn::{VarBuilder, Linear, Module, ops::sigmoid};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::{PaddingParams, Tokenizer, EncodeInput};
 use std::thread;
+use crate::ruby::{Device as RbDevice, Result as RbResult};
 
 #[magnus::wrap(class = "Candle::Reranker", free_immediately, size)]
 pub struct Reranker {
@@ -12,22 +13,16 @@ pub struct Reranker {
     tokenizer: Tokenizer,
     pooler: Linear,
     classifier: Linear,
-    device: Device,
+    device: CoreDevice,
 }
 
 impl Reranker {
-    pub fn new(model_id: String) -> Result<Self, Error> {
-        Self::new_with_device(model_id, Device::Cpu)
+    pub fn new(model_id: String, device: Option<RbDevice>) -> RbResult<Self> {
+        let device = device.unwrap_or(RbDevice::Cpu).as_device()?;
+        Self::new_with_core_device(model_id, device)
     }
-    
-    pub fn new_cuda(model_id: String) -> Result<Self, Error> {
-        match Device::cuda_if_available(0) {
-            Ok(device) => Self::new_with_device(model_id, device),
-            Err(_) => Self::new_with_device(model_id, Device::Cpu),
-        }
-    }
-    
-    pub fn new_with_device(model_id: String, device: Device) -> Result<Self, Error> {
+        
+    fn new_with_core_device(model_id: String, device: CoreDevice) -> Result<Self, Error> {
         let device_clone = device.clone();
         let handle = thread::spawn(move || -> Result<(BertModel, Tokenizer, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
@@ -74,22 +69,6 @@ impl Reranker {
             Ok(Err(e)) => Err(Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e))),
             Err(_) => Err(Error::new(magnus::exception::runtime_error(), "Thread panicked while loading model")),
         }
-    }
-
-    pub fn rerank(&self, query: String, documents: RArray) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, "pooler".to_string(), false)
-    }
-    
-    pub fn rerank_sigmoid(&self, query: String, documents: RArray) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, "pooler".to_string(), true)
-    }
-    
-    pub fn rerank_with_pooling(&self, query: String, documents: RArray, pooling_method: String) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, pooling_method, false)
-    }
-    
-    pub fn rerank_sigmoid_with_pooling(&self, query: String, documents: RArray, pooling_method: String) -> Result<RArray, Error> {
-        self.rerank_with_options(query, documents, pooling_method, true)
     }
     
     pub fn debug_tokenization(&self, query: String, document: String) -> Result<magnus::RHash, Error> {
@@ -155,8 +134,37 @@ impl Reranker {
         let pooled_embeddings = match pooling_method.as_str() {
             "pooler" => {
                 // Extract [CLS] token and apply pooler (dense + tanh)
-                let cls_embeddings = embeddings.i((.., 0))
-                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?;
+                // Work around Metal indexing issue by using narrow instead of i((.., 0))
+                let cls_embeddings = if self.device.is_metal() {
+                    // Metal has issues with tensor indexing, use a different approach
+                    let (batch_size, _seq_len, hidden_size) = embeddings.dims3()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to get dims: {}", e)))?;
+                    
+                    // Reshape to [batch * seq_len, hidden] then take first hidden vectors for each batch
+                    let reshaped = embeddings.reshape((batch_size * _seq_len, hidden_size))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to reshape: {}", e)))?;
+                    
+                    // Extract CLS tokens (first token of each sequence)
+                    let mut cls_vecs = Vec::new();
+                    for i in 0..batch_size {
+                        let start_idx = i * _seq_len;
+                        let cls_vec = reshaped.narrow(0, start_idx, 1)
+                            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS: {}", e)))?;
+                        cls_vecs.push(cls_vec);
+                    }
+                    
+                    // Stack the CLS vectors
+                    Tensor::cat(&cls_vecs, 0)
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to cat CLS tokens: {}", e)))?
+                        .contiguous()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make contiguous: {}", e)))?
+                } else {
+                    embeddings.i((.., 0))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+                };
+                // Ensure tensor is contiguous before linear layer
+                let cls_embeddings = cls_embeddings.contiguous()
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make cls_embeddings contiguous: {}", e)))?;
                 let pooled = self.pooler.forward(&cls_embeddings)
                     .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Pooler forward failed: {}", e)))?;
                 pooled.tanh()
@@ -164,8 +172,34 @@ impl Reranker {
             },
             "cls" => {
                 // Just use the [CLS] token embeddings directly (no pooler layer)
-                embeddings.i((.., 0))
-                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+                // Work around Metal indexing issue
+                let cls_embeddings = if self.device.is_metal() {
+                    // Use same approach as pooler method
+                    let (batch_size, _seq_len, hidden_size) = embeddings.dims3()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to get dims: {}", e)))?;
+                    
+                    let reshaped = embeddings.reshape((batch_size * _seq_len, hidden_size))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to reshape: {}", e)))?;
+                    
+                    let mut cls_vecs = Vec::new();
+                    for i in 0..batch_size {
+                        let start_idx = i * _seq_len;
+                        let cls_vec = reshaped.narrow(0, start_idx, 1)
+                            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS: {}", e)))?;
+                        cls_vecs.push(cls_vec);
+                    }
+                    
+                    Tensor::cat(&cls_vecs, 0)
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to cat CLS tokens: {}", e)))?
+                        .contiguous()
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make contiguous: {}", e)))?
+                } else {
+                    embeddings.i((.., 0))
+                        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to extract CLS token: {}", e)))?
+                };
+                // Ensure contiguous for classifier
+                cls_embeddings.contiguous()
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make CLS embeddings contiguous: {}", e)))?
             },
             "mean" => {
                 // Mean pooling across all tokens
@@ -181,6 +215,9 @@ impl Reranker {
         };
         
         // Apply classifier to get relevance scores (raw logits)
+        // Ensure tensor is contiguous before linear layer
+        let pooled_embeddings = pooled_embeddings.contiguous()
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to make pooled_embeddings contiguous: {}", e)))?;
         let logits = self.classifier.forward(&pooled_embeddings)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Classifier forward failed: {}", e)))?;
         let scores = logits.squeeze(1)
@@ -223,12 +260,7 @@ impl Reranker {
 
 pub fn init(rb_candle: RModule) -> Result<(), Error> {
     let c_reranker = rb_candle.define_class("Reranker", class::object())?;
-    c_reranker.define_singleton_method("_create", function!(Reranker::new, 1))?;
-    c_reranker.define_singleton_method("_create_cuda", function!(Reranker::new_cuda, 1))?;
-    c_reranker.define_method("rerank", method!(Reranker::rerank, 2))?;
-    c_reranker.define_method("rerank_sigmoid", method!(Reranker::rerank_sigmoid, 2))?;
-    c_reranker.define_method("rerank_with_pooling", method!(Reranker::rerank_with_pooling, 3))?;
-    c_reranker.define_method("rerank_sigmoid_with_pooling", method!(Reranker::rerank_sigmoid_with_pooling, 3))?;
+    c_reranker.define_singleton_method("_create", function!(Reranker::new, 2))?;
     c_reranker.define_method("rerank_with_options", method!(Reranker::rerank_with_options, 4))?;
     c_reranker.define_method("debug_tokenization", method!(Reranker::debug_tokenization, 2))?;
     Ok(())

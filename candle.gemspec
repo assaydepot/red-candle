@@ -10,11 +10,11 @@ Gem::Specification.new do |spec|
     "ext/candle/extconf.rb",
     "ext/candle/rustfmt.toml",
     "ext/candle/Cargo.toml",
-    "ext/candle/src/**/*.rs",
-    "ext/candle/src/**/*.toml",
-    "ext/candle/src/**/*.md",
-    "ext/candle/src/**/*.txt",
-    "ext/candle/src/**/*.rb",
+    "ext/candle/**/*.rs",
+    "ext/candle/**/*.toml",
+    "ext/candle/**/*.md",
+    "ext/candle/**/*.txt",
+    "ext/candle/**/*.rb",
     "Cargo.toml",
     "Cargo.lock",
     "README.md",
@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   ]
   spec.extensions  = ["ext/candle/extconf.rb"]
   spec.authors     = ["Christopher Petersen", "kojix2"]
-  spec.email       = ["christopher.petersen@gmail.com", "2xijok@gmail.com"]
+  spec.email       = ["chris@petersen.io", "2xijok@gmail.com"]
   spec.homepage    = "https://github.com/assaydepot/red-candle"
   spec.license     = "MIT"
 

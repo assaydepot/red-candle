@@ -21,18 +21,78 @@ x = x.reshape([3, 2])
 ```ruby
 require 'candle'
 
-# Default model (JinaBERT)
+# Default model (JinaBERT) on CPU
 model = Candle::EmbeddingModel.new
 embedding = model.embedding("Hi there!")
 
-# Specify a different model type
+# Specify device (CPU, Metal, or CUDA)
+device = Candle::Device.cpu     # or Candle::Device.metal, Candle::Device.cuda
 model = Candle::EmbeddingModel.new(
-  model_path: "sentence-transformers/all-MiniLM-L6-v2",
-  tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
-  device: nil,  # nil = CPU
-  model_type: Candle::EmbeddingModelType::MINILM
+  model_path: "jinaai/jina-embeddings-v2-base-en",
+  device: device
 )
 embedding = model.embedding("Hi there!")
+
+# Reranker also supports device selection
+reranker = Candle::Reranker.new(
+  model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2",
+  device: device
+)
+results = reranker.rerank("query", ["doc1", "doc2", "doc3"])
+```
+
+## LLM Support
+
+Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
+
+> ### ⚠️ Huggingface login warning
+> 
+> Many models, including the one below, require you to agree to the terms. You'll need to:
+> 1. Login to [Huggingface](https://huggingface.co)
+> 2. Agree to the terms. For example: [here](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
+> 3. Authenticate your session. Simplest way is with `huggingface-cli login`. Detail here: [Huggingface CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli)
+>
+> More details here: [Huggingface Authentication](HUGGINGFACE.md)
+
+```ruby
+require 'candle'
+
+# Choose your device
+device = Candle::Device.cpu     # CPU (default)
+device = Candle::Device.metal   # Apple GPU (Metal)
+device = Candle::Device.cuda    # NVIDIA GPU (CUDA)
+
+# Load a model
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
+
+# Generate text
+response = llm.generate("What is Ruby?", config: Candle::GenerationConfig.balanced)
+
+# Stream generation
+llm.generate_stream("Tell me a story", config: Candle::GenerationConfig.balanced) do |token|
+  print token
+end
+
+# Chat interface
+messages = [
+  { role: "system", content: "You are a helpful assistant." },
+  { role: "user", content: "Explain Ruby in one sentence." }
+]
+response = llm.chat(messages)
+```
+
+### GPU Acceleration
+
+```ruby
+# CPU works for all models
+device = Candle::Device.cpu
+llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
+
+# Metal
+device = Candle::Device.metal 
+
+# CUDA support (for NVIDIA GPUs COMING SOON)
+device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
 ```
 
 ## ⚠️ Model Format Requirement: Safetensors Only

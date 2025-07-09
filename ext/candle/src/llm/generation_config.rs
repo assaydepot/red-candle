@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 /// Configuration for text generation
 #[derive(Debug, Clone)]
 pub struct GenerationConfig {
@@ -21,6 +23,14 @@ pub struct GenerationConfig {
     pub include_prompt: bool,
 }
 
+/// Generate a random seed based on current time
+fn random_seed() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos() as u64)
+        .unwrap_or(42)
+}
+
 impl Default for GenerationConfig {
     fn default() -> Self {
         Self {
@@ -30,42 +40,10 @@ impl Default for GenerationConfig {
             top_k: None,
             repetition_penalty: 1.1,
             repetition_penalty_last_n: 64,
-            seed: 42,
+            seed: random_seed(),
             stop_sequences: vec![],
             include_prompt: false,
         }
     }
 }
 
-impl GenerationConfig {
-    /// Create a deterministic configuration (temperature = 0)
-    pub fn deterministic() -> Self {
-        Self {
-            temperature: 0.0,
-            top_p: None,
-            top_k: Some(1),
-            ..Default::default()
-        }
-    }
-
-    /// Create a creative configuration (higher temperature)
-    pub fn creative() -> Self {
-        Self {
-            temperature: 1.0,
-            top_p: Some(0.95),
-            top_k: Some(50),
-            repetition_penalty: 1.2,
-            ..Default::default()
-        }
-    }
-
-    /// Create a balanced configuration
-    pub fn balanced() -> Self {
-        Self {
-            temperature: 0.7,
-            top_p: Some(0.9),
-            top_k: Some(40),
-            ..Default::default()
-        }
-    }
-}

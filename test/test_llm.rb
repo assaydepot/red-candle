@@ -40,23 +40,7 @@ class TestLLM < Minitest::Test
     assert_equal 0.9, new_config.temperature
     assert_equal 200, new_config.max_length
   end
-  
-  def test_model_registry
-    # Test pattern matching
-    assert Candle::LLM::ModelRegistry.supported?("mistralai/Mistral-7B-Instruct-v0.2")
-    assert Candle::LLM::ModelRegistry.supported?("mistral-7b")
     
-    # Test model info retrieval
-    info = Candle::LLM::ModelRegistry.model_info("mistral-7b-instruct")
-    assert_equal :mistral, info[:type]
-    assert_equal "7B", info[:size]
-    assert info[:supports_chat]
-    
-    # Test registered models listing
-    models = Candle::LLM::ModelRegistry.registered_models
-    assert models.any? { |m| m[:name] == "Mistral 7B Instruct" }
-  end
-  
   # Skip actual model loading tests as they require downloading large files
   def test_llm_initialization_error
     skip "Model loading requires large downloads"
