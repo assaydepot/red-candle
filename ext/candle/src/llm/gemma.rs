@@ -13,7 +13,6 @@ pub struct Gemma {
     device: Device,
     model_id: String,
     eos_token_id: u32,
-    pad_token_id: u32,
 }
 
 impl Gemma {
@@ -88,12 +87,6 @@ impl Gemma {
                 .copied()
                 .unwrap_or(1) // Default Gemma EOS
         };
-            
-        let pad_token_id = tokenizer
-            .get_vocab(true)
-            .get("<pad>")
-            .copied()
-            .unwrap_or(0); // Default Gemma PAD
         
         // Load model weights
         let vb = unsafe {
@@ -108,7 +101,6 @@ impl Gemma {
             device,
             model_id: model_id.to_string(),
             eos_token_id,
-            pad_token_id,
         })
     }
 
@@ -126,12 +118,6 @@ impl Gemma {
                 .copied()
                 .unwrap_or(1)
         };
-            
-        let pad_token_id = tokenizer
-            .get_vocab(true)
-            .get("<pad>")
-            .copied()
-            .unwrap_or(0);
         
         Self {
             model,
@@ -139,7 +125,6 @@ impl Gemma {
             device,
             model_id,
             eos_token_id,
-            pad_token_id,
         }
     }
 
