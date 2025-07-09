@@ -103,27 +103,6 @@ creative_config = Candle::GenerationConfig.creative
 custom_config = creative_config.with(temperature: 0.8, max_length: 1000)
 ```
 
-## Model Registry
-
-Check supported models and their capabilities:
-
-```ruby
-# Check if a model is supported
-if Candle::LLM::ModelRegistry.supported?("mistralai/Mistral-7B-Instruct-v0.2")
-  puts "Model is supported!"
-end
-
-# Get model information
-info = Candle::LLM::ModelRegistry.model_info("mistralai/Mistral-7B-Instruct-v0.2")
-puts "Model: #{info[:name]}"
-puts "Context length: #{info[:context_length]}"
-puts "Supports chat: #{info[:supports_chat]}"
-
-# List all registered models
-Candle::LLM::ModelRegistry.registered_models.each do |model|
-  puts "#{model[:name]} - #{model[:size]}"
-end
-```
 
 ## Supported Models
 
