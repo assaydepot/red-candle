@@ -4,8 +4,6 @@ require "bundler/gem_tasks"
 require "rake/testtask"
 require "rake/extensiontask"
 
-ENV['CANDLE_TEST_SKIP_LLM'] = 'true'
-
 task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile

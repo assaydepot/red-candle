@@ -145,7 +145,7 @@ class DeviceBenchmarkTest < Minitest::Test
       
       device = create_device(device_type)
       
-      llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+      llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
       
       config = Candle::GenerationConfig.new(
         max_length: 50,
@@ -156,11 +156,11 @@ class DeviceBenchmarkTest < Minitest::Test
       
       prompts.each do |size, prompt|
         # Warm up
-        llm.generate(prompt, config)
+        llm.generate(prompt, config: config)
         
         # Benchmark
         time = Benchmark.realtime do
-          3.times { llm.generate(prompt, config) }
+          3.times { llm.generate(prompt, config: config) }
         end
         
         results[device_type][size] = time / 3.0
