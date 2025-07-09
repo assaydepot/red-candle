@@ -138,7 +138,7 @@ class DeviceCompatibilityTest < Minitest::Test
       device = create_device(device_type)
       
       # Use Mistral model (currently the only supported type)
-      llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+      llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
       
       config = Candle::GenerationConfig.new(
         max_length: 20,
@@ -146,7 +146,7 @@ class DeviceCompatibilityTest < Minitest::Test
       )
       
       prompt = "The capital of France is"
-      response = llm.generate(prompt, config)
+      response = llm.generate(prompt, config: config)
       
       assert_kind_of String, response
       refute_empty response
@@ -165,7 +165,7 @@ class DeviceCompatibilityTest < Minitest::Test
       
       device = create_device(device_type)
       
-      llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device)
+      llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
       
       config = Candle::GenerationConfig.new(
         max_length: 10,
@@ -173,7 +173,7 @@ class DeviceCompatibilityTest < Minitest::Test
       )
       
       tokens = []
-      llm.generate_stream("Once upon a time", config) do |token|
+      llm.generate_stream("Once upon a time", config: config) do |token|
         tokens << token
       end
       
