@@ -31,14 +31,14 @@ irb(main):020>
 
 You have two options:
 
-### Huggingface CLI
+### Option 1: Huggingface CLI
 
 You can authenticate by running the following command:
 ```sh
 huggingface login
 ```
 
-### Create a token file
+### Option 2:Create a token file
 
 You can skip the Huggingface CLI and create a token file manually. Create a file at `$HOME/.cache/huggingface/token` and populate it with your token.
 
