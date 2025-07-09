@@ -43,7 +43,14 @@ results = reranker.rerank("query", ["doc1", "doc2", "doc3"])
 
 ## LLM Support
 
-Red-Candle now supports Large Language Models (LLMs) with GPU acceleration:
+Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
+
+> ### ⚠️ Huggingface login warning
+> 
+> Many models, including the one below, require you to agree to the terms. You'll need to:
+> 1. Login to [Huggingface](https://huggingface.co)
+> 2. Agree to the terms. For example: [here](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
+> 3. Authenticate your session. Simplest way is with `huggingface-cli login`. Detail here: [Huggingface CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli)
 
 ```ruby
 require 'candle'
