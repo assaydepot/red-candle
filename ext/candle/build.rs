@@ -15,6 +15,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=CUDA_ROOT");
     println!("cargo:rerun-if-env-changed=CUDA_PATH");
     println!("cargo:rerun-if-env-changed=CANDLE_FEATURES");
+    println!("cargo:rerun-if-env-changed=CANDLE_ENABLE_CUDA");
 
     // Check if we should force CPU only
     if env::var("CANDLE_FORCE_CPU").is_ok() {
@@ -25,9 +26,13 @@ fn main() {
 
     // Detect CUDA availability
     let cuda_available = detect_cuda();
-    if cuda_available {
+    let cuda_enabled = env::var("CANDLE_ENABLE_CUDA").is_ok();
+    
+    if cuda_available && cuda_enabled {
         println!("cargo:rustc-cfg=has_cuda");
-        println!("cargo:warning=CUDA detected, CUDA acceleration will be available");
+        println!("cargo:warning=CUDA detected and enabled via CANDLE_ENABLE_CUDA");
+    } else if cuda_available && !cuda_enabled {
+        println!("cargo:warning=CUDA detected but not enabled. To enable CUDA support (coming soon), set CANDLE_ENABLE_CUDA=1");
     }
 
     // Detect Metal availability (macOS only)
