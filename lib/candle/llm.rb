@@ -2,13 +2,13 @@ module Candle
   class LLM
     # Simple chat interface for instruction models
     def chat(messages, **options)
-      prompt = format_messages(messages)
+      prompt = apply_chat_template(messages)
       generate(prompt, **options)
     end
 
     # Streaming chat interface
     def chat_stream(messages, **options, &block)
-      prompt = format_messages(messages)
+      prompt = apply_chat_template(messages)
       generate_stream(prompt, **options, &block)
     end
 
@@ -34,8 +34,8 @@ module Candle
 
     private
 
-    # Format messages into a prompt string
-    # This is a simple implementation - model-specific formatting should be added
+    # Legacy format messages method - kept for backward compatibility
+    # Use apply_chat_template for proper model-specific formatting
     def format_messages(messages)
       formatted = messages.map do |msg|
         case msg[:role]

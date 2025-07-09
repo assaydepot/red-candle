@@ -2,6 +2,7 @@ use candle_core::{Device, Result as CandleResult};
 use tokenizers::Tokenizer;
 
 pub mod mistral;
+pub mod llama;
 pub mod generation_config;
 pub mod text_generation;
 
