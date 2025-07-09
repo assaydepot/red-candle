@@ -92,12 +92,6 @@ Use the DeviceUtils helper for automatic device selection:
 ```ruby
 # Get the best available device (Metal > CUDA > CPU)
 device = Candle::DeviceUtils.best_device
-
-# Create a model with automatic device selection
-model = Candle::DeviceUtils.create_with_best_device(
-  Candle::EmbeddingModel,
-  model_type: :snowflake_arctic_embed_m_v15
-)
 ```
 
 ## Edge Cases: Runtime Device Availability

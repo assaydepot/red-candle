@@ -4,17 +4,6 @@
 
 Metal (Apple GPU) support in red-candle is now complete! All models (EmbeddingModel, Reranker, and LLMs) now work on Metal! 🎉
 
-## How to Enable Metal Support
-
-To use Metal acceleration, ensure all candle crates have the `metal` feature enabled in your `Cargo.toml`:
-
-```toml
-[dependencies]
-candle-core = { version = "0.9.1", features = ["metal"] }
-candle-nn = { version = "0.9.1", features = ["metal"] }
-candle-transformers = { version = "0.9.1", features = ["metal"] }
-```
-
 ## Usage Examples
 
 ### EmbeddingModel (Works on Metal!)
@@ -34,15 +23,15 @@ reranker = Candle::Reranker.new(device: device)
 results = reranker.rerank("query", ["doc1", "doc2"])  # Works on Metal!
 
 # All pooling methods work
-results = reranker.rerank_with_pooling("query", ["doc1", "doc2"], "mean")
-results = reranker.rerank_with_pooling("query", ["doc1", "doc2"], "cls")
+results = reranker.rerank("query", ["doc1", "doc2"], pooling_method: "mean")
+results = reranker.rerank("query", ["doc1", "doc2"], pooling_method: "cls")
 ```
 
 ### LLMs (Works on Metal!)
 ```ruby
 device = Candle::Device.metal
 llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
-config = Candle::GenerationConfig.new(max_length: 50)
+config = Candle::GenerationConfig.balanced(max_length: 50)
 response = llm.generate("Hello world", config: config)  # Works on Metal!
 
 # Streaming also works
@@ -76,19 +65,6 @@ require 'candle'
 
 # Get the best available device (Metal > CUDA > CPU)
 best_device = Candle::DeviceUtils.best_device
-
-# Automatically create models with the best device
-model = Candle::DeviceUtils.create_with_best_device(
-  Candle::EmbeddingModel,
-  model_path: "jinaai/jina-embeddings-v2-base-en"
-)
-
-reranker = Candle::DeviceUtils.create_with_best_device(Candle::Reranker)
-
-llm = Candle::DeviceUtils.create_with_best_device(
-  Candle::LLM,
-  model_id: "mistralai/Mistral-7B-Instruct-v0.1"
-)
 ```
 
 ## Example Code
