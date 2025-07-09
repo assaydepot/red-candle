@@ -51,6 +51,8 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 > 1. Login to [Huggingface](https://huggingface.co)
 > 2. Agree to the terms. For example: [here](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
 > 3. Authenticate your session. Simplest way is with `huggingface-cli login`. Detail here: [Huggingface CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli)
+>
+> More details here: [Huggingface Authentication](HUGGINGFACE.md)
 
 ```ruby
 require 'candle'
