@@ -47,6 +47,7 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 
 ### Supported Models
 
+- **Gemma**: Google's Gemma models (e.g., `google/gemma-2b`, `google/gemma-7b`, `google/gemma-2b-it`)
 - **Llama**: Llama 2 and Llama 3 models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, `meta-llama/Llama-2-7b-hf`, `NousResearch/Llama-2-7b-hf`)
 - **Mistral**: All Mistral models (e.g., `mistralai/Mistral-7B-Instruct-v0.1`)
 
@@ -67,10 +68,10 @@ device = Candle::Device.cpu     # CPU (default)
 device = Candle::Device.metal   # Apple GPU (Metal)
 device = Candle::Device.cuda    # NVIDIA GPU (CUDA)
 
-# Load a Llama model
-llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
-# Or a Mistral model
-llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
+# Load a model
+llm = Candle::LLM.from_pretrained("google/gemma-2b-it", device: device)  # Gemma
+# llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)  # Llama
+# llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)  # Mistral
 
 # Generate text
 response = llm.generate("What is Ruby?", config: Candle::GenerationConfig.balanced)
