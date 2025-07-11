@@ -82,9 +82,11 @@ llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: devic
 **Quantization levels explained:**
 - **Q8_0**: Almost identical to full model, use when quality is paramount
 - **Q5_K_M**: Excellent quality with good compression
-- **Q4_K_M**: Best balance of quality/size/speed (default)
+- **Q4_K_M**: Best balance of quality/size/speed (recommended default)
 - **Q3_K_M**: Noticeable quality reduction but very compact
-- **Q2_K**: Not recommended due to significant quality loss
+- **Q2_K**: ⚠️ **Not recommended** - Can cause inference errors due to extreme quantization
+
+> **Warning**: Q2_K quantization can lead to "weight is negative, too large or not a valid number" errors during inference. Use Q3_K_M or higher for stable operation.
 
 > ### ⚠️ Huggingface login warning
 > 
@@ -323,6 +325,72 @@ The reranker uses a BERT-based architecture that:
 4. Uses a classifier layer to produce a single relevance score
 
 This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.
+
+## Common Runtime Errors
+
+### 1. Weight is negative, too large or not a valid number
+
+**Error:**
+```
+/Users/cpetersen/src/scientist/red-candle/lib/candle/llm.rb:25:in `_generate_stream': Generation failed: A weight is negative, too large or not a valid number (RuntimeError)
+    from /Users/cpetersen/src/scientist/red-candle/lib/candle/llm.rb:25:in `generate_stream'
+    ...
+```
+
+**Cause:** This error occurs when using overly aggressive quantization levels (particularly Q2_K) that result in numerical instability during inference. The 2-bit quantization can cause weights to become corrupted or produce NaN/Inf values.
+
+**Solution:** Use a higher quantization level. Recommended options:
+- Q4_K_M (4-bit) - Best balance of quality and size
+- Q5_K_M (5-bit) - Higher quality with slightly larger size
+- Q3_K_M (3-bit) - Minimum recommended quantization
+
+```ruby
+# Instead of Q2_K:
+llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
+                                  device: device, 
+                                  gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
+```
+
+### 2. Cannot find tensor model.embed_tokens.weight
+
+**Error:**
+```
+Failed to load quantized model: cannot find tensor model.embed_tokens.weight (RuntimeError)
+```
+
+**Cause:** Mistral GGUF files from TheBloke use llama.cpp tensor naming conventions which are incompatible with candle's quantized_mistral implementation.
+
+**Solution:** Currently, Mistral GGUF models from TheBloke are not supported. Use either:
+- Non-quantized Mistral models in safetensors format
+- Llama or Gemma GGUF models which work correctly
+
+### 3. No GGUF file found in repository
+
+**Error:**
+```
+Failed to load quantized model: No GGUF file found in repository TheBloke/model-name-GGUF. Try specifying a quantization level like Q4_K_M, Q5_K_M, or Q8_0. (RuntimeError)
+```
+
+**Cause:** The automatic GGUF file detection couldn't find a matching file, often due to naming variations.
+
+**Solution:** Specify the exact GGUF filename:
+```ruby
+# Visit the HuggingFace repository to find the exact filename
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", 
+                                  device: device, 
+                                  gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
+```
+
+### 4. Failed to download tokenizer
+
+**Error:**
+```
+Failed to load quantized model: Failed to download tokenizer: request error: HTTP status client error (404 Not Found)
+```
+
+**Cause:** GGUF repositories often don't include separate tokenizer files since they're embedded in the GGUF format.
+
+**Solution:** The code now includes fallback tokenizer loading. If you still encounter this error, ensure you're using the latest version of red-candle.
 
 ## Development
 
