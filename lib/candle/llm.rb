@@ -28,8 +28,13 @@ module Candle
       end
     end
 
-    def self.from_pretrained(model_id, device: Candle::Device.cpu)
-      _from_pretrained(model_id, device)
+    def self.from_pretrained(model_id, device: Candle::Device.cpu, gguf_file: nil)
+      if gguf_file
+        # If user specified an exact GGUF filename, use it directly
+        _from_pretrained("#{model_id}@#{gguf_file}", device)
+      else
+        _from_pretrained(model_id, device)
+      end
     end
 
     private

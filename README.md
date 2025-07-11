@@ -51,6 +51,41 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 - **Llama**: Llama 2 and Llama 3 models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, `meta-llama/Llama-2-7b-hf`, `NousResearch/Llama-2-7b-hf`)
 - **Mistral**: All Mistral models (e.g., `mistralai/Mistral-7B-Instruct-v0.1`)
 
+### Quantized Model Support (GGUF)
+
+Red-Candle supports quantized models in GGUF format, offering 4-8x memory reduction:
+
+> **Note on GGUF Compatibility**: Currently, standard GGUF files from TheBloke use llama.cpp tensor naming conventions which are incompatible with candle's quantized_mistral implementation. Mistral GGUF models from TheBloke will not load properly. Llama and Gemma GGUF models work correctly.
+
+```ruby
+# Load quantized models (automatically detected by GGUF in name)
+# By default, searches for common GGUF files (Q4_K_M first)
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device)
+
+# Specify the exact GGUF filename for a specific quantization
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device, gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device, gguf_file: "llama-2-7b-chat.Q8_0.gguf")
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device, gguf_file: "llama-2-7b-chat.Q2_K.gguf")
+
+# Popular quantized model sources:
+# - TheBloke: Extensive collection of GGUF models
+# - Search HuggingFace for "GGUF" models
+```
+
+**Memory usage comparison (7B models):**
+- Full precision: ~28 GB
+- Q8_0 (8-bit): ~7 GB - Best quality, larger size
+- Q5_K_M (5-bit): ~4.5 GB - Very good quality  
+- Q4_K_M (4-bit): ~4 GB - Recommended default, best balance
+- Q3_K_M (3-bit): ~3 GB - Good for memory-constrained systems
+
+**Quantization levels explained:**
+- **Q8_0**: Almost identical to full model, use when quality is paramount
+- **Q5_K_M**: Excellent quality with good compression
+- **Q4_K_M**: Best balance of quality/size/speed (default)
+- **Q3_K_M**: Noticeable quality reduction but very compact
+- **Q2_K**: Not recommended due to significant quality loss
+
 > ### ⚠️ Huggingface login warning
 > 
 > Many models, including the one below, require you to agree to the terms. You'll need to:
