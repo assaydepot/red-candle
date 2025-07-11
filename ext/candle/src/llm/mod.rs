@@ -6,6 +6,7 @@ pub mod llama;
 pub mod gemma;
 pub mod generation_config;
 pub mod text_generation;
+pub mod quantized;
 
 pub use generation_config::GenerationConfig;
 pub use text_generation::TextGeneration;

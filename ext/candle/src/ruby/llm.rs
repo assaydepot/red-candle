@@ -1,8 +1,8 @@
 use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule, Ruby, TryConvert, Value};
 use std::cell::RefCell;
 
-use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma};
-use crate::ruby::{Result, Device};
+use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma, quantized::{QuantizedMistral as RustQuantizedMistral, QuantizedLlama as RustQuantizedLlama, QuantizedGemma as RustQuantizedGemma}};
+use crate::ruby::{Result as RbResult, Device as RbDevice};
 
 // Use an enum to handle different model types instead of trait objects
 #[derive(Debug)]
@@ -10,6 +10,9 @@ enum ModelType {
     Mistral(RustMistral),
     Llama(RustLlama),
     Gemma(RustGemma),
+    QuantizedMistral(RustQuantizedMistral),
+    QuantizedLlama(RustQuantizedLlama),
+    QuantizedGemma(RustQuantizedGemma),
 }
 
 impl ModelType {
@@ -18,6 +21,9 @@ impl ModelType {
             ModelType::Mistral(m) => m.generate(prompt, config),
             ModelType::Llama(m) => m.generate(prompt, config),
             ModelType::Gemma(m) => m.generate(prompt, config),
+            ModelType::QuantizedMistral(m) => m.generate(prompt, config),
+            ModelType::QuantizedLlama(m) => m.generate(prompt, config),
+            ModelType::QuantizedGemma(m) => m.generate(prompt, config),
         }
     }
 
@@ -31,6 +37,9 @@ impl ModelType {
             ModelType::Mistral(m) => m.generate_stream(prompt, config, callback),
             ModelType::Llama(m) => m.generate_stream(prompt, config, callback),
             ModelType::Gemma(m) => m.generate_stream(prompt, config, callback),
+            ModelType::QuantizedMistral(m) => m.generate_stream(prompt, config, callback),
+            ModelType::QuantizedLlama(m) => m.generate_stream(prompt, config, callback),
+            ModelType::QuantizedGemma(m) => m.generate_stream(prompt, config, callback),
         }
     }
 
@@ -40,6 +49,9 @@ impl ModelType {
             ModelType::Mistral(m) => m.model_name(),
             ModelType::Llama(m) => m.model_name(),
             ModelType::Gemma(m) => m.model_name(),
+            ModelType::QuantizedMistral(m) => m.model_name(),
+            ModelType::QuantizedLlama(m) => m.model_name(),
+            ModelType::QuantizedGemma(m) => m.model_name(),
         }
     }
     
@@ -48,6 +60,9 @@ impl ModelType {
             ModelType::Mistral(m) => m.clear_cache(),
             ModelType::Llama(m) => m.clear_cache(),
             ModelType::Gemma(m) => m.clear_cache(),
+            ModelType::QuantizedMistral(m) => m.clear_cache(),
+            ModelType::QuantizedLlama(m) => m.clear_cache(),
+            ModelType::QuantizedGemma(m) => m.clear_cache(),
         }
     }
     
@@ -72,6 +87,24 @@ impl ModelType {
             },
             ModelType::Llama(m) => m.apply_chat_template(messages),
             ModelType::Gemma(m) => m.apply_chat_template(messages),
+            ModelType::QuantizedMistral(_) => {
+                // For now, use a simple template for quantized Mistral
+                let mut prompt = String::new();
+                for message in messages {
+                    let role = message["role"].as_str().unwrap_or("");
+                    let content = message["content"].as_str().unwrap_or("");
+                    match role {
+                        "system" => prompt.push_str(&format!("System: {}\n\n", content)),
+                        "user" => prompt.push_str(&format!("User: {}\n\n", content)),
+                        "assistant" => prompt.push_str(&format!("Assistant: {}\n\n", content)),
+                        _ => {}
+                    }
+                }
+                prompt.push_str("Assistant: ");
+                Ok(prompt)
+            },
+            ModelType::QuantizedLlama(m) => m.apply_chat_template(messages),
+            ModelType::QuantizedGemma(m) => m.apply_chat_template(messages),
         }
     }
 }
@@ -206,30 +239,56 @@ impl LLM {
         let rt = tokio::runtime::Runtime::new()
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to create runtime: {}", e)))?;
         
-        // Determine model type from ID and load appropriately
+        // Determine model type from ID and whether it's quantized
         let model_lower = model_id.to_lowercase();
+        let is_quantized = model_lower.contains("gguf") || model_lower.contains("-q4") || model_lower.contains("-q5") || model_lower.contains("-q8");
+        
         let model = if model_lower.contains("mistral") {
-            let mistral = rt.block_on(async {
-                RustMistral::from_pretrained(&model_id, candle_device).await
-            })
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
-            ModelType::Mistral(mistral)
+            if is_quantized {
+                let mistral = rt.block_on(async {
+                    RustQuantizedMistral::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load quantized model: {}", e)))?;
+                ModelType::QuantizedMistral(mistral)
+            } else {
+                let mistral = rt.block_on(async {
+                    RustMistral::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Mistral(mistral)
+            }
         } else if model_lower.contains("llama") || model_lower.contains("meta-llama") || model_lower.contains("tinyllama") {
-            let llama = rt.block_on(async {
-                RustLlama::from_pretrained(&model_id, candle_device).await
-            })
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
-            ModelType::Llama(llama)
+            if is_quantized {
+                let llama = rt.block_on(async {
+                    RustQuantizedLlama::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load quantized model: {}", e)))?;
+                ModelType::QuantizedLlama(llama)
+            } else {
+                let llama = rt.block_on(async {
+                    RustLlama::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Llama(llama)
+            }
         } else if model_lower.contains("gemma") || model_lower.contains("google/gemma") {
-            let gemma = rt.block_on(async {
-                RustGemma::from_pretrained(&model_id, candle_device).await
-            })
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
-            ModelType::Gemma(gemma)
+            if is_quantized {
+                let gemma = rt.block_on(async {
+                    RustQuantizedGemma::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load quantized model: {}", e)))?;
+                ModelType::QuantizedGemma(gemma)
+            } else {
+                let gemma = rt.block_on(async {
+                    RustGemma::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Gemma(gemma)
+            }
         } else {
             return Err(Error::new(
                 magnus::exception::runtime_error(),
-                format!("Unsupported model type: {}. Currently Mistral, Llama, and Gemma models are supported.", model_id),
+                format!("Unsupported model type: {}. Currently Mistral, Llama, and Gemma models are supported (both standard and GGUF quantized versions).", model_id),
             ));
         };
         
