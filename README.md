@@ -55,7 +55,7 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 
 Red-Candle supports quantized models in GGUF format, offering 4-8x memory reduction:
 
-> **Note on GGUF Compatibility**: Currently, standard GGUF files from TheBloke use llama.cpp tensor naming conventions which are incompatible with candle's quantized_mistral implementation. Mistral GGUF models from TheBloke will not load properly. Llama and Gemma GGUF models work correctly.
+> **Note on GGUF Support**: Red-Candle now uses a unified GGUF loader that automatically detects the model architecture from the GGUF file. This means all GGUF models (including Mistral models from TheBloke) should now work correctly! The loader automatically selects the appropriate tokenizer based on the model type to ensure proper text generation.
 
 ```ruby
 # Load quantized models (automatically detected by GGUF in name)
@@ -357,11 +357,17 @@ llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF",
 Failed to load quantized model: cannot find tensor model.embed_tokens.weight (RuntimeError)
 ```
 
-**Cause:** Mistral GGUF files from TheBloke use llama.cpp tensor naming conventions which are incompatible with candle's quantized_mistral implementation.
+**Cause:** This error was common in earlier versions when loading GGUF files with incompatible tensor naming conventions. The unified GGUF loader in version 1.0.0+ should handle most GGUF files correctly.
 
-**Solution:** Currently, Mistral GGUF models from TheBloke are not supported. Use either:
-- Non-quantized Mistral models in safetensors format
-- Llama or Gemma GGUF models which work correctly
+**If you still encounter this error:**
+1. Ensure you're using the latest version of red-candle (1.0.0 or higher)
+2. Make sure to specify the exact GGUF filename:
+   ```ruby
+   llm = Candle::LLM.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-GGUF", 
+                                     device: device,
+                                     gguf_file: "mistral-7b-instruct-v0.2.Q4_K_M.gguf")
+   ```
+3. If the error persists, the GGUF file may use an unsupported architecture or format
 
 ### 3. No GGUF file found in repository
 
