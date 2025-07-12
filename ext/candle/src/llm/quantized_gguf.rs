@@ -29,7 +29,7 @@ enum ModelType {
 
 impl QuantizedGGUF {
     /// Load a quantized model from a GGUF file
-    pub async fn from_pretrained(model_id: &str, device: Device) -> CandleResult<Self> {
+    pub async fn from_pretrained(model_id: &str, device: Device, tokenizer_source: Option<&str>) -> CandleResult<Self> {
         // Check if user specified an exact GGUF filename
         let (actual_model_id, gguf_file) = if let Some(pos) = model_id.find('@') {
             let (id, filename) = model_id.split_at(pos);
@@ -70,8 +70,12 @@ impl QuantizedGGUF {
             architecture
         };
         
-        // Download tokenizer with fallback
-        let tokenizer_filename = Self::download_tokenizer(&api, &repo, actual_model_id, &architecture).await?;
+        // Download tokenizer - either from specified source or with fallback
+        let tokenizer_filename = if let Some(source) = tokenizer_source {
+            Self::download_tokenizer_from_source(&api, source).await?
+        } else {
+            Self::download_tokenizer(&api, &repo, actual_model_id, &architecture).await?
+        };
         let tokenizer = Tokenizer::from_file(tokenizer_filename)
             .map_err(|e| candle_core::Error::Msg(format!("Failed to load tokenizer: {}", e)))?;
         
@@ -147,6 +151,35 @@ impl QuantizedGGUF {
         }
     }
     
+    /// Download tokenizer from a specific source
+    async fn download_tokenizer_from_source(
+        api: &Api,
+        source: &str
+    ) -> CandleResult<std::path::PathBuf> {
+        // Check if it's a local file path
+        if source.ends_with(".json") && std::path::Path::new(source).exists() {
+            return Ok(std::path::PathBuf::from(source));
+        }
+        
+        // Otherwise treat it as a HuggingFace repo
+        let repo = api.model(source.to_string());
+        
+        // Try tokenizer.json first
+        if let Ok(path) = repo.get("tokenizer.json").await {
+            return Ok(path);
+        }
+        
+        // Try tokenizer.model (for models that use sentencepiece)
+        if let Ok(path) = repo.get("tokenizer.model").await {
+            return Ok(path);
+        }
+        
+        Err(candle_core::Error::Msg(format!(
+            "Failed to find tokenizer in specified source: {}",
+            source
+        )))
+    }
+    
     /// Download tokenizer with architecture-specific fallbacks
     async fn download_tokenizer(
         api: &Api, 
@@ -164,70 +197,10 @@ impl QuantizedGGUF {
             return Ok(path);
         }
         
-        // For Gemma 3, check if there's a tokenizer in a different location
-        if architecture == "gemma3" {
-            // Try the base model repo without -gguf suffix
-            let base_model_id = model_id.replace("-qat-q4_0-gguf", "").replace("-gguf", "");
-            if base_model_id != model_id {
-                let base_repo = api.model(base_model_id.clone());
-                if let Ok(path) = base_repo.get("tokenizer.json").await {
-                    eprintln!("Using tokenizer from base model: {}", base_model_id);
-                    return Ok(path);
-                }
-                if let Ok(path) = base_repo.get("tokenizer.model").await {
-                    eprintln!("Using tokenizer.model from base model: {}", base_model_id);
-                    return Ok(path);
-                }
-            }
-        }
-        
-        // Architecture-specific fallbacks
-        // Note: Mistral GGUF files report as "llama" architecture, so check model name
-        let model_lower = model_id.to_lowercase();
-        let is_mistral = model_lower.contains("mistral");
-        
-        let fallback_models = match architecture {
-            "mistral" => vec![
-                "mistralai/Mistral-7B-Instruct-v0.2",
-                "mistralai/Mistral-7B-Instruct-v0.1",
-                "mistralai/Mistral-7B-v0.1",
-            ],
-            "llama" if is_mistral => vec![
-                // Mistral GGUF reports as llama, but needs Mistral tokenizer
-                "mistralai/Mistral-7B-Instruct-v0.2",
-                "mistralai/Mistral-7B-Instruct-v0.1",
-                "mistralai/Mistral-7B-v0.1",
-            ],
-            "llama" => vec![
-                "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-                "meta-llama/Llama-2-7b-hf",
-                "NousResearch/Llama-2-7b-hf",
-            ],
-            "gemma" | "gemma2" => vec![
-                "google/gemma-2-2b",
-                "google/gemma-2-9b",
-                "google/gemma-2b",
-                "google/gemma-7b",
-                "google/gemma-2b-it",
-                "google/gemma-7b-it",
-            ],
-            "gemma3" => vec![
-                "google/gemma-2-2b-it",  // Gemma 3 might use Gemma 2 tokenizer
-                "google/gemma-2-2b",
-                "google/gemma-2b-it",
-            ],
-            _ => vec![],
-        };
-        
-        for fallback in fallback_models {
-            let fallback_repo = api.model(fallback.to_string());
-            if let Ok(path) = fallback_repo.get("tokenizer.json").await {
-                return Ok(path);
-            }
-        }
-        
+        // If no tokenizer found in GGUF repo, return error
+        // Ruby will handle the fallback logic
         Err(candle_core::Error::Msg(format!(
-            "Failed to find tokenizer for {}. GGUF models often don't include separate tokenizer files.",
+            "No tokenizer found in GGUF repository {}. Please specify a tokenizer source.",
             model_id
         )))
     }
