@@ -397,6 +397,30 @@ Failed to load quantized model: Failed to download tokenizer: request error: HTT
 
 **Solution:** The code now includes fallback tokenizer loading. If you still encounter this error, ensure you're using the latest version of red-candle.
 
+### 5. Missing metadata in GGUF file
+
+**Error:**
+```
+Failed to load GGUF model: cannot find gemma3.attention.head_count in metadata (RuntimeError)
+```
+or
+```
+Failed to load GGUF model: cannot find llama.attention.head_count in metadata (RuntimeError)
+```
+
+**Cause:** Some GGUF files may have been created with older conversion tools that don't include all required metadata fields.
+
+**Solution:** 
+- Try a different GGUF file from the same model
+- Look for GGUF files from TheBloke or other reputable sources
+- Check if a newer version of the GGUF file is available
+- Some Gemma GGUF files may not be compatible with the current loader
+
+**Known compatibility issues:**
+- `lmstudio-ai/gemma-2b-it-GGUF` - Missing required metadata fields
+- Gemma 3 GGUF files may require specific tokenizers that are not publicly available
+- For best compatibility, use Llama or Mistral GGUF files from TheBloke
+
 ## Development
 
 FORK IT!
