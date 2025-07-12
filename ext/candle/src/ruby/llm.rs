@@ -217,9 +217,17 @@ impl LLM {
         let is_quantized = model_lower.contains("gguf") || model_lower.contains("-q4") || model_lower.contains("-q5") || model_lower.contains("-q8");
         
         let model = if is_quantized {
+            // Extract tokenizer source if provided in model_id
+            let (model_id_clean, tokenizer_source) = if let Some(pos) = model_id.find("@@") {
+                let (id, tok) = model_id.split_at(pos);
+                (id.to_string(), Some(&model_id[pos+2..]))
+            } else {
+                (model_id.clone(), None)
+            };
+            
             // Use unified GGUF loader for all quantized models
             let gguf_model = rt.block_on(async {
-                RustQuantizedGGUF::from_pretrained(&model_id, candle_device).await
+                RustQuantizedGGUF::from_pretrained(&model_id_clean, candle_device, tokenizer_source).await
             })
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load GGUF model: {}", e)))?;
             ModelType::QuantizedGGUF(gguf_model)

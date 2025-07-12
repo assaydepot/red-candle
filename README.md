@@ -58,14 +58,22 @@ Red-Candle supports quantized models in GGUF format, offering 4-8x memory reduct
 > **Note on GGUF Support**: Red-Candle now uses a unified GGUF loader that automatically detects the model architecture from the GGUF file. This means all GGUF models (including Mistral models from TheBloke) should now work correctly! The loader automatically selects the appropriate tokenizer based on the model type to ensure proper text generation.
 
 ```ruby
-# Load quantized models (automatically detected by GGUF in name)
-# By default, searches for common GGUF files (Q4_K_M first)
-llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device)
+# Load quantized models - always specify the GGUF filename
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", 
+                                  device: device, 
+                                  gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
 
-# Specify the exact GGUF filename for a specific quantization
-llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device, gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
-llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device, gguf_file: "llama-2-7b-chat.Q8_0.gguf")
-llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", device: device, gguf_file: "llama-2-7b-chat.Q2_K.gguf")
+# The tokenizer will be auto-detected for common models
+# For new or unsupported models, specify the tokenizer explicitly:
+llm = Candle::LLM.from_pretrained("unsloth/Qwen3-0.6B-GGUF", 
+                                  device: device, 
+                                  gguf_file: "qwen3-0.6b.q4_k_m.gguf",
+                                  tokenizer: "Qwen/Qwen2.5-0.5B")
+
+# Register custom tokenizer mappings for your models
+Candle::LLM.register_tokenizer("my-org/my-model-GGUF", "my-org/my-tokenizer")
+# Or use patterns
+Candle::LLM.register_tokenizer(/qwen.*?3/i, "Qwen/Qwen2.5-0.5B")
 
 # Popular quantized model sources:
 # - TheBloke: Extensive collection of GGUF models
