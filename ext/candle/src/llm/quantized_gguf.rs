@@ -63,6 +63,13 @@ impl QuantizedGGUF {
         // Detect architecture from metadata
         let architecture = Self::detect_architecture(&content, actual_model_id)?;
         
+        // For Gemma 3 models, we might need to adjust the architecture
+        let architecture = if actual_model_id.contains("gemma-3") || actual_model_id.contains("gemma3") {
+            "gemma3".to_string()
+        } else {
+            architecture
+        };
+        
         // Download tokenizer with fallback
         let tokenizer_filename = Self::download_tokenizer(&api, &repo, actual_model_id, &architecture).await?;
         let tokenizer = Tokenizer::from_file(tokenizer_filename)
@@ -81,9 +88,20 @@ impl QuantizedGGUF {
                 let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
                 ModelType::Llama(model)
             }
-            "gemma" | "gemma2" => {
-                let model = QuantizedGemmaModel::from_gguf(content, &mut file, &device)?;
-                ModelType::Gemma(model)
+            "gemma" | "gemma2" | "gemma3" => {
+                // Try Gemma-specific loader first, fall back to Llama if it fails
+                match QuantizedGemmaModel::from_gguf(content, &mut file, &device) {
+                    Ok(model) => ModelType::Gemma(model),
+                    Err(e) if e.to_string().contains("gemma3.attention.head_count") => {
+                        // This might be an older Gemma GGUF that uses llama format
+                        // Note: Some Gemma GGUF files may not be compatible
+                        file.seek(std::io::SeekFrom::Start(0))?;
+                        let content = gguf_file::Content::read(&mut file)?;
+                        let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
+                        ModelType::Llama(model)
+                    }
+                    Err(e) => return Err(e),
+                }
             }
             _ => {
                 return Err(candle_core::Error::Msg(format!(
@@ -146,6 +164,23 @@ impl QuantizedGGUF {
             return Ok(path);
         }
         
+        // For Gemma 3, check if there's a tokenizer in a different location
+        if architecture == "gemma3" {
+            // Try the base model repo without -gguf suffix
+            let base_model_id = model_id.replace("-qat-q4_0-gguf", "").replace("-gguf", "");
+            if base_model_id != model_id {
+                let base_repo = api.model(base_model_id.clone());
+                if let Ok(path) = base_repo.get("tokenizer.json").await {
+                    eprintln!("Using tokenizer from base model: {}", base_model_id);
+                    return Ok(path);
+                }
+                if let Ok(path) = base_repo.get("tokenizer.model").await {
+                    eprintln!("Using tokenizer.model from base model: {}", base_model_id);
+                    return Ok(path);
+                }
+            }
+        }
+        
         // Architecture-specific fallbacks
         // Note: Mistral GGUF files report as "llama" architecture, so check model name
         let model_lower = model_id.to_lowercase();
@@ -168,9 +203,18 @@ impl QuantizedGGUF {
                 "meta-llama/Llama-2-7b-hf",
                 "NousResearch/Llama-2-7b-hf",
             ],
-            "gemma" => vec![
+            "gemma" | "gemma2" => vec![
+                "google/gemma-2-2b",
+                "google/gemma-2-9b",
                 "google/gemma-2b",
                 "google/gemma-7b",
+                "google/gemma-2b-it",
+                "google/gemma-7b-it",
+            ],
+            "gemma3" => vec![
+                "google/gemma-2-2b-it",  // Gemma 3 might use Gemma 2 tokenizer
+                "google/gemma-2-2b",
+                "google/gemma-2b-it",
             ],
             _ => vec![],
         };
@@ -231,6 +275,9 @@ impl QuantizedGGUF {
         
         if model_lower.contains("mistral") {
             self.apply_mistral_template(messages)
+        } else if model_lower.contains("gemma") {
+            // Always use Gemma template for Gemma models, regardless of loader used
+            self.apply_gemma_template(messages)
         } else {
             match self.architecture.as_str() {
                 "llama" => {
