@@ -2,6 +2,7 @@ use candle_core::{Device, Result as CandleResult};
 use serde::{Deserialize, Serialize};
 
 pub mod stable_diffusion;
+pub mod sd3;
 
 pub use stable_diffusion::StableDiffusion3;
 

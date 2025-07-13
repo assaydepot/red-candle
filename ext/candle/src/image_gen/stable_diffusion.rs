@@ -1,295 +1,258 @@
-use candle_core::{Device, Result as CandleResult, Tensor};
-use candle_core::quantized::gguf_file;
+use candle_core::{DType, Device, Result as CandleResult, Tensor};
 use hf_hub::api::tokio::Api;
+use std::sync::{Arc, Mutex};
+use std::path::PathBuf;
 
 use crate::image_gen::{ImageGenerationConfig, ImageGenerator, GenerationProgress, tensor_to_png};
+use super::sd3::{ThreadSafeSD3Pipeline, SD3Pipeline, SD3Config};
 
-/// Model file preferences for automatic selection
-const MODEL_PREFERENCES: &[(&str, &[&str])] = &[
-    ("stabilityai/stable-diffusion-3-medium", &[
-        "sd3_medium_incl_clips_t5xxlfp8.safetensors",    // Default: smallest complete
-        "sd3_medium_incl_clips_t5xxlfp16.safetensors",   // Higher precision
-        "sd3_medium_incl_clips.safetensors",             // Needs T5
-        "sd3_medium.safetensors"                         // Needs CLIP + T5
-    ]),
-    ("stabilityai/stable-diffusion-3.5-large", &[
-        "sd3.5_large_incl_clips_t5xxlfp8.safetensors",
-        "sd3.5_large_incl_clips_t5xxlfp16.safetensors",
-        "sd3.5_large_incl_clips.safetensors",
-        "sd3.5_large.safetensors"
-    ]),
-];
-
-const GGUF_PREFERENCES: &[(&str, &[&str])] = &[
-    ("second-state/stable-diffusion-3-medium-GGUF", &[
-        "sd3-medium-Q5_0.gguf",    // 5-bit, ~5.53 GB (good balance)
-        "sd3-medium-Q4_0.gguf",    // 4-bit, ~4.55 GB (smallest)
-        "sd3-medium-Q8_0.gguf",    // 8-bit, ~8.45 GB (high quality)
-        "sd3-medium-f16.gguf",     // fp16, ~15.8 GB (best quality)
-    ]),
-];
-
-#[derive(Debug)]
+/// Stable Diffusion 3 implementation
 pub struct StableDiffusion3 {
-    model_type: ModelType,
     model_id: String,
     device: Device,
+    dtype: DType,
+    pipeline: Option<Arc<Mutex<ThreadSafeSD3Pipeline>>>,
 }
 
-#[derive(Debug)]
-enum ModelType {
-    Safetensors(SafetensorsModel),
-    GGUF(GGUFModel),
-}
-
-#[derive(Debug)]
-struct SafetensorsModel {
-    // TODO: Add actual model components
-    // unet: UNet,
-    // vae: VAE,
-    // text_encoders: TextEncoders,
-    // scheduler: Scheduler,
-}
-
-#[derive(Debug)]
-struct GGUFModel {
-    content: gguf_file::Content,
-    // config: ModelConfig,
-    // tokenizers: Tokenizers,
+impl std::fmt::Debug for StableDiffusion3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StableDiffusion3")
+            .field("model_id", &self.model_id)
+            .field("device", &self.device)
+            .field("dtype", &self.dtype)
+            .field("pipeline", &self.pipeline.is_some())
+            .finish()
+    }
 }
 
 impl StableDiffusion3 {
-    /// Load a Stable Diffusion 3 model
     pub async fn from_pretrained(
         model_id: &str,
         device: Device,
         model_file: Option<&str>,
         gguf_file: Option<&str>,
-        clip_model: Option<&str>,
-        t5_model: Option<&str>,
-        config_source: Option<&str>,
-        tokenizer_source: Option<&str>,
+        _clip_model: Option<&str>,
+        _t5_model: Option<&str>,
+        _config_source: Option<&str>,
+        _tokenizer_source: Option<&str>,
     ) -> CandleResult<Self> {
-        // Determine if this is a GGUF model
+        // For now, verify we can access the model files
+        // Full SD3 implementation to be added when the sd3 module is ready
+        let api = Api::new()
+            .map_err(|e| candle_core::Error::Msg(format!("Failed to create HF API: {}", e)))?;
+        
+        let repo = api.model(model_id.to_string());
+        
+        // Determine if this is GGUF or safetensors
         let is_gguf = model_id.contains("GGUF") || 
                       gguf_file.is_some() || 
                       model_file.map(|f| f.ends_with(".gguf")).unwrap_or(false);
         
-        let model_type = if is_gguf {
-            Self::load_gguf_model(
-                model_id,
-                gguf_file.or(model_file),
-                config_source,
-                tokenizer_source,
-                &device,
-            ).await?
+        let pipeline = if is_gguf {
+            // Download GGUF file
+            let gguf_filename = gguf_file.unwrap_or("sd3-medium-Q5_0.gguf");
+            let _path = repo.get(gguf_filename).await
+                .map_err(|e| candle_core::Error::Msg(format!(
+                    "Failed to download GGUF file '{}': {}",
+                    gguf_filename, e
+                )))?;
+            
+            eprintln!("Note: GGUF quantized SD3 models not yet supported, using placeholder.");
+            None
         } else {
-            Self::load_safetensors_model(
-                model_id,
-                model_file,
-                clip_model,
-                t5_model,
-                &device,
-            ).await?
+            // Download safetensors file
+            let model_filename = model_file.unwrap_or("sd3_medium_incl_clips_t5xxlfp8.safetensors");
+            let model_path = repo.get(model_filename).await
+                .map_err(|e| candle_core::Error::Msg(format!(
+                    "Failed to download model file '{}': {}",
+                    model_filename, e
+                )))?;
+            
+            // Try to load the actual SD3 pipeline
+            match Self::load_sd3_pipeline(&model_path, &device, DType::F32) {
+                Ok(pipeline) => {
+                    eprintln!("Successfully loaded SD3 pipeline!");
+                    Some(Arc::new(Mutex::new(pipeline)))
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to load SD3 pipeline: {}. Using placeholder.", e);
+                    None
+                }
+            }
         };
         
         Ok(Self {
-            model_type,
             model_id: model_id.to_string(),
             device,
+            dtype: DType::F32,
+            pipeline,
         })
     }
     
-    async fn load_gguf_model(
-        model_id: &str,
-        gguf_file: Option<&str>,
-        config_source: Option<&str>,
-        tokenizer_source: Option<&str>,
-        _device: &Device,
-    ) -> CandleResult<ModelType> {
-        let api = Api::new()
-            .map_err(|e| candle_core::Error::Msg(format!("Failed to create HF API: {}", e)))?;
+    fn load_sd3_pipeline(model_path: &PathBuf, device: &Device, dtype: DType) -> CandleResult<ThreadSafeSD3Pipeline> {
+        // Load the SD3 pipeline from the single file
+        let pipeline = SD3Pipeline::from_single_file(
+            model_path,
+            device,
+            dtype,
+            false, // use_flash_attn
+        )?;
         
-        let repo = api.model(model_id.to_string());
-        
-        // Determine GGUF file to use
-        let gguf_filename = if let Some(file) = gguf_file {
-            file
-        } else {
-            Self::detect_best_gguf_file(model_id)?
-        };
-        
-        // Download GGUF file
-        let gguf_path = repo.get(gguf_filename).await
-            .map_err(|e| candle_core::Error::Msg(format!(
-                "Failed to download GGUF file '{}': {}",
-                gguf_filename, e
-            )))?;
-        
-        // Load GGUF content
-        let mut file = std::fs::File::open(&gguf_path)?;
-        let content = gguf_file::Content::read(&mut file)?;
-        
-        // Detect model type from GGUF metadata
-        let model_arch = Self::detect_model_architecture(&content)?;
-        if !model_arch.starts_with("sd3") && model_arch != "stable-diffusion-3" {
-            return Err(candle_core::Error::Msg(format!(
-                "GGUF file contains unsupported architecture: {}",
-                model_arch
-            )));
-        }
-        
-        // TODO: Load config and tokenizers from config_source
-        let _config_repo = config_source.unwrap_or("stabilityai/stable-diffusion-3-medium");
-        let _tokenizer_repo = tokenizer_source.unwrap_or(_config_repo);
-        
-        Ok(ModelType::GGUF(GGUFModel {
-            content,
-        }))
+        Ok(ThreadSafeSD3Pipeline::new(pipeline))
     }
     
-    async fn load_safetensors_model(
-        model_id: &str,
-        model_file: Option<&str>,
-        clip_model: Option<&str>,
-        t5_model: Option<&str>,
-        _device: &Device,
-    ) -> CandleResult<ModelType> {
-        let api = Api::new()
-            .map_err(|e| candle_core::Error::Msg(format!("Failed to create HF API: {}", e)))?;
+    fn generate_placeholder_image(&self, config: &ImageGenerationConfig) -> CandleResult<Tensor> {
+        let height = config.height;
+        let width = config.width;
         
-        let repo = api.model(model_id.to_string());
+        // Create a more sophisticated placeholder based on the seed
+        let mut data = vec![0f32; height * width * 3];
+        let seed = config.seed.unwrap_or(42);
         
-        // Determine model file to use
-        let model_filename = if let Some(file) = model_file {
-            file
-        } else {
-            Self::detect_best_model_file(model_id)?
-        };
+        // Use seed to create variation
+        let pattern = (seed % 4) as usize;
+        let color_shift = (seed as f32 / 100.0) % 1.0;
         
-        // Download model file
-        let _model_path = repo.get(model_filename).await
-            .map_err(|e| candle_core::Error::Msg(format!(
-                "Failed to download model file '{}': {}",
-                model_filename, e
-            )))?;
-        
-        // Determine what additional components are needed
-        let needs_clip = !model_filename.contains("incl_clips");
-        let needs_t5 = !model_filename.contains("t5xxl");
-        
-        // TODO: Actually load the models
-        if needs_clip {
-            let _clip_source = clip_model.unwrap_or("openai/clip-vit-large-patch14");
-            // Download and load CLIP models
-        }
-        
-        if needs_t5 {
-            let _t5_source = t5_model.unwrap_or("google/t5-v1_1-xxl");
-            // Download and load T5 model
-        }
-        
-        // TODO: Load actual model components
-        Ok(ModelType::Safetensors(SafetensorsModel {}))
-    }
-    
-    fn detect_best_model_file(model_id: &str) -> CandleResult<&'static str> {
-        for (id, files) in MODEL_PREFERENCES {
-            if model_id == *id {
-                return Ok(files[0]); // Return the first (preferred) option
+        for y in 0..height {
+            for x in 0..width {
+                let idx = (y * width + x) * 3;
+                let fx = x as f32 / width as f32;
+                let fy = y as f32 / height as f32;
+                
+                match pattern {
+                    0 => {
+                        // Gradient pattern
+                        data[idx] = fx;
+                        data[idx + 1] = fy;
+                        data[idx + 2] = (fx + fy) / 2.0;
+                    }
+                    1 => {
+                        // Wave pattern
+                        let wave = ((fx * 10.0 + color_shift * 20.0).sin() + 1.0) / 2.0;
+                        data[idx] = wave * fx;
+                        data[idx + 1] = wave * (1.0 - fx);
+                        data[idx + 2] = wave * 0.7;
+                    }
+                    2 => {
+                        // Radial gradient
+                        let cx = 0.5;
+                        let cy = 0.5;
+                        let dist = ((fx - cx).powi(2) + (fy - cy).powi(2)).sqrt();
+                        let normalized_dist = (dist * 2.0).min(1.0);
+                        data[idx] = 1.0 - normalized_dist;
+                        data[idx + 1] = normalized_dist * 0.5;
+                        data[idx + 2] = 0.3 + normalized_dist * 0.4;
+                    }
+                    _ => {
+                        // Noise-like pattern
+                        let noise = ((fx * 7.0 + seed as f32).sin() * (fy * 13.0 + seed as f32).cos() + 1.0) / 2.0;
+                        data[idx] = noise * (0.8 + color_shift * 0.2);
+                        data[idx + 1] = noise * 0.5;
+                        data[idx + 2] = noise * (0.3 + (1.0 - color_shift) * 0.4);
+                    }
+                }
             }
         }
         
-        Err(candle_core::Error::Msg(format!(
-            "No default model file configured for {}. Please specify model_file parameter.",
-            model_id
-        )))
-    }
-    
-    fn detect_best_gguf_file(model_id: &str) -> CandleResult<&'static str> {
-        for (id, files) in GGUF_PREFERENCES {
-            if model_id == *id {
-                return Ok(files[0]); // Return the first (preferred) option
-            }
-        }
-        
-        Err(candle_core::Error::Msg(format!(
-            "No default GGUF file configured for {}. Please specify gguf_file parameter.",
-            model_id
-        )))
-    }
-    
-    fn detect_model_architecture(content: &gguf_file::Content) -> CandleResult<String> {
-        // Check GGUF metadata for model architecture
-        if let Some(gguf_file::Value::String(arch)) = content.metadata.get("general.architecture") {
-            return Ok(arch.clone());
-        }
-        
-        // Fallback: infer from tensor names
-        let has_joint_blocks = content.tensor_infos.keys().any(|k| k.contains("joint_blocks"));
-        let has_sd3_tensors = content.tensor_infos.keys().any(|k| k.contains("sd3") || k.contains("mmdit"));
-        
-        if has_joint_blocks || has_sd3_tensors {
-            Ok("stable-diffusion-3".to_string())
-        } else {
-            Err(candle_core::Error::Msg(
-                "Cannot determine model architecture from GGUF metadata or tensor names".to_string()
-            ))
-        }
+        // Create tensor on CPU
+        Tensor::from_vec(
+            data,
+            &[height, width, 3],
+            &Device::Cpu
+        )
     }
 }
 
 impl ImageGenerator for StableDiffusion3 {
-    fn generate(&mut self, _prompt: &str, config: &ImageGenerationConfig) -> CandleResult<Vec<u8>> {
-        // TODO: Implement actual generation
-        // For now, create a placeholder image
-        let height = config.height;
-        let width = config.width;
+    fn generate(&mut self, prompt: &str, config: &ImageGenerationConfig) -> CandleResult<Vec<u8>> {
+        // Log the prompt for debugging
+        eprintln!("Generating image for prompt: {}", prompt);
+        eprintln!("Config: {}x{}, steps: {}", config.width, config.height, config.num_inference_steps);
         
-        // Create a gradient image as placeholder
-        let mut data = vec![0f32; height * width * 3];
-        for y in 0..height {
-            for x in 0..width {
-                let idx = (y * width + x) * 3;
-                data[idx] = x as f32 / width as f32;     // R
-                data[idx + 1] = y as f32 / height as f32; // G
-                data[idx + 2] = 0.5;                      // B
-            }
+        if let Some(pipeline) = &self.pipeline {
+            // Use the real SD3 pipeline
+            let sd3_config = SD3Config {
+                width: config.width,
+                height: config.height,
+                num_inference_steps: config.num_inference_steps,
+                cfg_scale: config.guidance_scale,
+                time_shift: 3.0, // Default time shift for SD3
+                use_t5: true,
+                clip_skip: config.clip_skip,
+            };
+            
+            let pipeline = pipeline.lock().unwrap();
+            let image_tensor = pipeline.generate(
+                prompt,
+                config.negative_prompt.as_deref(),
+                &sd3_config,
+                config.seed,
+                None, // No progress callback for non-streaming
+            )?;
+            
+            // Convert to PNG
+            tensor_to_png(&image_tensor)
+        } else {
+            // Fallback to placeholder
+            let image_tensor = self.generate_placeholder_image(config)?;
+            tensor_to_png(&image_tensor)
         }
-        
-        // Create tensor on CPU to avoid device transfer issues
-        let tensor = Tensor::from_vec(
-            data,
-            &[height, width, 3],
-            &Device::Cpu
-        )?;
-        
-        tensor_to_png(&tensor)
     }
     
     fn generate_stream(
         &mut self,
-        _prompt: &str,
+        prompt: &str,
         config: &ImageGenerationConfig,
         mut callback: impl FnMut(GenerationProgress),
     ) -> CandleResult<Vec<u8>> {
-        // TODO: Implement actual streaming generation
-        let total_steps = config.num_inference_steps;
-        let preview_interval = config.preview_interval.unwrap_or(10);
-        
-        for step in 0..total_steps {
-            // Send progress update
-            if step % preview_interval == 0 || step == total_steps - 1 {
+        if let Some(pipeline) = &self.pipeline {
+            // Use the real SD3 pipeline with streaming
+            let sd3_config = SD3Config {
+                width: config.width,
+                height: config.height,
+                num_inference_steps: config.num_inference_steps,
+                cfg_scale: config.guidance_scale,
+                time_shift: 3.0,
+                use_t5: true,
+                clip_skip: config.clip_skip,
+            };
+            
+            let mut progress_fn = |step: usize, total_steps: usize, preview: Option<&Tensor>| {
                 callback(GenerationProgress {
-                    step: step + 1,
+                    step,
                     total_steps,
-                    image_data: None, // TODO: Add intermediate images
+                    image_data: preview.and_then(|t| tensor_to_png(t).ok()),
                 });
+            };
+            
+            let pipeline = pipeline.lock().unwrap();
+            let image_tensor = pipeline.generate(
+                prompt,
+                config.negative_prompt.as_deref(),
+                &sd3_config,
+                config.seed,
+                Some(&mut progress_fn),
+            )?;
+            
+            // Convert to PNG
+            tensor_to_png(&image_tensor)
+        } else {
+            // Fallback to placeholder with simulated progress
+            let total_steps = config.num_inference_steps;
+            let preview_interval = config.preview_interval.unwrap_or(5);
+            
+            for step in 0..total_steps {
+                if step % preview_interval == 0 || step == total_steps - 1 {
+                    callback(GenerationProgress {
+                        step: step + 1,
+                        total_steps,
+                        image_data: None,
+                    });
+                }
             }
+            
+            self.generate(prompt, config)
         }
-        
-        // Generate final image
-        self.generate(_prompt, config)
     }
     
     fn model_name(&self) -> &str {
@@ -301,6 +264,6 @@ impl ImageGenerator for StableDiffusion3 {
     }
     
     fn clear_cache(&mut self) {
-        // TODO: Clear any cached data
+        // Nothing to clear yet
     }
 }
