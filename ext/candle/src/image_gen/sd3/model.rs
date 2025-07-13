@@ -134,8 +134,32 @@ pub struct TextEncoders {
 }
 
 impl TextEncoders {
+    pub fn dummy(device: &Device) -> CandleResult<Self> {
+        // Create dummy encoders that just return zero tensors
+        // This allows the pipeline to run without actual text encoders
+        Ok(Self {
+            clip_g: None,
+            clip_l: None,
+            t5: None,
+        })
+    }
+    
     pub fn encode(&mut self, prompt: &str, negative_prompt: Option<&str>, use_t5: bool) -> CandleResult<(Tensor, Tensor, Tensor)> {
         let negative = negative_prompt.unwrap_or("");
+        
+        // If no encoders are loaded, return dummy tensors
+        if self.clip_g.is_none() && self.clip_l.is_none() && self.t5.is_none() {
+            // Return dummy tensors that allow the pipeline to run
+            let device = Device::Cpu; // Default device
+            let batch_size = 1;
+            let seq_len = 77; // Standard CLIP sequence length
+            let hidden_size = 2048; // Standard hidden size
+            
+            let zeros = Tensor::zeros(&[batch_size, seq_len, hidden_size], DType::F32, &device)?;
+            let pooled = Tensor::zeros(&[batch_size, hidden_size], DType::F32, &device)?;
+            
+            return Ok((zeros.clone(), zeros, pooled));
+        }
         
         // Encode with CLIP-G
         let (clip_g_pos, clip_g_neg) = if let Some(encoder) = &self.clip_g {

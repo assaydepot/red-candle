@@ -29,3 +29,7 @@ cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
 cudnn = ["candle-core/cudnn", "cuda"]
 mkl = ["candle-core/mkl"]
 accelerate = ["candle-core/accelerate"]
+
+[[bin]]
+name = "inspect_safetensors"
+path = "src/bin/inspect_safetensors.rs"

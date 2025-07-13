@@ -46,13 +46,9 @@ impl SD3Pipeline {
             return Err(candle_core::Error::Msg("VAE weights not found in model file".to_string()));
         };
         
-        // For bundled models, text encoders are included
-        // This is a simplified version - full implementation would load actual encoders
-        let text_encoders = TextEncoders {
-            clip_g: None, // Would load from vb.pp("text_encoders.clip_g")
-            clip_l: None, // Would load from vb.pp("text_encoders.clip_l")
-            t5: None,     // Would load from vb.pp("text_encoders.t5")
-        };
+        // For now, create dummy text encoders that generate zeros
+        // TODO: Load actual encoders from the model file
+        let text_encoders = TextEncoders::dummy(device)?;
         
         let scheduler_config = SchedulerConfig::default();
         
