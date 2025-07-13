@@ -1,6 +1,7 @@
 require "candle"
 device = Candle::Device.metal
 config = Candle::GenerationConfig.balanced(debug_tokens: false, max_length: 25)
+puts "Running with seed: #{config.seed}"
 
 models = [
   {
