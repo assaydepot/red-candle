@@ -256,7 +256,7 @@ impl ImageGenerator {
     }
 
     /// Generate an image from a prompt
-    pub fn generate(&self, prompt: String, config: Option<&ImageGenerationConfig>) -> RbResult<Vec<u8>> {
+    pub fn generate(&self, prompt: String, config: Option<&ImageGenerationConfig>) -> RbResult<magnus::RString> {
         let config = config
             .map(|c| c.inner.clone())
             .unwrap_or_default();
@@ -267,12 +267,16 @@ impl ImageGenerator {
         };
         let mut model_ref = model.borrow_mut();
         
-        model_ref.generate(&prompt, &config)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Generation failed: {}", e)))
+        let image_data = model_ref.generate(&prompt, &config)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Generation failed: {}", e)))?;
+        
+        // Convert Vec<u8> to Ruby string with binary encoding
+        let ruby = Ruby::get().unwrap();
+        Ok(ruby.str_from_slice(&image_data))
     }
 
     /// Generate an image with streaming progress
-    pub fn generate_stream(&self, prompt: String, config: Option<&ImageGenerationConfig>) -> RbResult<Vec<u8>> {
+    pub fn generate_stream(&self, prompt: String, config: Option<&ImageGenerationConfig>) -> RbResult<magnus::RString> {
         let config = config
             .map(|c| c.inner.clone())
             .unwrap_or_default();
@@ -294,14 +298,18 @@ impl ImageGenerator {
             let _ = hash.aset("total_steps", progress.total_steps);
             
             if let Some(image_data) = progress.image_data {
-                let _ = hash.aset("image_data", image_data);
+                // Convert image data to binary string
+                let image_str = ruby.str_from_slice(&image_data);
+                let _ = hash.aset("image_data", image_str);
             }
             
             // Call the Ruby block with progress
             let _ = block.call::<(RHash,), Value>((hash,));
-        });
+        })
+        .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Generation failed: {}", e)))?;
         
-        result.map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Generation failed: {}", e)))
+        // Convert final result to binary string
+        Ok(ruby.str_from_slice(&result))
     }
 
     /// Get the model name

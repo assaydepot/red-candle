@@ -257,10 +257,11 @@ impl ImageGenerator for StableDiffusion3 {
             }
         }
         
+        // Create tensor on CPU to avoid device transfer issues
         let tensor = Tensor::from_vec(
             data,
             &[height, width, 3],
-            &self.device
+            &Device::Cpu
         )?;
         
         tensor_to_png(&tensor)
