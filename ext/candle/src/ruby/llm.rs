@@ -219,7 +219,7 @@ impl LLM {
         let model = if is_quantized {
             // Extract tokenizer source if provided in model_id
             let (model_id_clean, tokenizer_source) = if let Some(pos) = model_id.find("@@") {
-                let (id, tok) = model_id.split_at(pos);
+                let (id, _tok) = model_id.split_at(pos);
                 (id.to_string(), Some(&model_id[pos+2..]))
             } else {
                 (model_id.clone(), None)
