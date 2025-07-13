@@ -69,4 +69,32 @@ impl TokenizerWrapper {
             .map(|s| s.to_string())
             .ok_or_else(|| candle_core::Error::Msg(format!("Unknown token id: {}", token)))
     }
+    
+    /// Decode a single token for streaming output
+    pub fn decode_token(&self, token: u32) -> CandleResult<String> {
+        // Decode the single token properly
+        self.decode(&[token], true)
+    }
+    
+    /// Decode tokens incrementally for streaming
+    /// This is more efficient than decoding single tokens
+    pub fn decode_incremental(&self, all_tokens: &[u32], new_tokens_start: usize) -> CandleResult<String> {
+        if new_tokens_start >= all_tokens.len() {
+            return Ok(String::new());
+        }
+        
+        // Decode all tokens up to this point
+        let full_text = self.decode(all_tokens, true)?;
+        
+        // If we're at the start, return everything
+        if new_tokens_start == 0 {
+            return Ok(full_text);
+        }
+        
+        // Otherwise, decode up to the previous token and return the difference
+        let previous_text = self.decode(&all_tokens[..new_tokens_start], true)?;
+        
+        // Return only the new portion
+        Ok(full_text[previous_text.len()..].to_string())
+    }
 }

@@ -139,6 +139,27 @@ device = Candle::Device.metal
 device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
 ```
 
+### Debugging Token Generation
+
+For debugging purposes, you can enable raw token output to see both token IDs and their raw representations:
+
+```ruby
+# Enable debug mode to see raw tokens during generation
+config = Candle::GenerationConfig.balanced(debug_tokens: true)
+
+llm.generate_stream("Hello, world!", config: config) do |text|
+  print text  # Will show: [15043:Hello][11:,] [1917:world][0:!]
+end
+
+# Works with all models (Llama, Mistral, Gemma, and quantized GGUF models)
+```
+
+This is particularly useful for:
+- Debugging tokenization issues
+- Understanding how the model processes text
+- Troubleshooting generation problems
+- Analyzing model behavior
+
 ## ⚠️ Model Format Requirement: Safetensors Only
 
 Red-Candle **only supports embedding models that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do.

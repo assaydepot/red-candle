@@ -150,6 +150,12 @@ impl GenerationConfig {
             }
         }
         
+        if let Some(value) = kwargs.get(magnus::Symbol::new("debug_tokens")) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                config.debug_tokens = v;
+            }
+        }
+        
         Ok(Self { inner: config })
     }
 
@@ -190,6 +196,10 @@ impl GenerationConfig {
 
     pub fn include_prompt(&self) -> bool {
         self.inner.include_prompt
+    }
+
+    pub fn debug_tokens(&self) -> bool {
+        self.inner.debug_tokens
     }
 }
 
@@ -389,6 +399,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("seed", method!(GenerationConfig::seed, 0))?;
     rb_generation_config.define_method("stop_sequences", method!(GenerationConfig::stop_sequences, 0))?;
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
+    rb_generation_config.define_method("debug_tokens", method!(GenerationConfig::debug_tokens, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
     rb_llm.define_singleton_method("_from_pretrained", function!(from_pretrained_wrapper, -1))?;

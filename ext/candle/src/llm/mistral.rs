@@ -180,8 +180,19 @@ impl Mistral {
             
             // Stream callback
             if let Some(ref mut cb) = callback {
-                let token_text = self.tokenizer.token_to_piece(next_token)?;
-                cb(&token_text);
+                if config.debug_tokens {
+                    // In debug mode, show both raw token and decoded text
+                    let token_piece = self.tokenizer.token_to_piece(next_token)?;
+                    let decoded_text = self.tokenizer.decode_incremental(&all_tokens, all_tokens.len() - 1)?;
+                    cb(&format!("[{}:{}]", next_token, token_piece));
+                    if !decoded_text.is_empty() {
+                        cb(&decoded_text);
+                    }
+                } else {
+                    // Normal mode: use incremental decoding for proper text
+                    let decoded_text = self.tokenizer.decode_incremental(&all_tokens, all_tokens.len() - 1)?;
+                    cb(&decoded_text);
+                }
             }
             
             // Check stop conditions
