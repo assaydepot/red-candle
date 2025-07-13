@@ -45,6 +45,11 @@ results = reranker.rerank("query", ["doc1", "doc2", "doc3"])
 
 Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 
+### Supported Models
+
+- **Llama**: Llama 2 and Llama 3 models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, `meta-llama/Llama-2-7b-hf`, `NousResearch/Llama-2-7b-hf`)
+- **Mistral**: All Mistral models (e.g., `mistralai/Mistral-7B-Instruct-v0.1`)
+
 > ### ⚠️ Huggingface login warning
 > 
 > Many models, including the one below, require you to agree to the terms. You'll need to:
@@ -62,7 +67,9 @@ device = Candle::Device.cpu     # CPU (default)
 device = Candle::Device.metal   # Apple GPU (Metal)
 device = Candle::Device.cuda    # NVIDIA GPU (CUDA)
 
-# Load a model
+# Load a Llama model
+llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
+# Or a Mistral model
 llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
 
 # Generate text
@@ -86,7 +93,7 @@ response = llm.chat(messages)
 ```ruby
 # CPU works for all models
 device = Candle::Device.cpu
-llm = Candle::LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device: device)
+llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
 
 # Metal
 device = Candle::Device.metal 

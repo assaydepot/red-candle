@@ -1,19 +1,21 @@
 use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule, Ruby, TryConvert, Value};
 use std::cell::RefCell;
 
-use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral};
+use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama};
 use crate::ruby::{Result as RbResult, Device as RbDevice};
 
 // Use an enum to handle different model types instead of trait objects
 #[derive(Debug)]
 enum ModelType {
     Mistral(RustMistral),
+    Llama(RustLlama),
 }
 
 impl ModelType {
     fn generate(&mut self, prompt: &str, config: &RustGenerationConfig) -> candle_core::Result<String> {
         match self {
             ModelType::Mistral(m) => m.generate(prompt, config),
+            ModelType::Llama(m) => m.generate(prompt, config),
         }
     }
 
@@ -25,6 +27,7 @@ impl ModelType {
     ) -> candle_core::Result<String> {
         match self {
             ModelType::Mistral(m) => m.generate_stream(prompt, config, callback),
+            ModelType::Llama(m) => m.generate_stream(prompt, config, callback),
         }
     }
 
@@ -32,12 +35,37 @@ impl ModelType {
     fn model_name(&self) -> &str {
         match self {
             ModelType::Mistral(m) => m.model_name(),
+            ModelType::Llama(m) => m.model_name(),
         }
     }
     
     fn clear_cache(&mut self) {
         match self {
             ModelType::Mistral(m) => m.clear_cache(),
+            ModelType::Llama(m) => m.clear_cache(),
+        }
+    }
+    
+    fn apply_chat_template(&self, messages: &[serde_json::Value]) -> candle_core::Result<String> {
+        match self {
+            ModelType::Mistral(_) => {
+                // For now, use a simple template for Mistral
+                // In the future, we could implement proper Mistral chat templating
+                let mut prompt = String::new();
+                for message in messages {
+                    let role = message["role"].as_str().unwrap_or("");
+                    let content = message["content"].as_str().unwrap_or("");
+                    match role {
+                        "system" => prompt.push_str(&format!("System: {}\n\n", content)),
+                        "user" => prompt.push_str(&format!("User: {}\n\n", content)),
+                        "assistant" => prompt.push_str(&format!("Assistant: {}\n\n", content)),
+                        _ => {}
+                    }
+                }
+                prompt.push_str("Assistant: ");
+                Ok(prompt)
+            },
+            ModelType::Llama(m) => m.apply_chat_template(messages),
         }
     }
 }
@@ -180,10 +208,16 @@ impl LLM {
             })
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
             ModelType::Mistral(mistral)
+        } else if model_lower.contains("llama") || model_lower.contains("meta-llama") {
+            let llama = rt.block_on(async {
+                RustLlama::from_pretrained(&model_id, candle_device).await
+            })
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+            ModelType::Llama(llama)
         } else {
             return Err(Error::new(
                 magnus::exception::runtime_error(),
-                format!("Unsupported model type: {}. Currently only Mistral models are supported.", model_id),
+                format!("Unsupported model type: {}. Currently only Mistral and Llama models are supported.", model_id),
             ));
         };
         
@@ -248,6 +282,41 @@ impl LLM {
         model_ref.clear_cache();
         Ok(())
     }
+    
+    /// Apply chat template to messages
+    pub fn apply_chat_template(&self, messages: RArray) -> RbResult<String> {
+        // Convert Ruby array to JSON values
+        let json_messages: Vec<serde_json::Value> = messages
+            .into_iter()
+            .filter_map(|msg| {
+                if let Ok(hash) = <RHash as TryConvert>::try_convert(msg) {
+                    let mut json_msg = serde_json::Map::new();
+                    
+                    if let Some(role) = hash.get(magnus::Symbol::new("role")) {
+                        if let Ok(role_str) = <String as TryConvert>::try_convert(role) {
+                            json_msg.insert("role".to_string(), serde_json::Value::String(role_str));
+                        }
+                    }
+                    
+                    if let Some(content) = hash.get(magnus::Symbol::new("content")) {
+                        if let Ok(content_str) = <String as TryConvert>::try_convert(content) {
+                            json_msg.insert("content".to_string(), serde_json::Value::String(content_str));
+                        }
+                    }
+                    
+                    Some(serde_json::Value::Object(json_msg))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        
+        let model = self.model.lock().unwrap();
+        let model_ref = model.borrow();
+        
+        model_ref.apply_chat_template(&json_messages)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to apply chat template: {}", e)))
+    }
 }
 
 // Define a standalone function for from_pretrained that handles variable arguments
@@ -290,6 +359,7 @@ pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
     rb_llm.define_method("model_name", method!(LLM::model_name, 0))?;
     rb_llm.define_method("device", method!(LLM::device, 0))?;
     rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;
+    rb_llm.define_method("apply_chat_template", method!(LLM::apply_chat_template, 1))?;
     
     Ok(())
 }
