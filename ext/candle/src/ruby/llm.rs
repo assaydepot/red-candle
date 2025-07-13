@@ -272,7 +272,10 @@ impl LLM {
             .map(|c| c.inner.clone())
             .unwrap_or_default();
         
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let mut model_ref = model.borrow_mut();
         
         model_ref.generate(&prompt, &config)
@@ -292,7 +295,10 @@ impl LLM {
         }
         let block = block.unwrap();
         
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let mut model_ref = model.borrow_mut();
         
         let result = model_ref.generate_stream(&prompt, &config, |token| {
@@ -314,8 +320,15 @@ impl LLM {
     }
     
     /// Clear the model's cache (e.g., KV cache for transformers)
-    pub fn clear_cache(&self) -> Result<()> {
-        let model = self.model.lock().unwrap();
+    pub fn clear_cache(&self) -> RbResult<()> {
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                // If the mutex is poisoned, we can still recover the data
+                // This happens when another thread panicked while holding the lock
+                poisoned.into_inner()
+            }
+        };
         let mut model_ref = model.borrow_mut();
         model_ref.clear_cache();
         Ok(())
@@ -349,7 +362,10 @@ impl LLM {
             })
             .collect();
         
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let model_ref = model.borrow();
         
         model_ref.apply_chat_template(&json_messages)

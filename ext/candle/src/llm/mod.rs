@@ -94,8 +94,24 @@ impl TokenizerWrapper {
         // Otherwise, decode up to the previous token and return the difference
         let previous_text = self.decode(&all_tokens[..new_tokens_start], true)?;
         
+        // Find the common prefix between the two strings to handle cases where
+        // the tokenizer might produce slightly different text when decoding
+        // different token sequences
+        let common_prefix_len = full_text
+            .char_indices()
+            .zip(previous_text.chars())
+            .take_while(|((_, c1), c2)| c1 == c2)
+            .count();
+        
+        // Find the byte position of the character boundary
+        let byte_pos = full_text
+            .char_indices()
+            .nth(common_prefix_len)
+            .map(|(pos, _)| pos)
+            .unwrap_or(full_text.len());
+        
         // Return only the new portion
-        Ok(full_text[previous_text.len()..].to_string())
+        Ok(full_text[byte_pos..].to_string())
     }
     
     /// Format tokens with debug information
