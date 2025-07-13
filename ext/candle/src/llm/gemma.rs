@@ -170,13 +170,9 @@ impl Gemma {
             // Stream callback
             if let Some(ref mut cb) = callback {
                 if config.debug_tokens {
-                    // In debug mode, show both raw token and decoded text
+                    // In debug mode, only show debug tokens
                     let token_piece = self.tokenizer.token_to_piece(next_token)?;
-                    let decoded_text = self.tokenizer.decode_incremental(&all_tokens, all_tokens.len() - 1)?;
                     cb(&format!("[{}:{}]", next_token, token_piece));
-                    if !decoded_text.is_empty() {
-                        cb(&decoded_text);
-                    }
                 } else {
                     // Normal mode: use incremental decoding for proper text
                     let decoded_text = self.tokenizer.decode_incremental(&all_tokens, all_tokens.len() - 1)?;
@@ -203,6 +199,7 @@ impl Gemma {
         })
     }
     
+    #[allow(dead_code)]
     fn generate_tokens_decoded(
         &mut self,
         prompt_tokens: Vec<u32>,
@@ -245,12 +242,19 @@ impl Gemma {
             
             // Stream callback with incremental decoding
             if let Some(ref mut cb) = callback {
-                let current_decoded = self.tokenizer.decode(&all_tokens[start_gen..], true)?;
-                
-                if current_decoded.len() > previously_decoded.len() {
-                    let new_text = &current_decoded[previously_decoded.len()..];
-                    cb(new_text);
-                    previously_decoded = current_decoded;
+                if config.debug_tokens {
+                    // In debug mode, only show debug tokens
+                    let token_piece = self.tokenizer.token_to_piece(next_token)?;
+                    cb(&format!("[{}:{}]", next_token, token_piece));
+                } else {
+                    // Normal mode: use incremental decoding
+                    let current_decoded = self.tokenizer.decode(&all_tokens[start_gen..], true)?;
+                    
+                    if current_decoded.len() > previously_decoded.len() {
+                        let new_text = &current_decoded[previously_decoded.len()..];
+                        cb(new_text);
+                        previously_decoded = current_decoded;
+                    }
                 }
             }
             
@@ -260,7 +264,7 @@ impl Gemma {
             }
             
             // Check stop sequences
-            let generated_text = if callback.is_some() {
+            let generated_text = if callback.is_some() && !config.debug_tokens {
                 previously_decoded.clone()
             } else {
                 self.tokenizer.decode(&all_tokens[start_gen..], true)?
@@ -323,7 +327,12 @@ impl TextGenerator for Gemma {
     ) -> CandleResult<String> {
         let prompt_tokens = self.tokenizer.encode(prompt, true)?;
         let output_tokens = self.generate_tokens(prompt_tokens, config, None::<fn(&str)>)?;
-        self.tokenizer.decode(&output_tokens, true)
+        
+        if config.debug_tokens {
+            self.tokenizer.format_tokens_with_debug(&output_tokens)
+        } else {
+            self.tokenizer.decode(&output_tokens, true)
+        }
     }
 
     fn generate_stream(
@@ -333,7 +342,7 @@ impl TextGenerator for Gemma {
         mut callback: impl FnMut(&str),
     ) -> CandleResult<String> {
         let prompt_tokens = self.tokenizer.encode(prompt, true)?;
-        let output_tokens = self.generate_tokens_decoded(prompt_tokens, config, Some(&mut callback))?;
+        let output_tokens = self.generate_tokens(prompt_tokens, config, Some(&mut callback))?;
         self.tokenizer.decode(&output_tokens, true)
     }
 

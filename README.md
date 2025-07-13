@@ -147,8 +147,14 @@ For debugging purposes, you can enable raw token output to see both token IDs an
 # Enable debug mode to see raw tokens during generation
 config = Candle::GenerationConfig.balanced(debug_tokens: true)
 
+# Non-streaming generation with debug tokens
+result = llm.generate("Hello, world!", config: config)
+puts result
+# Output: [15043:Hello][11:,][1917:world][0:!]
+
+# Streaming generation with debug tokens
 llm.generate_stream("Hello, world!", config: config) do |text|
-  print text  # Will show: [15043:Hello][11:,] [1917:world][0:!]
+  print text  # Will show each token as it's generated: [15043:Hello][11:,][1917:world][0:!]
 end
 
 # Works with all models (Llama, Mistral, Gemma, and quantized GGUF models)

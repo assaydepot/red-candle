@@ -1,6 +1,6 @@
 require "candle"
 device = Candle::Device.metal
-config = Candle::GenerationConfig.balanced(debug_tokens: true, max_length: 25)
+config = Candle::GenerationConfig.balanced(debug_tokens: false, max_length: 25)
 
 models = [
   {
@@ -52,17 +52,13 @@ models.each do |entry|
   model = entry[:model]
   options = entry[:options]
   options.each do |option|
-    puts "-" * 80
-    puts "-" * 80
-    puts "Loading #{model} - #{option}..."
+    puts "=== Loading #{model} - #{option} ==="
     llm = Candle::LLM.from_pretrained(model, device: device, **option)
-    puts "-" * 80
     puts "\n=== Basic Generation ==="
     puts llm.generate("What is Ruby?", config: config)
     puts "\n=== Streaming Generation ==="
     llm.generate_stream("What is Ruby?", config: config) { |t| print t }
     puts "\n"
-    puts "-" * 80
   end
 end
 
@@ -73,15 +69,11 @@ models = [
   "google/gemma-2b-it"
 ]
 models.each do |model|
-  puts "-" * 80
-  puts "-" * 80
-  puts "Loading #{model}..."
+  puts "=== Loading #{model} ==="
   llm = Candle::LLM.from_pretrained(model, device: device)
-  puts "-" * 80
   puts "\n=== Basic Generation ==="
   puts llm.generate("What is Ruby?", config: config)
   puts "\n=== Streaming Generation ==="
   llm.generate_stream("What is Ruby?", config: config) { |t| print t }
   puts "\n"
-  puts "-" * 80
 end
