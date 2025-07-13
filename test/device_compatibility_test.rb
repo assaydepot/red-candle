@@ -132,7 +132,6 @@ class DeviceCompatibilityTest < Minitest::Test
   # Test LLM on each device
   DeviceTestHelper.devices_to_test.each do |device_type|
     define_method "test_llm_generation_on_#{device_type}" do
-      skip("LLM tests skipped via CANDLE_TEST_SKIP_LLM") if ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
       skip_unless_device_available(device_type)
       
       device = create_device(device_type)
@@ -160,7 +159,6 @@ class DeviceCompatibilityTest < Minitest::Test
   # Test LLM streaming on each device
   DeviceTestHelper.devices_to_test.each do |device_type|
     define_method "test_llm_streaming_on_#{device_type}" do
-      skip("LLM tests skipped via CANDLE_TEST_SKIP_LLM") if ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
       skip_unless_device_available(device_type)
       
       device = create_device(device_type)

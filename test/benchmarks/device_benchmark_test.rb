@@ -123,7 +123,6 @@ class DeviceBenchmarkTest < Minitest::Test
   
   # Benchmark LLM performance
   def test_llm_generation_performance
-    skip("LLM tests skipped via CANDLE_TEST_SKIP_LLM") if ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
     results = {}
     
     prompts = {
