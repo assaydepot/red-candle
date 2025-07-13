@@ -27,13 +27,7 @@ module Candle
         [/gemma.*?2.*?9b/i, "google/gemma-2-9b"],
         [/gemma.*?2.*?2b/i, "google/gemma-2-2b"],
         [/gemma.*?7b/i, "google/gemma-7b"],
-        [/gemma.*?2b/i, "google/gemma-2b"],
-        
-        # Qwen models
-        [/qwen.*?2\.5.*?7b/i, "Qwen/Qwen2.5-7B"],
-        [/qwen.*?2\.5.*?0\.5b/i, "Qwen/Qwen2.5-0.5B"],
-        [/qwen.*?2.*?7b/i, "Qwen/Qwen2-7B"],
-        [/qwen3/i, "Qwen/Qwen2.5-7B"], # Qwen3 uses Qwen2.5 tokenizer
+        [/gemma.*?2b/i, "google/gemma-2b"]
       ]
     }
     

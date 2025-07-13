@@ -40,7 +40,7 @@ class TestLLM < Minitest::Test
     assert_equal 0.9, new_config.temperature
     assert_equal 200, new_config.max_length
   end
-    
+
   # Skip actual model loading tests as they require downloading large files
   def test_llm_initialization_error
     skip "Model loading requires large downloads"
