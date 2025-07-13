@@ -21,6 +21,8 @@ pub struct GenerationConfig {
     pub stop_sequences: Vec<String>,
     /// Whether to return the prompt in the output
     pub include_prompt: bool,
+    /// Whether to show raw tokens during generation (for debugging)
+    pub debug_tokens: bool,
 }
 
 /// Generate a random seed based on current time
@@ -43,6 +45,7 @@ impl Default for GenerationConfig {
             seed: random_seed(),
             stop_sequences: vec![],
             include_prompt: false,
+            debug_tokens: false,
         }
     }
 }
