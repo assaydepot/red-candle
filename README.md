@@ -63,17 +63,8 @@ llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF",
                                   device: device, 
                                   gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
 
-# The tokenizer will be auto-detected for common models
-# For new or unsupported models, specify the tokenizer explicitly:
-llm = Candle::LLM.from_pretrained("unsloth/Qwen3-0.6B-GGUF", 
-                                  device: device, 
-                                  gguf_file: "qwen3-0.6b.q4_k_m.gguf",
-                                  tokenizer: "Qwen/Qwen2.5-0.5B")
-
 # Register custom tokenizer mappings for your models
 Candle::LLM.register_tokenizer("my-org/my-model-GGUF", "my-org/my-tokenizer")
-# Or use patterns
-Candle::LLM.register_tokenizer(/qwen.*?3/i, "Qwen/Qwen2.5-0.5B")
 
 # Popular quantized model sources:
 # - TheBloke: Extensive collection of GGUF models
