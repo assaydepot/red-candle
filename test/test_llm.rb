@@ -7,12 +7,6 @@ class TestLLM < Minitest::Test
   
   def self.load_model_once
     unless @@model_loaded
-      # Allow skipping LLM tests via environment variable
-      if ENV['CANDLE_TEST_SKIP_LLM'] == 'true'
-        @@model_loaded = :skipped
-        return
-      end
-      
       begin
         @@llm = Candle::LLM.from_pretrained(
           "TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
@@ -31,8 +25,6 @@ class TestLLM < Minitest::Test
     self.class.load_model_once
     if @@model_loaded == :failed
       skip "Model loading failed: #{@@load_error.message}"
-    elsif @@model_loaded == :skipped
-      skip "LLM tests skipped (CANDLE_TEST_SKIP_LLM=true)"
     end
   end
   
