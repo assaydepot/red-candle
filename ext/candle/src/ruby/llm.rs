@@ -36,16 +36,6 @@ impl ModelType {
             ModelType::QuantizedGGUF(m) => m.generate_stream(prompt, config, callback),
         }
     }
-
-    #[allow(dead_code)]
-    fn model_name(&self) -> &str {
-        match self {
-            ModelType::Mistral(m) => m.model_name(),
-            ModelType::Llama(m) => m.model_name(),
-            ModelType::Gemma(m) => m.model_name(),
-            ModelType::QuantizedGGUF(m) => m.model_name(),
-        }
-    }
     
     fn clear_cache(&mut self) {
         match self {
