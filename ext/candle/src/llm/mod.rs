@@ -97,4 +97,16 @@ impl TokenizerWrapper {
         // Return only the new portion
         Ok(full_text[previous_text.len()..].to_string())
     }
+    
+    /// Format tokens with debug information
+    pub fn format_tokens_with_debug(&self, tokens: &[u32]) -> CandleResult<String> {
+        let mut result = String::new();
+        
+        for &token in tokens {
+            let token_piece = self.token_to_piece(token)?;
+            result.push_str(&format!("[{}:{}]", token, token_piece));
+        }
+        
+        Ok(result)
+    }
 }

@@ -163,6 +163,24 @@ class TestLLM < Minitest::Test
     assert debug_tokens_seen, "Debug tokens should be visible when debug_tokens is true"
   end
   
+  def test_llm_generate_debug_tokens
+    skip unless @@llm
+    
+    config = Candle::GenerationConfig.new(
+      max_length: 20,
+      temperature: 0.0,
+      seed: 42,
+      debug_tokens: true
+    )
+    
+    result = @@llm.generate("Hi", config: config)
+    
+    # In debug mode, the result should only contain token information
+    assert result.match?(/\[\d+:.*\]/), "Debug tokens should be visible in generate output"
+    # The entire result should be debug tokens
+    assert result.match?(/^(\[\d+:[^\]]*\])+$/), "Result should only contain debug tokens"
+  end
+  
   def test_llm_chat
     skip unless @@llm
     

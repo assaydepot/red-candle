@@ -425,13 +425,9 @@ impl QuantizedGGUF {
             // Stream callback
             if let Some(ref mut cb) = callback {
                 if config.debug_tokens {
-                    // In debug mode, show both raw token and decoded text
+                    // In debug mode, only show debug tokens
                     let token_piece = self.tokenizer.token_to_piece(next_token)?;
-                    let decoded_text = self.tokenizer.decode_incremental(&all_tokens, all_tokens.len() - 1)?;
                     cb(&format!("[{}:{}]", next_token, token_piece));
-                    if !decoded_text.is_empty() {
-                        cb(&decoded_text);
-                    }
                 } else {
                     // Normal mode: use incremental decoding for proper text
                     let decoded_text = self.tokenizer.decode_incremental(&all_tokens, all_tokens.len() - 1)?;
@@ -467,7 +463,12 @@ impl TextGenerator for QuantizedGGUF {
     ) -> CandleResult<String> {
         let prompt_tokens = self.tokenizer.encode(prompt, true)?;
         let output_tokens = self.generate_tokens(prompt_tokens, config, None::<fn(&str)>)?;
-        self.tokenizer.decode(&output_tokens, true)
+        
+        if config.debug_tokens {
+            self.tokenizer.format_tokens_with_debug(&output_tokens)
+        } else {
+            self.tokenizer.decode(&output_tokens, true)
+        }
     }
 
     fn generate_stream(
