@@ -367,7 +367,6 @@ impl EmbeddingModel {
         }
     }
 
-    #[allow(dead_code)]
     fn normalize_l2(v: &CoreTensor) -> Result<CoreTensor, candle_core::Error> {
         v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
