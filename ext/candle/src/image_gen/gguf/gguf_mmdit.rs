@@ -35,7 +35,6 @@ impl Default for MMDiTConfig {
 /// A quantized tensor that can be dequantized on demand
 pub struct QuantizedTensor {
     /// Raw quantized data
-    #[allow(dead_code)]
     data: Vec<u8>,
     /// Shape of the tensor
     shape: Vec<usize>,
@@ -63,21 +62,15 @@ impl QuantizedTensor {
     
     /// Dequantize the tensor to a regular Tensor
     pub fn dequantize(&self) -> CandleResult<Tensor> {
-        // For now, return a placeholder tensor with the correct shape
-        // In a full implementation, this would:
-        // 1. Parse the quantized data based on dtype
-        // 2. Dequantize to f32 values
-        // 3. Create a Tensor with the dequantized data
-        
         eprintln!("Dequantizing tensor with shape {:?} and dtype {:?}", self.shape, self.dtype);
         
-        // Create a placeholder tensor filled with small random values
-        let elem_count: usize = self.shape.iter().product();
-        let data: Vec<f32> = (0..elem_count)
-            .map(|i| (i as f32 * 0.001) % 0.1 - 0.05) // Small values around 0
-            .collect();
-        
-        Tensor::from_vec(data, self.shape.as_slice(), &self.device)
+        // Use the real GGML dequantization
+        crate::image_gen::gguf::ggml_quant::dequantize_ggml(
+            &self.data,
+            &self.shape,
+            self.dtype,
+            &self.device,
+        )
     }
 }
 

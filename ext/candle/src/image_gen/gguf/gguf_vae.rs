@@ -32,7 +32,6 @@ impl Default for VAEConfig {
 /// A quantized VAE tensor that can be dequantized on demand
 pub struct QuantizedVAETensor {
     /// Raw quantized data
-    #[allow(dead_code)]
     data: Vec<u8>,
     /// Shape of the tensor
     shape: Vec<usize>,
@@ -62,24 +61,13 @@ impl QuantizedVAETensor {
     pub fn dequantize(&self) -> CandleResult<Tensor> {
         eprintln!("Dequantizing VAE tensor with shape {:?} and dtype {:?}", self.shape, self.dtype);
         
-        // Create a placeholder tensor filled with appropriate values for VAE
-        let elem_count: usize = self.shape.iter().product();
-        let data: Vec<f32> = (0..elem_count)
-            .map(|i| {
-                // VAE weights typically have larger magnitudes than transformer weights
-                let base_val = (i as f32 * 0.001) % 0.2 - 0.1;
-                // Scale based on tensor type (decoder weights vs encoder weights)
-                if self.shape.len() == 4 {
-                    // Likely a conv layer weight - larger values
-                    base_val * 2.0
-                } else {
-                    // Likely a linear layer or bias - smaller values
-                    base_val
-                }
-            })
-            .collect();
-        
-        Tensor::from_vec(data, self.shape.as_slice(), &self.device)
+        // Use the real GGML dequantization
+        crate::image_gen::gguf::ggml_quant::dequantize_ggml(
+            &self.data,
+            &self.shape,
+            self.dtype,
+            &self.device,
+        )
     }
 }
 
