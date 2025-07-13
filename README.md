@@ -166,9 +166,11 @@ This is particularly useful for:
 - Troubleshooting generation problems
 - Analyzing model behavior
 
-## ⚠️ Model Format Requirement: Safetensors Only
+## ⚠️ Model Format Requirements
 
-Red-Candle **only supports embedding models that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do.
+### EmbeddingModels and Rerankers: Safetensors Only
+
+Red-Candle **only supports embedding models and rerankers that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do.
 
 **If you encounter an error like:**
 
@@ -177,6 +179,14 @@ RuntimeError: model.safetensors not found after download. Only safetensors model
 ```
 
 this means the selected model is not compatible. Please choose a model repo that provides the required file.
+
+### LLMs: Safetensors and GGUF Support
+
+LLM models support two formats:
+1. **Safetensors format** - Standard HuggingFace models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`)
+2. **GGUF quantized format** - Memory-efficient quantized models (e.g., `TheBloke/Llama-2-7B-Chat-GGUF`)
+
+See the [Quantized Model Support](#quantized-model-support-gguf) section for details on using GGUF models.
 
 ## Supported Embedding Models
 
