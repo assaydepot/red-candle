@@ -264,6 +264,7 @@ dependencies = [
  "hf-hub",
  "image",
  "magnus",
+ "memmap2",
  "rand 0.8.5",
  "safetensors 0.3.3",
  "serde",

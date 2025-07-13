@@ -69,22 +69,21 @@ impl StableDiffusion3 {
                 )))?;
             
             // Try to load the actual SD3 pipeline
-            // Check if this is an FP8 model
-            let is_fp8 = model_filename.contains("fp8");
-            if is_fp8 {
-                eprintln!("Note: FP8 models are not yet supported by Candle. Please use the FP16 version:");
-                eprintln!("  model_file: \"sd3_medium_incl_clips_t5xxlfp16.safetensors\"");
-                None
-            } else {
-                match Self::load_sd3_pipeline(&model_path, &device, DType::F32) {
-                    Ok(pipeline) => {
-                        eprintln!("Successfully loaded SD3 pipeline!");
-                        Some(Arc::new(Mutex::new(pipeline)))
+            match Self::load_sd3_pipeline(&model_path, &device, DType::F32) {
+                Ok(pipeline) => {
+                    eprintln!("Successfully loaded SD3 pipeline!");
+                    Some(Arc::new(Mutex::new(pipeline)))
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to load SD3 pipeline: {}. Using placeholder.", e);
+                    if e.to_string().contains("FP8") {
+                        eprintln!("\nTo use SD3 with Candle, try one of these options:");
+                        eprintln!("1. Use the FP16 model (20GB):");
+                        eprintln!("   model_file: \"sd3_medium_incl_clips_t5xxlfp16.safetensors\"");
+                        eprintln!("2. Use the base model without text encoders (5GB):");
+                        eprintln!("   model_file: \"sd3_medium.safetensors\"");
                     }
-                    Err(e) => {
-                        eprintln!("Warning: Failed to load SD3 pipeline: {}. Using placeholder.", e);
-                        None
-                    }
+                    None
                 }
             }
         };

@@ -21,6 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.45", features = ["rt", "macros"] }
 rand = "0.8"
 image = { version = "0.25", default-features = false, features = ["png"] }
+memmap2 = "0.9"
 
 [features]
 default = []
@@ -30,6 +31,3 @@ cudnn = ["candle-core/cudnn", "cuda"]
 mkl = ["candle-core/mkl"]
 accelerate = ["candle-core/accelerate"]
 
-[[bin]]
-name = "inspect_safetensors"
-path = "src/bin/inspect_safetensors.rs"
