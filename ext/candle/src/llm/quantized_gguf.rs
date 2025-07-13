@@ -17,7 +17,7 @@ pub struct QuantizedGGUF {
     model_id: String,
     eos_token_id: u32,
     architecture: String,
-    chat_template: Option<String>,
+    _chat_template: Option<String>,
 }
 
 #[derive(Debug)]
@@ -125,7 +125,7 @@ impl QuantizedGGUF {
             model_id: actual_model_id.to_string(),
             eos_token_id,
             architecture: architecture.clone(),
-            chat_template,
+            _chat_template: chat_template,
         })
     }
     
@@ -182,10 +182,10 @@ impl QuantizedGGUF {
     
     /// Download tokenizer with architecture-specific fallbacks
     async fn download_tokenizer(
-        api: &Api, 
+        _api: &Api, 
         repo: &ApiRepo, 
         model_id: &str,
-        architecture: &str
+        _architecture: &str
     ) -> CandleResult<std::path::PathBuf> {
         // First try to get tokenizer.json from the GGUF repo
         if let Ok(path) = repo.get("tokenizer.json").await {
@@ -235,7 +235,7 @@ impl QuantizedGGUF {
     }
     
     /// Detect chat template based on model
-    fn detect_chat_template(_tokenizer: &Tokenizer, architecture: &str, model_id: &str) -> Option<String> {
+    fn detect_chat_template(_tokenizer: &Tokenizer, _architecture: &str, _model_id: &str) -> Option<String> {
         // For now, return None and handle templates in apply_chat_template
         // In the future, this could read from tokenizer config
         None
