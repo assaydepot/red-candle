@@ -11,7 +11,6 @@ use super::{
     vae::{AutoEncoderKL, VAEConfig},
     scheduler::{EulerScheduler, SchedulerConfig},
 };
-use hf_hub::api::tokio::Api;
 
 pub struct SD3Pipeline {
     mmdit: MMDiT,
@@ -27,7 +26,7 @@ impl SD3Pipeline {
         model_path: &Path,
         device: &Device,
         dtype: DType,
-        use_flash_attn: bool,
+        _use_flash_attn: bool,
     ) -> CandleResult<Self> {
         // Load the safetensors file with FP8 awareness
         let vb = crate::image_gen::fp8_loader::create_fp8_aware_varbuilder(
@@ -69,13 +68,13 @@ impl SD3Pipeline {
     
     /// Load from separate component files
     pub fn from_components(
-        mmdit_path: &Path,
-        vae_path: Option<&Path>,
-        clip_g_path: Option<&Path>,
-        clip_l_path: Option<&Path>,
-        t5_path: Option<&Path>,
-        device: &Device,
-        dtype: DType,
+        _mmdit_path: &Path,
+        _vae_path: Option<&Path>,
+        _clip_g_path: Option<&Path>,
+        _clip_l_path: Option<&Path>,
+        _t5_path: Option<&Path>,
+        _device: &Device,
+        _dtype: DType,
     ) -> CandleResult<Self> {
         // This would load each component separately
         // For now, return an error as this is complex
@@ -85,7 +84,7 @@ impl SD3Pipeline {
     }
     
     /// Detect model configuration from loaded weights
-    fn detect_model_config(vb: &VarBuilder) -> CandleResult<(mmdit::model::Config, VAEConfig)> {
+    fn detect_model_config(_vb: &VarBuilder) -> CandleResult<(mmdit::model::Config, VAEConfig)> {
         // This is a simplified detection - real implementation would check tensor shapes
         // For now, assume SD3-medium configuration
         

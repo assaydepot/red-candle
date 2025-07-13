@@ -3,7 +3,6 @@ use std::cell::RefCell;
 
 use crate::image_gen::{
     ImageGenerationConfig as RustImageGenerationConfig,
-    ImageGenerator as ImageGeneratorTrait, 
     StableDiffusion3 as RustStableDiffusion3,
     SchedulerType,
 };
@@ -39,12 +38,14 @@ impl ModelType {
         }
     }
     
+    #[allow(dead_code)]
     fn model_name(&self) -> &str {
         match self {
             ModelType::StableDiffusion3(m) => m.model_name(),
         }
     }
     
+    #[allow(dead_code)]
     fn device(&self) -> &candle_core::Device {
         match self {
             ModelType::StableDiffusion3(m) => m.device(),

@@ -19,6 +19,7 @@ impl Default for SchedulerConfig {
 pub struct EulerScheduler {
     sigmas: Vec<f32>,
     timesteps: Vec<f32>,
+    #[allow(dead_code)]
     config: SchedulerConfig,
 }
 

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub mod stable_diffusion;
 pub mod sd3;
 pub mod fp8_loader;
+pub mod gguf;
 
 pub use stable_diffusion::StableDiffusion3;
 

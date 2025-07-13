@@ -32,6 +32,7 @@ impl Default for SD3Config {
 
 pub struct MMDiT {
     model: mmdit::model::MMDiT,
+    #[allow(dead_code)]
     device: Device,
 }
 
@@ -134,7 +135,7 @@ pub struct TextEncoders {
 }
 
 impl TextEncoders {
-    pub fn dummy(device: &Device) -> CandleResult<Self> {
+    pub fn dummy(_device: &Device) -> CandleResult<Self> {
         // Create dummy encoders that just return zero tensors
         // This allows the pipeline to run without actual text encoders
         Ok(Self {

@@ -1,6 +1,5 @@
-use candle_core::{DType, Device, Result as CandleResult, Tensor};
+use candle_core::{DType, Device, Result as CandleResult};
 use candle_nn::VarBuilder;
-use std::collections::HashMap;
 use std::path::Path;
 
 /// Check if a safetensors file contains FP8 tensors

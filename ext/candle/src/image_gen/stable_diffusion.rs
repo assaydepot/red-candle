@@ -3,15 +3,22 @@ use hf_hub::api::tokio::Api;
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 
-use crate::image_gen::{ImageGenerationConfig, ImageGenerator, GenerationProgress, tensor_to_png};
-use super::sd3::{ThreadSafeSD3Pipeline, SD3Pipeline, SD3Config};
+use crate::image_gen::{ImageGenerationConfig, GenerationProgress, tensor_to_png};
+use super::sd3::{ThreadSafeSD3Pipeline, SD3Pipeline};
+use super::sd3::model::SD3Config;
+use super::gguf::{QuantizedSD3Pipeline};
 
 /// Stable Diffusion 3 implementation
 pub struct StableDiffusion3 {
     model_id: String,
     device: Device,
     dtype: DType,
-    pipeline: Option<Arc<Mutex<ThreadSafeSD3Pipeline>>>,
+    pipeline: Option<PipelineType>,
+}
+
+enum PipelineType {
+    Standard(Arc<Mutex<ThreadSafeSD3Pipeline>>),
+    Quantized(Arc<Mutex<QuantizedSD3Pipeline>>),
 }
 
 impl std::fmt::Debug for StableDiffusion3 {
@@ -51,14 +58,23 @@ impl StableDiffusion3 {
         let pipeline = if is_gguf {
             // Download GGUF file
             let gguf_filename = gguf_file.unwrap_or("sd3-medium-Q5_0.gguf");
-            let _path = repo.get(gguf_filename).await
+            let gguf_path = repo.get(gguf_filename).await
                 .map_err(|e| candle_core::Error::Msg(format!(
                     "Failed to download GGUF file '{}': {}",
                     gguf_filename, e
                 )))?;
             
-            eprintln!("Note: GGUF quantized SD3 models not yet supported, using placeholder.");
-            None
+            // Try to load the quantized SD3 pipeline
+            match QuantizedSD3Pipeline::from_gguf_file(&gguf_path, &device) {
+                Ok(quantized_pipeline) => {
+                    eprintln!("Successfully loaded quantized SD3 pipeline from GGUF!");
+                    Some(PipelineType::Quantized(Arc::new(Mutex::new(quantized_pipeline))))
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to load quantized SD3 pipeline: {}. Using placeholder.", e);
+                    None
+                }
+            }
         } else {
             // Download safetensors file
             let model_filename = model_file.unwrap_or("sd3_medium_incl_clips_t5xxlfp8.safetensors");
@@ -72,7 +88,7 @@ impl StableDiffusion3 {
             match Self::load_sd3_pipeline(&model_path, &device, DType::F32) {
                 Ok(pipeline) => {
                     eprintln!("Successfully loaded SD3 pipeline!");
-                    Some(Arc::new(Mutex::new(pipeline)))
+                    Some(PipelineType::Standard(Arc::new(Mutex::new(pipeline))))
                 }
                 Err(e) => {
                     eprintln!("Warning: Failed to load SD3 pipeline: {}. Using placeholder.", e);
@@ -170,35 +186,45 @@ impl StableDiffusion3 {
     }
 }
 
-impl ImageGenerator for StableDiffusion3 {
-    fn generate(&mut self, prompt: &str, config: &ImageGenerationConfig) -> CandleResult<Vec<u8>> {
+// TODO: Fix Send/Sync issues with MMDiT before re-enabling
+impl StableDiffusion3 {
+    pub fn generate(&mut self, prompt: &str, config: &ImageGenerationConfig) -> CandleResult<Vec<u8>> {
         // Log the prompt for debugging
         eprintln!("Generating image for prompt: {}", prompt);
         eprintln!("Config: {}x{}, steps: {}", config.width, config.height, config.num_inference_steps);
         
         if let Some(pipeline) = &self.pipeline {
-            // Use the real SD3 pipeline
-            let sd3_config = SD3Config {
-                width: config.width,
-                height: config.height,
-                num_inference_steps: config.num_inference_steps,
-                cfg_scale: config.guidance_scale,
-                time_shift: 3.0, // Default time shift for SD3
-                use_t5: true,
-                clip_skip: config.clip_skip,
-            };
-            
-            let pipeline = pipeline.lock().unwrap();
-            let image_tensor = pipeline.generate(
-                prompt,
-                config.negative_prompt.as_deref(),
-                &sd3_config,
-                config.seed,
-                None, // No progress callback for non-streaming
-            )?;
-            
-            // Convert to PNG
-            tensor_to_png(&image_tensor)
+            match pipeline {
+                PipelineType::Standard(standard_pipeline) => {
+                    // Use the standard SD3 pipeline
+                    let sd3_config = SD3Config {
+                        width: config.width,
+                        height: config.height,
+                        num_inference_steps: config.num_inference_steps,
+                        cfg_scale: config.guidance_scale,
+                        time_shift: 3.0, // Default time shift for SD3
+                        use_t5: true,
+                        clip_skip: config.clip_skip,
+                    };
+                    
+                    let pipeline = standard_pipeline.lock().unwrap();
+                    let image_tensor = pipeline.generate(
+                        prompt,
+                        config.negative_prompt.as_deref(),
+                        &sd3_config,
+                        config.seed,
+                        None, // No progress callback for non-streaming
+                    )?;
+                    
+                    // Convert to PNG
+                    tensor_to_png(&image_tensor)
+                }
+                PipelineType::Quantized(quantized_pipeline) => {
+                    // Use the quantized SD3 pipeline
+                    let mut pipeline = quantized_pipeline.lock().unwrap();
+                    pipeline.generate_image(prompt, config)
+                }
+            }
         } else {
             // Fallback to placeholder
             let image_tensor = self.generate_placeholder_image(config)?;
@@ -206,43 +232,52 @@ impl ImageGenerator for StableDiffusion3 {
         }
     }
     
-    fn generate_stream(
+    pub fn generate_stream(
         &mut self,
         prompt: &str,
         config: &ImageGenerationConfig,
         mut callback: impl FnMut(GenerationProgress),
     ) -> CandleResult<Vec<u8>> {
         if let Some(pipeline) = &self.pipeline {
-            // Use the real SD3 pipeline with streaming
-            let sd3_config = SD3Config {
-                width: config.width,
-                height: config.height,
-                num_inference_steps: config.num_inference_steps,
-                cfg_scale: config.guidance_scale,
-                time_shift: 3.0,
-                use_t5: true,
-                clip_skip: config.clip_skip,
-            };
-            
-            let mut progress_fn = |step: usize, total_steps: usize, preview: Option<&Tensor>| {
-                callback(GenerationProgress {
-                    step,
-                    total_steps,
-                    image_data: preview.and_then(|t| tensor_to_png(t).ok()),
-                });
-            };
-            
-            let pipeline = pipeline.lock().unwrap();
-            let image_tensor = pipeline.generate(
-                prompt,
-                config.negative_prompt.as_deref(),
-                &sd3_config,
-                config.seed,
-                Some(&mut progress_fn),
-            )?;
-            
-            // Convert to PNG
-            tensor_to_png(&image_tensor)
+            match pipeline {
+                PipelineType::Standard(standard_pipeline) => {
+                    // Use the standard SD3 pipeline with streaming
+                    let sd3_config = SD3Config {
+                        width: config.width,
+                        height: config.height,
+                        num_inference_steps: config.num_inference_steps,
+                        cfg_scale: config.guidance_scale,
+                        time_shift: 3.0,
+                        use_t5: true,
+                        clip_skip: config.clip_skip,
+                    };
+                    
+                    let mut progress_fn = |step: usize, total_steps: usize, preview: Option<&Tensor>| {
+                        callback(GenerationProgress {
+                            step,
+                            total_steps,
+                            image_data: preview.and_then(|t| tensor_to_png(t).ok()),
+                        });
+                    };
+                    
+                    let pipeline = standard_pipeline.lock().unwrap();
+                    let image_tensor = pipeline.generate(
+                        prompt,
+                        config.negative_prompt.as_deref(),
+                        &sd3_config,
+                        config.seed,
+                        Some(&mut progress_fn),
+                    )?;
+                    
+                    // Convert to PNG
+                    tensor_to_png(&image_tensor)
+                }
+                PipelineType::Quantized(quantized_pipeline) => {
+                    // Use the quantized SD3 pipeline with streaming
+                    let mut pipeline = quantized_pipeline.lock().unwrap();
+                    pipeline.generate_image_stream(prompt, config, callback)
+                }
+            }
         } else {
             // Fallback to placeholder with simulated progress
             let total_steps = config.num_inference_steps;
@@ -262,15 +297,15 @@ impl ImageGenerator for StableDiffusion3 {
         }
     }
     
-    fn model_name(&self) -> &str {
+    pub fn model_name(&self) -> &str {
         &self.model_id
     }
     
-    fn device(&self) -> &Device {
+    pub fn device(&self) -> &Device {
         &self.device
     }
     
-    fn clear_cache(&mut self) {
+    pub fn clear_cache(&mut self) {
         // Nothing to clear yet
     }
 }

@@ -1,4 +1,4 @@
-use candle_core::{DType, Device, Module, Result as CandleResult, Tensor, D};
+use candle_core::{Module, Result as CandleResult, Tensor};
 use candle_nn::{Conv2d, Conv2dConfig, GroupNorm, VarBuilder};
 
 // Simplified VAE implementation for SD3
