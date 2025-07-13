@@ -8,7 +8,7 @@ task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
   t.libs << "test"
-  t.test_files = FileList["test/**/*_test.rb"]
+  t.test_files = FileList["test/**/*_test.rb"].exclude("test/benchmarks/**/*_test.rb")
 end
 
 spec = Bundler.load_gemspec("candle.gemspec")
@@ -36,7 +36,6 @@ end
 
 desc "Run benchmark tests"
 Rake::TestTask.new("test:benchmark") do |t|
-  ENV['CANDLE_RUN_BENCHMARKS'] = 'true'
   t.deps << :compile
   t.libs << "test"
   t.test_files = FileList["test/benchmarks/**/*_test.rb"]
@@ -59,7 +58,6 @@ end
 
 desc "Run benchmarks with device tests"
 task "test:device:benchmark" => :compile do
-  ENV['CANDLE_RUN_BENCHMARKS'] = 'true'
   ENV['CANDLE_TEST_VERBOSE'] = 'true'
   Rake::Task["test:device"].invoke
   Rake::Task["test:benchmark"].invoke

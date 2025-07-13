@@ -4,15 +4,7 @@ require 'benchmark'
 class DeviceBenchmarkTest < Minitest::Test
   include DeviceTestHelper
   
-  # Skip benchmarks unless explicitly requested via CANDLE_RUN_BENCHMARKS=true
-  # This only applies when running the full test suite (rake test)
-  # When running rake test:benchmark directly, benchmarks always run
-  def setup
-    # Skip if this appears to be a full test run and benchmarks weren't requested
-    unless ENV['CANDLE_RUN_BENCHMARKS'] == 'true'
-      skip("Set CANDLE_RUN_BENCHMARKS=true to run benchmarks with full test suite")
-    end
-  end
+  # Benchmarks are run separately via rake test:benchmark
   
   # Benchmark tensor operations across devices
   def test_tensor_operation_performance
