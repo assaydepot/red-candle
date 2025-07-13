@@ -105,6 +105,7 @@
 <h3 id="supported-models">Supported Models</h3>
 
 <ul>
+<li><strong>Gemma</strong>: Google&#39;s Gemma models (e.g., <code>google/gemma-2b</code>, <code>google/gemma-7b</code>, <code>google/gemma-2b-it</code>)</li>
 <li><strong>Llama</strong>: Llama 2 and Llama 3 models (e.g., <code>TinyLlama/TinyLlama-1.1B-Chat-v1.0</code>, <code>meta-llama/Llama-2-7b-hf</code>, <code>NousResearch/Llama-2-7b-hf</code>)</li>
 <li><strong>Mistral</strong>: All Mistral models (e.g., <code>mistralai/Mistral-7B-Instruct-v0.1</code>)</li>
 </ul>
@@ -130,11 +131,11 @@
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span>   <span class='comment'># Apple GPU (Metal)
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>    <span class='comment'># NVIDIA GPU (CUDA)
 </span>
-<span class='comment'># Load a Llama model
-</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TinyLlama/TinyLlama-1.1B-Chat-v1.0</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
-<span class='comment'># Or a Mistral model
-</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>mistralai/Mistral-7B-Instruct-v0.1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
-
+<span class='comment'># Load a model
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>google/gemma-2b-it</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>  <span class='comment'># Gemma
+</span><span class='comment'># llm = Candle::LLM.from_pretrained(&quot;TinyLlama/TinyLlama-1.1B-Chat-v1.0&quot;, device: device)  # Llama
+</span><span class='comment'># llm = Candle::LLM.from_pretrained(&quot;mistralai/Mistral-7B-Instruct-v0.1&quot;, device: device)  # Mistral
+</span>
 <span class='comment'># Generate text
 </span><span class='id identifier rubyid_response'>response</span> <span class='op'>=</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>What is Ruby?</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="Candle/GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='rparen'>)</span>
 
@@ -378,7 +379,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Sun Jul 13 12:52:16 2025 by
+  Generated on Sun Jul 13 12:52:25 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>
