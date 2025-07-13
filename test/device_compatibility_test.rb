@@ -197,12 +197,4 @@ class DeviceCompatibilityTest < Minitest::Test
       assert_equal "cpu", best.to_s
     end
   end
-
-  # Test error handling
-  def test_unsupported_device_operations
-    skip("This test is for documentation purposes")
-    
-    # In the future, if certain operations don't work on certain devices,
-    # we would test the error handling here
-  end
 end
