@@ -1,7 +1,7 @@
 use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule, Ruby, TryConvert, Value};
 use std::cell::RefCell;
 
-use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama};
+use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma};
 use crate::ruby::{Result as RbResult, Device as RbDevice};
 
 // Use an enum to handle different model types instead of trait objects
@@ -9,6 +9,7 @@ use crate::ruby::{Result as RbResult, Device as RbDevice};
 enum ModelType {
     Mistral(RustMistral),
     Llama(RustLlama),
+    Gemma(RustGemma),
 }
 
 impl ModelType {
@@ -16,6 +17,7 @@ impl ModelType {
         match self {
             ModelType::Mistral(m) => m.generate(prompt, config),
             ModelType::Llama(m) => m.generate(prompt, config),
+            ModelType::Gemma(m) => m.generate(prompt, config),
         }
     }
 
@@ -28,6 +30,7 @@ impl ModelType {
         match self {
             ModelType::Mistral(m) => m.generate_stream(prompt, config, callback),
             ModelType::Llama(m) => m.generate_stream(prompt, config, callback),
+            ModelType::Gemma(m) => m.generate_stream(prompt, config, callback),
         }
     }
 
@@ -36,6 +39,7 @@ impl ModelType {
         match self {
             ModelType::Mistral(m) => m.model_name(),
             ModelType::Llama(m) => m.model_name(),
+            ModelType::Gemma(m) => m.model_name(),
         }
     }
     
@@ -43,6 +47,7 @@ impl ModelType {
         match self {
             ModelType::Mistral(m) => m.clear_cache(),
             ModelType::Llama(m) => m.clear_cache(),
+            ModelType::Gemma(m) => m.clear_cache(),
         }
     }
     
@@ -66,6 +71,7 @@ impl ModelType {
                 Ok(prompt)
             },
             ModelType::Llama(m) => m.apply_chat_template(messages),
+            ModelType::Gemma(m) => m.apply_chat_template(messages),
         }
     }
 }
@@ -208,16 +214,22 @@ impl LLM {
             })
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
             ModelType::Mistral(mistral)
-        } else if model_lower.contains("llama") || model_lower.contains("meta-llama") {
+        } else if model_lower.contains("llama") || model_lower.contains("meta-llama") || model_lower.contains("tinyllama") {
             let llama = rt.block_on(async {
                 RustLlama::from_pretrained(&model_id, candle_device).await
             })
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
             ModelType::Llama(llama)
+        } else if model_lower.contains("gemma") || model_lower.contains("google/gemma") {
+            let gemma = rt.block_on(async {
+                RustGemma::from_pretrained(&model_id, candle_device).await
+            })
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+            ModelType::Gemma(gemma)
         } else {
             return Err(Error::new(
                 magnus::exception::runtime_error(),
-                format!("Unsupported model type: {}. Currently only Mistral and Llama models are supported.", model_id),
+                format!("Unsupported model type: {}. Currently Mistral, Llama, and Gemma models are supported.", model_id),
             ));
         };
         

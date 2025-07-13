@@ -3,6 +3,7 @@ use tokenizers::Tokenizer;
 
 pub mod mistral;
 pub mod llama;
+pub mod gemma;
 pub mod generation_config;
 pub mod text_generation;
 
