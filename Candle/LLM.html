@@ -317,7 +317,7 @@
       <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 4</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_chat'>chat</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_prompt'>prompt</span> <span class='op'>=</span> <span class='id identifier rubyid_format_messages'>format_messages</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_prompt'>prompt</span> <span class='op'>=</span> <span class='id identifier rubyid_apply_chat_template'>apply_chat_template</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -360,7 +360,7 @@
       <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 10</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_chat_stream'>chat_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_prompt'>prompt</span> <span class='op'>=</span> <span class='id identifier rubyid_format_messages'>format_messages</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_prompt'>prompt</span> <span class='op'>=</span> <span class='id identifier rubyid_apply_chat_template'>apply_chat_template</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_generate_stream'>generate_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -449,7 +449,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jul  9 19:34:42 2025 by
+  Generated on Sun Jul 13 12:52:16 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>
