@@ -7,6 +7,7 @@ pub mod result;
 pub mod errors;
 pub mod utils;
 pub mod llm;
+pub mod image_gen;
 
 pub use embedding_model::{EmbeddingModel, EmbeddingModelInner};
 pub use tensor::Tensor;
@@ -19,3 +20,4 @@ pub use result::Result;
 pub use embedding_model::init as init_embedding_model;
 pub use utils::candle_utils;
 pub use llm::init_llm;
+pub use image_gen::init_image_gen;

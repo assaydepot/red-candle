@@ -3,6 +3,7 @@ use magnus::{function, prelude::*, Ruby};
 use crate::ruby::candle_utils;
 use crate::ruby::Result as RbResult;
 
+pub mod image_gen;
 pub mod llm;
 pub mod reranker;
 pub mod ruby;
@@ -41,6 +42,7 @@ fn init(ruby: &Ruby) -> RbResult<()> {
     
     ruby::init_embedding_model(rb_candle)?;
     ruby::init_llm(rb_candle)?;
+    ruby::init_image_gen(rb_candle)?;
     reranker::init(rb_candle)?;
     ruby::dtype::init(rb_candle)?;
     ruby::qtensor::init(rb_candle)?;
