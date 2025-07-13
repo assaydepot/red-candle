@@ -66,7 +66,7 @@ module DeviceTestHelper
 
   # Should we run benchmarks?
   def self.run_benchmarks?
-    ENV['CANDLE_RUN_BENCHMARKS'] == 'true'
+    false  # Benchmarks are now run separately via rake test:benchmark
   end
 end
 
