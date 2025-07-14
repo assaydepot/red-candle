@@ -1,4 +1,4 @@
-use candle_core::{Device, Result as CandleResult, Tensor, quantized::{gguf_file, GgmlDType}};
+use candle_core::{Device, Result as CandleResult, Tensor, DType, D, quantized::{gguf_file, GgmlDType}};
 use std::collections::HashMap;
 
 /// Quantized MMDiT (Multimodal Diffusion Transformer) for SD3
@@ -72,6 +72,63 @@ impl QuantizedTensor {
             &self.device,
         )
     }
+}
+
+/// Helper to get a tensor by name and dequantize it
+fn get_tensor(tensors: &HashMap<String, QuantizedTensor>, name: &str) -> CandleResult<Tensor> {
+    tensors.get(name)
+        .ok_or_else(|| candle_core::Error::Msg(format!("Tensor {} not found", name)))?
+        .dequantize()
+}
+
+/// Apply a linear layer using quantized weights
+fn linear(
+    x: &Tensor,
+    tensors: &HashMap<String, QuantizedTensor>,
+    prefix: &str,
+) -> CandleResult<Tensor> {
+    let weight = get_tensor(tensors, &format!("{}.weight", prefix))?;
+    let bias = tensors.get(&format!("{}.bias", prefix))
+        .map(|t| t.dequantize())
+        .transpose()?;
+    
+    let out = x.matmul(&weight.t()?)?;
+    match bias {
+        Some(b) => out.broadcast_add(&b),
+        None => Ok(out),
+    }
+}
+
+/// Apply layer normalization using quantized weights
+fn layer_norm(
+    x: &Tensor,
+    tensors: &HashMap<String, QuantizedTensor>,
+    prefix: &str,
+    eps: f64,
+) -> CandleResult<Tensor> {
+    let weight = get_tensor(tensors, &format!("{}.weight", prefix))?;
+    let bias = get_tensor(tensors, &format!("{}.bias", prefix))?;
+    
+    // Compute mean and variance
+    let mean = x.mean_keepdim(D::Minus1)?;
+    let x_centered = x.broadcast_sub(&mean)?;
+    let var = (&x_centered * &x_centered)?.mean_keepdim(D::Minus1)?;
+    let std = (var + eps)?.sqrt()?;
+    
+    // Normalize and apply affine transformation
+    let normalized = x_centered.broadcast_div(&std)?;
+    let scaled = normalized.broadcast_mul(&weight)?;
+    scaled.broadcast_add(&bias)
+}
+
+/// Apply GELU activation
+fn gelu(x: &Tensor) -> CandleResult<Tensor> {
+    x.gelu()
+}
+
+/// Apply SiLU (Swish) activation
+fn silu(x: &Tensor) -> CandleResult<Tensor> {
+    x.silu()
 }
 
 impl QuantizedMMDiT {
@@ -212,45 +269,245 @@ impl QuantizedMMDiT {
         context: &Tensor, 
         y: &Tensor
     ) -> CandleResult<Tensor> {
-        eprintln!("QuantizedMMDiT forward pass with {} tensors loaded", self.tensors.len());
+        eprintln!("QuantizedMMDiT forward pass starting...");
         eprintln!("Input shapes - x: {:?}, timestep: {:?}, context: {:?}, y: {:?}", 
             x.shape(), timestep.shape(), context.shape(), y.shape());
         
-        // This is a simplified forward pass that demonstrates tensor access
-        // A full implementation would:
-        // 1. Apply patch embedding using x_embedder weights
-        // 2. Apply timestep embedding using t_embedder weights 
-        // 3. Apply label embedding using y_embedder weights
-        // 4. Process through joint transformer blocks
-        // 5. Apply final layer to get output
+        // 1. Patch embedding (x_embedder)
+        let x_emb = self.apply_patch_embedding(x)?;
+        eprintln!("After patch embedding: {:?}", x_emb.shape());
         
-        let mut current = x.clone();
+        // 2. Timestep embedding (t_embedder)
+        let t_emb = self.apply_timestep_embedding(timestep)?;
+        eprintln!("Timestep embedding: {:?}", t_emb.shape());
         
-        // Demonstrate accessing quantized tensors
-        let mut processed_layers = 0;
-        for (name, tensor) in &self.tensors {
-            if name.contains("joint_blocks.0.") && name.contains("norm1.weight") {
-                eprintln!("Processing layer with tensor: {}", name);
-                
-                // Dequantize the tensor for computation
-                let weight = tensor.dequantize()?;
-                eprintln!("Dequantized weight shape: {:?}", weight.shape());
-                
-                // Simple placeholder operation - in reality this would be layer norm
-                // For now, just add a small value to show the tensor is being used
-                current = (&current + 0.001)?;
-                processed_layers += 1;
-                
-                if processed_layers >= 3 {
-                    break; // Limit demonstration to first few layers
-                }
+        // 3. Label embedding (y_embedder)
+        let y_emb = self.apply_label_embedding(y)?;
+        eprintln!("Label embedding: {:?}", y_emb.shape());
+        
+        // 4. Context embedding (for text conditioning)
+        let context_emb = self.apply_context_embedding(context)?;
+        eprintln!("Context embedding: {:?}", context_emb.shape());
+        
+        // 5. Combine embeddings
+        let mut hidden = self.combine_embeddings(&x_emb, &t_emb, &y_emb)?;
+        eprintln!("Combined embeddings: {:?}", hidden.shape());
+        
+        // 6. Process through joint transformer blocks
+        hidden = self.apply_transformer_blocks(&hidden, &context_emb)?;
+        eprintln!("After transformer blocks: {:?}", hidden.shape());
+        
+        // 7. Final layer and unpatchify
+        let output = self.apply_final_layer(&hidden)?;
+        eprintln!("Final output: {:?}", output.shape());
+        
+        Ok(output)
+    }
+    
+    /// Apply patch embedding to input
+    fn apply_patch_embedding(&self, x: &Tensor) -> CandleResult<Tensor> {
+        // x_embedder in SD3 is a 2D convolution with patch_size=2
+        // For GGUF, we'll implement it as a linear projection after reshaping
+        
+        let (b, c, h, w) = x.dims4()?;
+        let patch_size = self.config.patch_size;
+        
+        // Reshape input into patches
+        let n_patches_h = h / patch_size;
+        let n_patches_w = w / patch_size;
+        let n_patches = n_patches_h * n_patches_w;
+        
+        // Reshape: (B, C, H, W) -> (B, n_patches, patch_size*patch_size*C)
+        let x_reshaped = x
+            .reshape((b, c, n_patches_h, patch_size, n_patches_w, patch_size))?
+            .permute((0, 2, 4, 1, 3, 5))?
+            .reshape((b, n_patches, patch_size * patch_size * c))?;
+        
+        // Apply linear projection using x_embedder weights
+        let x_emb = linear(&x_reshaped, &self.tensors, "x_embedder.proj")?;
+        
+        // Add positional embeddings if available
+        if let Ok(pos_emb) = get_tensor(&self.tensors, "pos_embed") {
+            x_emb.broadcast_add(&pos_emb)
+        } else {
+            Ok(x_emb)
+        }
+    }
+    
+    /// Apply timestep embedding
+    fn apply_timestep_embedding(&self, timestep: &Tensor) -> CandleResult<Tensor> {
+        // Timestep embedding typically uses sinusoidal encoding followed by MLPs
+        
+        // First, create sinusoidal embeddings
+        let t_freq = self.timestep_sinusoidal_embedding(timestep)?;
+        
+        // Then apply MLP layers
+        let t_emb = linear(&t_freq, &self.tensors, "t_embedder.mlp.0")?;
+        let t_emb = silu(&t_emb)?;
+        linear(&t_emb, &self.tensors, "t_embedder.mlp.2")
+    }
+    
+    /// Apply label embedding
+    fn apply_label_embedding(&self, y: &Tensor) -> CandleResult<Tensor> {
+        // Label embedding for class conditioning
+        linear(y, &self.tensors, "y_embedder.embedding_table")
+    }
+    
+    /// Apply context embedding for text conditioning
+    fn apply_context_embedding(&self, context: &Tensor) -> CandleResult<Tensor> {
+        // Context is already embedded by text encoder, just project it
+        if self.tensors.contains_key("context_embedder.weight") {
+            linear(context, &self.tensors, "context_embedder")
+        } else {
+            Ok(context.clone())
+        }
+    }
+    
+    /// Combine embeddings
+    fn combine_embeddings(
+        &self,
+        x_emb: &Tensor,
+        t_emb: &Tensor,
+        y_emb: &Tensor,
+    ) -> CandleResult<Tensor> {
+        // Add timestep and label embeddings to patch embeddings
+        let c_emb = (t_emb + y_emb)?;
+        
+        // Broadcast and add to all patch positions
+        let (b, n_patches, d) = x_emb.dims3()?;
+        let c_emb = c_emb.unsqueeze(1)?; // Add spatial dimension
+        let c_emb = c_emb.broadcast_as((b, n_patches, d))?;
+        
+        x_emb.add(&c_emb)
+    }
+    
+    /// Apply transformer blocks
+    fn apply_transformer_blocks(
+        &self,
+        hidden: &Tensor,
+        context: &Tensor,
+    ) -> CandleResult<Tensor> {
+        let mut x = hidden.clone();
+        
+        // Process through each transformer block
+        for i in 0..self.config.num_layers {
+            x = self.apply_single_block(&x, context, i)?;
+            
+            // Log progress every few blocks
+            if i % 4 == 0 {
+                eprintln!("Processed transformer block {}/{}", i + 1, self.config.num_layers);
             }
         }
         
-        eprintln!("Processed {} quantized layers", processed_layers);
+        Ok(x)
+    }
+    
+    /// Apply a single transformer block
+    fn apply_single_block(
+        &self,
+        x: &Tensor,
+        context: &Tensor,
+        block_idx: usize,
+    ) -> CandleResult<Tensor> {
+        let prefix = format!("joint_blocks.{}", block_idx);
         
-        // Return modified tensor to show processing occurred
-        Ok(current)
+        // Self-attention
+        let x_norm = layer_norm(x, &self.tensors, &format!("{}.x_norm", prefix), 1e-6)?;
+        let attn_out = self.apply_attention(&x_norm, &x_norm, &format!("{}.attn", prefix))?;
+        let x = (x + attn_out)?;
+        
+        // Cross-attention with context
+        let x_norm = layer_norm(&x, &self.tensors, &format!("{}.x_norm2", prefix), 1e-6)?;
+        let context_norm = layer_norm(context, &self.tensors, &format!("{}.context_norm", prefix), 1e-6)?;
+        let cross_attn_out = self.apply_attention(&x_norm, &context_norm, &format!("{}.cross_attn", prefix))?;
+        let x = (x + cross_attn_out)?;
+        
+        // Feed-forward network
+        let x_norm = layer_norm(&x, &self.tensors, &format!("{}.x_norm3", prefix), 1e-6)?;
+        let ff_out = self.apply_feedforward(&x_norm, &prefix)?;
+        let x = (x + ff_out)?;
+        
+        Ok(x)
+    }
+    
+    /// Apply attention mechanism
+    fn apply_attention(
+        &self,
+        query: &Tensor,
+        key_value: &Tensor,
+        prefix: &str,
+    ) -> CandleResult<Tensor> {
+        // Simple attention implementation
+        // In a full implementation, this would handle multi-head attention properly
+        
+        let q = linear(query, &self.tensors, &format!("{}.q_linear", prefix))?;
+        let k = linear(key_value, &self.tensors, &format!("{}.k_linear", prefix))?;
+        let v = linear(key_value, &self.tensors, &format!("{}.v_linear", prefix))?;
+        
+        // Scaled dot-product attention (simplified)
+        let d_k = (q.dims()[2] as f64).sqrt();
+        let scores = (q.matmul(&k.t()?)? / d_k)?;
+        let weights = candle_nn::ops::softmax(&scores, D::Minus1)?;
+        let attn_out = weights.matmul(&v)?;
+        
+        // Output projection
+        linear(&attn_out, &self.tensors, &format!("{}.out_proj", prefix))
+    }
+    
+    /// Apply feed-forward network
+    fn apply_feedforward(&self, x: &Tensor, block_prefix: &str) -> CandleResult<Tensor> {
+        let prefix = format!("{}.mlp", block_prefix);
+        
+        // First linear layer
+        let x = linear(x, &self.tensors, &format!("{}.fc1", prefix))?;
+        let x = gelu(&x)?;
+        
+        // Second linear layer
+        linear(&x, &self.tensors, &format!("{}.fc2", prefix))
+    }
+    
+    /// Apply final layer and reshape output
+    fn apply_final_layer(&self, hidden: &Tensor) -> CandleResult<Tensor> {
+        // Final normalization
+        let x = layer_norm(hidden, &self.tensors, "final_layer.norm_out", 1e-6)?;
+        
+        // Final linear projection
+        let x = linear(&x, &self.tensors, "final_layer.linear")?;
+        
+        // Unpatchify: reshape back to image format
+        let (b, n_patches, _) = x.dims3()?;
+        let patch_size = self.config.patch_size;
+        let h = (n_patches as f64).sqrt() as usize;
+        let w = h; // Assume square for now
+        let c = x.dims()[2] / (patch_size * patch_size);
+        
+        // Reshape: (B, n_patches, patch_size*patch_size*C) -> (B, C, H, W)
+        x.reshape((b, h, w, patch_size, patch_size, c))?
+            .permute((0, 5, 1, 3, 2, 4))?
+            .reshape((b, c, h * patch_size, w * patch_size))
+    }
+    
+    /// Create sinusoidal timestep embeddings
+    fn timestep_sinusoidal_embedding(&self, timesteps: &Tensor) -> CandleResult<Tensor> {
+        let dim = self.config.hidden_size;
+        let half_dim = dim / 2;
+        let max_period = 10000.0;
+        
+        // Create frequency bands
+        let freqs = Tensor::arange(0, half_dim as i64, timesteps.device())?
+            .to_dtype(DType::F32)?
+            .affine((-f32::ln(max_period) / half_dim as f32) as f64, 0.0)?
+            .exp()?;
+        
+        // Apply to timesteps
+        let args = timesteps.unsqueeze(1)?.matmul(&freqs.unsqueeze(0)?)?;
+        
+        // Create sin and cos embeddings
+        let sin_emb = args.sin()?;
+        let cos_emb = args.cos()?;
+        
+        // Concatenate
+        Tensor::cat(&[&sin_emb, &cos_emb], 1)
     }
     
     /// Get a specific tensor by name (for debugging/inspection)
