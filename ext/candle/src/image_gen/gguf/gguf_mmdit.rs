@@ -466,57 +466,68 @@ impl QuantizedMMDiT {
     fn apply_patch_embedding(&self, x: &Tensor) -> CandleResult<Tensor> {
         eprintln!("\n=== apply_patch_embedding called ===");
         // x_embedder in SD3 is a 2D convolution with patch_size=2
-        // For GGUF, we'll implement it as a linear projection after reshaping
+        // Follow the standard PatchEmbedder implementation
         
         let (b, c, h, w) = x.dims4()?;
         eprintln!("Input shape: [{}, {}, {}, {}]", b, c, h, w);
         let patch_size = self.config.patch_size;
         eprintln!("Patch size: {}", patch_size);
         
-        // Reshape input into patches
-        let n_patches_h = h / patch_size;
-        let n_patches_w = w / patch_size;
-        let n_patches = n_patches_h * n_patches_w;
-        eprintln!("Number of patches: {} ({}x{})", n_patches, n_patches_h, n_patches_w);
+        // For patch embedding, we need to handle different input sizes
+        // The Conv2d with kernel_size=2, stride=2 will downsample by 2x
+        // So: input_size -> input_size/2 patches
+        // But we need to handle potential padding issues
         
-        // Reshape: (B, C, H, W) -> (B, n_patches, patch_size*patch_size*C)
-        eprintln!("Reshaping input...");
-        let x_reshaped = x
-            .reshape((b, c, n_patches_h, patch_size, n_patches_w, patch_size))?
-            .permute((0, 2, 4, 1, 3, 5))?
-            .reshape((b, n_patches, patch_size * patch_size * c))?;
-        eprintln!("Reshaped to: {:?}", x_reshaped.shape());
+        // Don't crop - let the conv2d handle the input as-is
+        let x = x.clone();
         
-        // Apply patch embedding using x_embedder weights
-        // x_embedder.proj is a Conv2d in SD3, so we need to handle it specially
-        eprintln!("\nApplying patch embedding...");
+        // Calculate expected output dimensions based on input
+        let expected_h_out = h / patch_size; // Simple stride-based calculation
+        let expected_w_out = w / patch_size;
+        let expected_n_patches = expected_h_out * expected_w_out;
+        eprintln!("Expected patches: {} ({}x{}) from input {}x{}", 
+                  expected_n_patches, expected_h_out, expected_w_out, h, w);
         
         // Get the conv weight and bias
         let weight = get_tensor(&self.tensors, "x_embedder.proj.weight")?;
         let bias = get_tensor(&self.tensors, "x_embedder.proj.bias")?;
         
         eprintln!("Conv weight shape: {:?}", weight.shape());
-        eprintln!("Input shape: {:?}", x.shape());
+        eprintln!("Conv bias shape: {:?}", bias.shape());
         
-        // Apply 2D convolution
-        // For GGUF, we'll use the conv2d operation
-        // patch_size should be the stride, not the kernel size for patch embedding
+        // Apply 2D convolution following standard PatchEmbedder pattern
+        // kernel_size = patch_size, stride = patch_size, padding = 0
         let kernel_size = patch_size;
         let stride = patch_size; 
         let padding = 0;
         let dilation = 1;
         
         eprintln!("Conv2d params: kernel={}, stride={}, padding={}, dilation={}", kernel_size, stride, padding, dilation);
-        let x_emb = x.conv2d(&weight, kernel_size, stride, padding, dilation)?;
-        eprintln!("After conv2d: {:?}", x_emb.shape());
+        eprintln!("Input to conv2d: {:?}", x.shape());
+        eprintln!("Weight shape: {:?}", weight.shape());
+        let groups = 1; // Standard convolution (not grouped)
+        let x_conv = x.conv2d(&weight, padding, stride, dilation, groups)?;
+        eprintln!("After conv2d: {:?}", x_conv.shape());
+        eprintln!("Conv2d: {}x{} input -> {}x{} output", h, w, x_conv.dims()[2], x_conv.dims()[3]);
         
         // Add bias
-        let x_emb = x_emb.broadcast_add(&bias.unsqueeze(0)?.unsqueeze(2)?.unsqueeze(3)?)?;
+        let x_conv = x_conv.broadcast_add(&bias.unsqueeze(0)?.unsqueeze(2)?.unsqueeze(3)?)?;
+        eprintln!("After bias addition: {:?}", x_conv.shape());
         
-        // Reshape from (B, C, H, W) to (B, H*W, C) for transformer
-        let (b, c_out, h_out, w_out) = x_emb.dims4()?;
-        let x_emb = x_emb.permute((0, 2, 3, 1))?.reshape((b, h_out * w_out, c_out))?;
+        // Reshape following standard PatchEmbedder pattern:
+        // (B, C, H, W) -> (B, C, H*W) -> (B, H*W, C)
+        let (b, c_out, h_out, w_out) = x_conv.dims4()?;
+        eprintln!("Conv output dimensions: b={}, c_out={}, h_out={}, w_out={}", b, c_out, h_out, w_out);
+        
+        let x_emb = x_conv.reshape((b, c_out, h_out * w_out))?.transpose(1, 2)?;
         eprintln!("Final patch embedding shape: {:?}", x_emb.shape());
+        
+        // Verify dimensions match expectations
+        let actual_n_patches = h_out * w_out;
+        if actual_n_patches != expected_n_patches {
+            eprintln!("WARNING: Patch count mismatch! Expected {}, got {}", expected_n_patches, actual_n_patches);
+            eprintln!("This suggests input size or conv2d parameters are incorrect");
+        }
         
         // Add positional embeddings if available
         if let Ok(pos_embed) = get_tensor(&self.tensors, "pos_embed") {
@@ -526,6 +537,20 @@ impl QuantizedMMDiT {
             
             // pos_embed is [max_patches, hidden_dim], we need to slice it
             let n_patches = x_emb.dims()[1];
+            eprintln!("Number of patches in x_emb: {}", n_patches);
+            
+            // Check if we have enough positional embeddings
+            let max_pos_embeds = pos_embed.dims()[0];
+            eprintln!("Max positional embeddings available: {}", max_pos_embeds);
+            
+            if n_patches > max_pos_embeds {
+                eprintln!("ERROR: Not enough positional embeddings! Need {}, have {}", n_patches, max_pos_embeds);
+                return Err(candle_core::Error::Msg(format!(
+                    "Insufficient positional embeddings: need {} patches but only have {} embeddings",
+                    n_patches, max_pos_embeds
+                )));
+            }
+            
             let pos_embed_slice = pos_embed.narrow(0, 0, n_patches)?;
             eprintln!("pos_embed_slice shape: {:?}", pos_embed_slice.shape());
             
@@ -812,16 +837,49 @@ impl QuantizedMMDiT {
         // Unpatchify: reshape back to image format
         let (b, n_patches, channels) = x.dims3()?;
         let patch_size = self.config.patch_size;
-        let h = (n_patches as f64).sqrt() as usize;
-        let w = h; // Assume square for now
+        // Calculate dimensions based on the expected latent resolution
+        // The MMDiT seems to be outputting 34x34 patches instead of 32x32
+        // For compatibility with the scheduler, we need to crop or adjust the output
+        let h_patches = (n_patches as f64).sqrt() as usize;
+        let w_patches = h_patches; 
+        
+        // For SD3, we need the output to match the actual latent dimensions
+        // With 8x downsampling: 512x512 -> 64x64, 256x256 -> 32x32, 64x64 -> 8x8
+        // But patch_size=2 means: 8x8 latents -> 4x4 patches
+        // However, we're getting 6x6=36 patches, so let's work with that
+        let target_h_patches = h_patches; // Use actual patch count
+        let target_w_patches = w_patches;
+        
+        eprintln!("Unpatchify: n_patches={}, computed={}x{}, target={}x{}", 
+                  n_patches, h_patches, w_patches, target_h_patches, target_w_patches);
         
         // For SD3, the output should have channels = patch_size * patch_size * latent_channels
         // where latent_channels = 16 for VAE input
         let latent_channels = channels / (patch_size * patch_size);
         eprintln!("Unpatchify - patches: {}, patch_size: {}, latent_channels: {}", n_patches, patch_size, latent_channels);
         
+        // If we have more patches than needed, crop the tensor
+        let x_cropped = if h_patches > target_h_patches || w_patches > target_w_patches {
+            eprintln!("Cropping from {}x{} to {}x{} patches", h_patches, w_patches, target_h_patches, target_w_patches);
+            
+            // Reshape to spatial layout first: (B, n_patches, C) -> (B, H, W, C)  
+            let x_spatial = x.reshape((b, h_patches, w_patches, channels))?;
+            
+            // Crop the spatial dimensions
+            let x_cropped_spatial = x_spatial.i((.., 0..target_h_patches, 0..target_w_patches, ..))?;
+            
+            // Reshape back: (B, H, W, C) -> (B, n_patches_new, C)
+            x_cropped_spatial.reshape((b, target_h_patches * target_w_patches, channels))?
+        } else {
+            x.clone()
+        };
+        
+        // Use target dimensions for unpatchify
+        let h = target_h_patches;
+        let w = target_w_patches;
+        
         // Reshape: (B, n_patches, patch_size*patch_size*C) -> (B, C, H, W)
-        let output = x.reshape((b, h, w, patch_size, patch_size, latent_channels))?
+        let output = x_cropped.reshape((b, h, w, patch_size, patch_size, latent_channels))?
             .permute((0, 5, 1, 3, 2, 4))?
             .reshape((b, latent_channels, h * patch_size, w * patch_size))?;
         

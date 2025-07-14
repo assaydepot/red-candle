@@ -91,17 +91,10 @@ impl EulerScheduler {
         dtype: DType,
         seed: Option<u64>,
     ) -> CandleResult<Tensor> {
-        // For SD3, the latent space is actually based on the patch size
-        // The model expects latents at the "patch latent" resolution
-        // Based on the MMDiT output, it seems to expect a different resolution
-        // Let me calculate this empirically: for 64x64 input, MMDiT outputs 12x12
-        let scaling_factor = if height == 64 && width == 64 {
-            // For 64x64 input, MMDiT outputs 28x28, so we need 28x28 latents
-            64.0 / 28.0 // ≈ 2.29
-        } else {
-            // Default VAE scaling
-            8.0
-        };
+        // SD3 uses VAE with 8x downsampling factor
+        // For a 512x512 image -> 64x64 latents
+        // The MMDiT operates on these VAE latents, not raw image patches
+        let scaling_factor = 8.0; // SD3 VAE downsampling factor
         
         let latent_height = (height as f64 / scaling_factor).round() as usize;
         let latent_width = (width as f64 / scaling_factor).round() as usize;

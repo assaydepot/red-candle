@@ -234,28 +234,54 @@ impl QuantizedVAE {
     pub fn decode(&self, latents: &Tensor) -> CandleResult<Tensor> {
         eprintln!("QuantizedVAE decode with {} tensors loaded", self.tensors.len());
         eprintln!("Input latent shape: {:?}", latents.shape());
+        eprintln!("Input latent dims4: {:?}", latents.dims4()?);
         
         // Scale latents by 1/scaling_factor
+        eprintln!("About to scale latents...");
         let mut x = (latents / self.config.scaling_factor)?;
         eprintln!("After scaling: {:?}", x.shape());
+        eprintln!("After scaling dims4: {:?}", x.dims4()?);
+        
+        eprintln!("Checking for post_quant_conv...");
         
         // 1. Post-quant conv (if present)
-        if self.tensors.contains_key("decoder.post_quant_conv.weight") {
+        if self.has_tensor("decoder.post_quant_conv.weight") {
             x = self.apply_conv2d(&x, "decoder.post_quant_conv")?;
             eprintln!("After post_quant_conv: {:?}", x.shape());
         }
         
         // 2. Initial conv_in
-        x = self.apply_conv2d(&x, "decoder.conv_in")?;
-        eprintln!("After conv_in: {:?}", x.shape());
+        eprintln!("About to apply decoder.conv_in");
+        use std::io::{self, Write};
+        io::stderr().flush().unwrap();
+        
+        match self.apply_conv2d(&x, "decoder.conv_in") {
+            Ok(result) => {
+                x = result;
+                eprintln!("After conv_in: {:?}", x.shape());
+                io::stderr().flush().unwrap();
+            }
+            Err(e) => {
+                eprintln!("Error in apply_conv2d: {:?}", e);
+                io::stderr().flush().unwrap();
+                return Err(e);
+            }
+        }
         
         // 3. Decoder blocks (mid + up blocks)
         // Mid block
         x = self.apply_decoder_mid_block(&x)?;
         
-        // Up blocks (typically 4 blocks for SD3)
-        for i in 0..4 {
+        // Up blocks - in SD3 GGUF they appear to be numbered in reverse
+        // up.3 = 512 channels (first, connects to mid block)
+        // up.2 = 512 channels  
+        // up.1 = 256 channels
+        // up.0 = 128 channels (last, before final conv)
+        for i in (0..4).rev() {
+            eprintln!("\nApplying decoder up block {}", i);
+            eprintln!("  Input to up block {}: {:?}", i, x.shape());
             x = self.apply_decoder_up_block(&x, i)?;
+            eprintln!("  Output from up block {}: {:?}", i, x.shape());
         }
         
         // 4. Final normalization and conv_out
@@ -332,22 +358,63 @@ impl QuantizedVAE {
         &self.device
     }
     
+    /// Check if a tensor exists with flexible prefix handling
+    fn has_tensor(&self, name: &str) -> bool {
+        self.tensors.contains_key(name) || 
+        self.tensors.contains_key(&format!("first_stage_model.{}", name))
+    }
+    
     /// Apply a 2D convolution using quantized weights
     fn apply_conv2d(&self, x: &Tensor, prefix: &str) -> CandleResult<Tensor> {
-        // Get weight and bias tensors
+        eprintln!("\napply_conv2d: {}", prefix);
+        eprintln!("  Input to apply_conv2d: {:?}", x.shape());
+        
+        // Get weight and bias tensors - try with GGUF prefix first
         let weight_name = format!("{}.weight", prefix);
         let bias_name = format!("{}.bias", prefix);
         
-        let weight = self.tensors.get(&weight_name)
-            .ok_or_else(|| candle_core::Error::Msg(format!("Weight {} not found", weight_name)))?
-            .dequantize()?;
+        // Try to find weight with different possible prefixes
+        let weight = if let Some(tensor) = self.tensors.get(&weight_name) {
+            tensor
+        } else if let Some(tensor) = self.tensors.get(&format!("first_stage_model.{}", weight_name)) {
+            tensor
+        } else {
+            return Err(candle_core::Error::Msg(format!("Weight {} not found (tried {} and first_stage_model.{})", weight_name, weight_name, weight_name)));
+        };
+        let weight = weight.dequantize()?;
+        eprintln!("  Weight shape: {:?}", weight.shape());
+        eprintln!("  Weight successfully dequantized!");
         
-        let bias = self.tensors.get(&bias_name)
-            .map(|t| t.dequantize())
-            .transpose()?;
+        // Try to find bias with different possible prefixes
+        let bias = if let Some(tensor) = self.tensors.get(&bias_name) {
+            eprintln!("  Found bias, dequantizing...");
+            let bias_tensor = tensor.dequantize()?;
+            eprintln!("  Bias shape after dequantize: {:?}", bias_tensor.shape());
+            Some(bias_tensor)
+        } else if let Some(tensor) = self.tensors.get(&format!("first_stage_model.{}", bias_name)) {
+            eprintln!("  Found bias with prefix, dequantizing...");
+            let bias_tensor = tensor.dequantize()?;
+            eprintln!("  Bias shape after dequantize: {:?}", bias_tensor.shape());
+            Some(bias_tensor)
+        } else {
+            eprintln!("  No bias found");
+            None
+        };
+        
+        // Determine padding based on kernel size
+        // 1x1 convolutions should have no padding
+        let weight_shape = weight.shape();
+        let kernel_size = if weight_shape.dims().len() >= 4 {
+            weight_shape.dims()[2] // Kernel height
+        } else {
+            3 // Default
+        };
+        let padding = if kernel_size == 1 { 0 } else { 1 };
+        let stride = 1;
         
         // Apply convolution
-        let output = self.conv2d_op(x, &weight, bias.as_ref(), 1, 1)?;
+        let output = self.conv2d_op(x, &weight, bias.as_ref(), stride, padding)?;
+        eprintln!("  Output from apply_conv2d: {:?}", output.shape());
         Ok(output)
     }
     
@@ -360,47 +427,21 @@ impl QuantizedVAE {
         stride: usize,
         padding: usize,
     ) -> CandleResult<Tensor> {
-        // Manual conv2d implementation for GGUF tensors
-        // This is a simplified version - production would use optimized kernels
+        eprintln!("conv2d_op:");
+        eprintln!("  Input shape: {:?}", x.shape());
+        eprintln!("  Weight shape: {:?}", weight.shape());
+        eprintln!("  Stride: {}, Padding: {}", stride, padding);
         
-        let (batch_size, in_channels, height, width) = x.dims4()?;
-        let (out_channels, weight_in_channels, kernel_h, kernel_w) = weight.dims4()?;
+        // Use Candle's built-in conv2d instead of manual implementation
+        let groups = 1;
+        let dilation = 1;
         
-        if in_channels != weight_in_channels {
-            return Err(candle_core::Error::Msg(format!(
-                "Input channels mismatch: {} vs {}", in_channels, weight_in_channels
-            )));
-        }
-        
-        // Calculate output dimensions
-        let out_h = (height + 2 * padding - kernel_h) / stride + 1;
-        let out_w = (width + 2 * padding - kernel_w) / stride + 1;
-        
-        // For now, use simple matrix multiplication approach
-        // Real implementation would use im2col or direct convolution
-        let x_padded = if padding > 0 {
-            // Add padding
-            self.pad_tensor(x, padding)?
-        } else {
-            x.clone()
-        };
-        
-        // Reshape weight for matmul: (out_channels, in_channels * kernel_h * kernel_w)
-        let weight_flat = weight.reshape((out_channels, in_channels * kernel_h * kernel_w))?;
-        
-        // Create patches from input (im2col operation)
-        let patches = self.extract_patches(&x_padded, kernel_h, kernel_w, stride)?;
-        
-        // Perform convolution as matrix multiplication
-        let out_flat = patches.matmul(&weight_flat.t()?)?;
-        
-        // Reshape to output dimensions
-        let mut out = out_flat.reshape((batch_size, out_h, out_w, out_channels))?
-            .permute((0, 3, 1, 2))?; // NHWC to NCHW
+        let mut out = x.conv2d(weight, padding, stride, dilation, groups)?;
+        eprintln!("  Output shape after conv2d: {:?}", out.shape());
         
         // Add bias if present
         if let Some(b) = bias {
-            let b_reshaped = b.reshape((1, out_channels, 1, 1))?;
+            let b_reshaped = b.unsqueeze(0)?.unsqueeze(2)?.unsqueeze(3)?;
             out = out.broadcast_add(&b_reshaped)?;
         }
         
@@ -409,25 +450,55 @@ impl QuantizedVAE {
     
     /// Apply group normalization
     fn apply_group_norm(&self, x: &Tensor, prefix: &str) -> CandleResult<Tensor> {
-        // Get weight and bias
-        let weight = self.tensors.get(&format!("{}.weight", prefix))
-            .ok_or_else(|| candle_core::Error::Msg(format!("GroupNorm weight {} not found", prefix)))?
-            .dequantize()?;
+        // Get weight and bias with prefix handling
+        let weight_name = format!("{}.weight", prefix);
+        let bias_name = format!("{}.bias", prefix);
         
-        let bias = self.tensors.get(&format!("{}.bias", prefix))
-            .ok_or_else(|| candle_core::Error::Msg(format!("GroupNorm bias {} not found", prefix)))?
-            .dequantize()?;
+        let weight = if let Some(tensor) = self.tensors.get(&weight_name) {
+            tensor
+        } else if let Some(tensor) = self.tensors.get(&format!("first_stage_model.{}", weight_name)) {
+            tensor
+        } else {
+            return Err(candle_core::Error::Msg(format!("GroupNorm weight {} not found", prefix)));
+        };
+        let weight = weight.dequantize()?;
         
-        // Apply group normalization (simplified version)
-        // Real implementation would group channels
+        let bias = if let Some(tensor) = self.tensors.get(&bias_name) {
+            tensor
+        } else if let Some(tensor) = self.tensors.get(&format!("first_stage_model.{}", bias_name)) {
+            tensor
+        } else {
+            return Err(candle_core::Error::Msg(format!("GroupNorm bias {} not found", prefix)));
+        };
+        let bias = bias.dequantize()?;
+        
+        // Apply group normalization
+        // For simplicity, we'll do layer norm over spatial dimensions
+        // Input shape: [B, C, H, W]
         let eps = 1e-6;
-        let mean = x.mean_keepdim(D::Minus1)?;
-        let x_centered = x.broadcast_sub(&mean)?;
-        let var = (&x_centered * &x_centered)?.mean_keepdim(D::Minus1)?;
+        
+        // Compute mean and variance over spatial dimensions (H, W)
+        let dims = x.dims4()?;
+        let (b, c, h, w) = dims;
+        
+        // Reshape to [B, C, H*W] for easier computation
+        let x_reshaped = x.reshape((b, c, h * w))?;
+        
+        // Compute stats over the last dimension
+        let mean = x_reshaped.mean_keepdim(2)?;
+        let x_centered = x_reshaped.broadcast_sub(&mean)?;
+        let var = (&x_centered * &x_centered)?.mean_keepdim(2)?;
         let std = (var + eps)?.sqrt()?;
         let normalized = x_centered.broadcast_div(&std)?;
         
+        // Reshape back to [B, C, H, W]
+        let normalized = normalized.reshape((b, c, h, w))?;
+        
         // Apply affine transformation
+        // Reshape weight and bias to [1, C, 1, 1] for broadcasting
+        let weight = weight.unsqueeze(0)?.unsqueeze(2)?.unsqueeze(3)?;
+        let bias = bias.unsqueeze(0)?.unsqueeze(2)?.unsqueeze(3)?;
+        
         let scaled = normalized.broadcast_mul(&weight)?;
         scaled.broadcast_add(&bias)
     }
@@ -444,6 +515,8 @@ impl QuantizedVAE {
     
     /// Apply decoder mid block
     fn apply_decoder_mid_block(&self, x: &Tensor) -> CandleResult<Tensor> {
+        eprintln!("\nStarting decoder mid block");
+        eprintln!("  Input shape: {:?}", x.shape());
         let mut current = x.clone();
         
         // Check if we have mid block tensors
@@ -459,50 +532,60 @@ impl QuantizedVAE {
             
             // Process ResNet blocks
             for i in 0..2 {
-                if self.tensors.contains_key(&format!("decoder.mid_block.resnets.{}.conv1.weight", i)) {
+                if self.has_tensor(&format!("decoder.mid_block.resnets.{}.conv1.weight", i)) {
+                    eprintln!("  Applying ResNet block {}", i);
+                    eprintln!("    Current shape before resnet: {:?}", current.shape());
                     current = self.apply_resnet_block(&current, &format!("decoder.mid_block.resnets.{}", i))?;
+                    eprintln!("    Current shape after resnet: {:?}", current.shape());
                 }
             }
             
             // Process attention if present
-            if self.tensors.contains_key("decoder.mid_block.attentions.0.norm.weight") {
+            if self.has_tensor("decoder.mid_block.attentions.0.norm.weight") {
                 current = self.apply_attention_block(&current, "decoder.mid_block.attentions.0")?;
             }
         }
         
+        eprintln!("  Output shape from mid block: {:?}", current.shape());
         Ok(current)
     }
     
     /// Apply decoder up block
     fn apply_decoder_up_block(&self, x: &Tensor, block_idx: usize) -> CandleResult<Tensor> {
         let mut current = x.clone();
-        let prefix = format!("decoder.up_blocks.{}", block_idx);
         
-        // Check if this up block exists
+        // SD3 uses decoder.up.{idx} naming convention
+        let prefix = format!("decoder.up.{}", block_idx);
+        
+        // Check if this up block exists - SD3 uses first_stage_model prefix
+        let full_prefix = format!("first_stage_model.{}", prefix);
         let has_block = self.tensors.keys()
-            .any(|k| k.starts_with(&prefix));
+            .any(|k| k.starts_with(&full_prefix));
         
         if !has_block {
+            eprintln!("  No tensors found for up block {} (looked for {})", block_idx, full_prefix);
             return Ok(current);
         }
         
-        eprintln!("Processing decoder up block {}", block_idx);
+        eprintln!("  Processing decoder up block {} (prefix: {})", block_idx, prefix);
         
         // Up block typically has:
         // - ResNet blocks (usually 3)
         // - Upsamplers
         
-        // Process ResNet blocks
+        // Process ResNet blocks - SD3 uses block.{idx} naming
         for i in 0..3 {
-            let resnet_prefix = format!("{}.resnets.{}", prefix, i);
-            if self.tensors.contains_key(&format!("{}.conv1.weight", resnet_prefix)) {
+            let resnet_prefix = format!("{}.block.{}", prefix, i);
+            if self.has_tensor(&format!("{}.conv1.weight", resnet_prefix)) {
+                eprintln!("    Found resnet block: {}", resnet_prefix);
                 current = self.apply_resnet_block(&current, &resnet_prefix)?;
             }
         }
         
-        // Process upsampler if present
-        let upsample_prefix = format!("{}.upsamplers.0", prefix);
-        if self.tensors.contains_key(&format!("{}.conv.weight", upsample_prefix)) {
+        // Process upsampler if present - SD3 uses upsample naming
+        let upsample_prefix = format!("{}.upsample", prefix);
+        if self.has_tensor(&format!("{}.conv.weight", upsample_prefix)) {
+            eprintln!("    Found upsampler: {}", upsample_prefix);
             // First upsample by 2x
             current = self.upsample_2x(&current)?;
             // Then apply convolution
@@ -514,34 +597,49 @@ impl QuantizedVAE {
     
     /// Apply a ResNet block
     fn apply_resnet_block(&self, x: &Tensor, prefix: &str) -> CandleResult<Tensor> {
+        eprintln!("\n  apply_resnet_block: {}", prefix);
+        eprintln!("    Input shape: {:?}", x.shape());
+        
         // Typical ResNet block structure:
         // norm1 -> silu -> conv1 -> norm2 -> silu -> conv2 -> residual add
         
         let mut h = x.clone();
         
         // First conv block
-        if self.tensors.contains_key(&format!("{}.norm1.weight", prefix)) {
+        if self.has_tensor(&format!("{}.norm1.weight", prefix)) {
+            eprintln!("    Applying norm1");
             h = self.apply_group_norm(&h, &format!("{}.norm1", prefix))?;
         }
         h = self.apply_activation(&h, "silu")?;
+        eprintln!("    Before conv1: {:?}", h.shape());
         h = self.apply_conv2d(&h, &format!("{}.conv1", prefix))?;
+        eprintln!("    After conv1: {:?}", h.shape());
         
         // Second conv block
-        if self.tensors.contains_key(&format!("{}.norm2.weight", prefix)) {
+        if self.has_tensor(&format!("{}.norm2.weight", prefix)) {
+            eprintln!("    Applying norm2");
             h = self.apply_group_norm(&h, &format!("{}.norm2", prefix))?;
         }
         h = self.apply_activation(&h, "silu")?;
+        eprintln!("    Before conv2: {:?}", h.shape());
         h = self.apply_conv2d(&h, &format!("{}.conv2", prefix))?;
+        eprintln!("    After conv2: {:?}", h.shape());
         
-        // Skip connection (may need conv_shortcut)
-        let skip = if self.tensors.contains_key(&format!("{}.conv_shortcut.weight", prefix)) {
+        // Skip connection (may need conv_shortcut or nin_shortcut)
+        let skip = if self.has_tensor(&format!("{}.conv_shortcut.weight", prefix)) {
+            eprintln!("    Applying conv_shortcut");
             self.apply_conv2d(x, &format!("{}.conv_shortcut", prefix))?
+        } else if self.has_tensor(&format!("{}.nin_shortcut.weight", prefix)) {
+            eprintln!("    Applying nin_shortcut");
+            self.apply_conv2d(x, &format!("{}.nin_shortcut", prefix))?
         } else {
             x.clone()
         };
         
         // Residual add
-        h.add(&skip)
+        let result = h.add(&skip)?;
+        eprintln!("    Output shape: {:?}", result.shape());
+        Ok(result)
     }
     
     /// Apply attention block (simplified)
