@@ -154,10 +154,11 @@ impl TextEncoders {
             let device = Device::Cpu; // Default device
             let batch_size = 1;
             let seq_len = 77; // Standard CLIP sequence length
-            let hidden_size = 2048; // Standard hidden size
+            let hidden_size = 4096; // Combined size: CLIP-L (768) + CLIP-G (1280) + T5 (2048)
+            let pooled_size = 2048; // Pooled embedding size
             
             let zeros = Tensor::zeros(&[batch_size, seq_len, hidden_size], DType::F32, &device)?;
-            let pooled = Tensor::zeros(&[batch_size, hidden_size], DType::F32, &device)?;
+            let pooled = Tensor::zeros(&[batch_size, pooled_size], DType::F32, &device)?;
             
             return Ok((zeros.clone(), zeros, pooled));
         }

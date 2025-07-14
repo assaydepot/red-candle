@@ -258,6 +258,9 @@ impl ImageGenerator {
 
     /// Generate an image from a prompt
     pub fn generate(&self, prompt: String, config: Option<&ImageGenerationConfig>) -> RbResult<magnus::RString> {
+        eprintln!("\n*** Ruby ImageGenerator::generate called ***");
+        eprintln!("*** Prompt: {} ***", prompt);
+        
         let config = config
             .map(|c| c.inner.clone())
             .unwrap_or_default();

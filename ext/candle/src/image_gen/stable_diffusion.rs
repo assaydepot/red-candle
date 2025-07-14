@@ -190,8 +190,14 @@ impl StableDiffusion3 {
 impl StableDiffusion3 {
     pub fn generate(&mut self, prompt: &str, config: &ImageGenerationConfig) -> CandleResult<Vec<u8>> {
         // Log the prompt for debugging
+        eprintln!("\n=== StableDiffusion3::generate called ===");
         eprintln!("Generating image for prompt: {}", prompt);
         eprintln!("Config: {}x{}, steps: {}", config.width, config.height, config.num_inference_steps);
+        eprintln!("Pipeline type: {}", match &self.pipeline {
+            Some(PipelineType::Standard(_)) => "Standard",
+            Some(PipelineType::Quantized(_)) => "Quantized",
+            None => "None (placeholder)",
+        });
         
         if let Some(pipeline) = &self.pipeline {
             match pipeline {
@@ -220,9 +226,13 @@ impl StableDiffusion3 {
                     tensor_to_png(&image_tensor)
                 }
                 PipelineType::Quantized(quantized_pipeline) => {
+                    eprintln!("\n>>> Using QUANTIZED pipeline <<<");
                     // Use the quantized SD3 pipeline
                     let mut pipeline = quantized_pipeline.lock().unwrap();
-                    pipeline.generate_image(prompt, config)
+                    eprintln!(">>> Calling quantized generate_image <<<");
+                    let result = pipeline.generate_image(prompt, config);
+                    eprintln!(">>> Quantized generate_image returned: {:?} <<<", result.is_ok());
+                    result
                 }
             }
         } else {

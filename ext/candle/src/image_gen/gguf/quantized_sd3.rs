@@ -183,6 +183,9 @@ impl QuantizedSD3Pipeline {
         eprintln!("Generating with quantized SD3 pipeline...");
         eprintln!("Prompt: {}", prompt);
         eprintln!("Config: {}x{}, {} steps", config.width, config.height, config.num_inference_steps);
+        eprintln!("Using quantized MMDiT: true");
+        eprintln!("Using quantized VAE: true");
+        eprintln!("Text encoders loaded");
         
         // Text encoding
         let (context_cond, context_uncond, pooled) = self.text_encoders.encode(
@@ -222,12 +225,20 @@ impl QuantizedSD3Pipeline {
             let t = Tensor::new(&[timestep, timestep], &self.device)?;
             
             // Predict noise using quantized MMDiT
+            eprintln!("\nCalling MMDiT forward with:");
+            eprintln!("  latent_model_input: {:?}", latent_model_input.shape());
+            eprintln!("  t: {:?}", t.shape());
+            eprintln!("  context: {:?}", context.shape());
+            eprintln!("  y: {:?}", y.shape());
+            
             let noise_pred = self.mmdit.forward(
                 &latent_model_input,
                 &t,
                 &context,
                 &y,
             )?;
+            
+            eprintln!("MMDiT forward completed! Output shape: {:?}", noise_pred.shape());
             
             // Perform CFG
             let chunks = noise_pred.chunk(2, 0)?;
@@ -274,6 +285,9 @@ impl QuantizedSD3Pipeline {
 /// Convert QuantizedSD3Pipeline to be compatible with ImageGenerationConfig
 impl QuantizedSD3Pipeline {
     pub fn generate_image(&mut self, prompt: &str, config: &ImageGenerationConfig) -> CandleResult<Vec<u8>> {
+        eprintln!("\n>>> QuantizedSD3Pipeline::generate_image called! <<<");
+        eprintln!(">>> This is the quantized pipeline! <<<\n");
+        
         let sd3_config = SD3Config {
             width: config.width,
             height: config.height,

@@ -1,4 +1,4 @@
-use candle_core::{Device, Result as CandleResult, Tensor, DType, D, quantized::{gguf_file, GgmlDType}};
+use candle_core::{Device, Result as CandleResult, Tensor, DType, D, IndexOp, quantized::{gguf_file, GgmlDType}};
 use std::collections::HashMap;
 
 /// Quantized MMDiT (Multimodal Diffusion Transformer) for SD3
@@ -76,9 +76,50 @@ impl QuantizedTensor {
 
 /// Helper to get a tensor by name and dequantize it
 fn get_tensor(tensors: &HashMap<String, QuantizedTensor>, name: &str) -> CandleResult<Tensor> {
-    tensors.get(name)
-        .ok_or_else(|| candle_core::Error::Msg(format!("Tensor {} not found", name)))?
-        .dequantize()
+    eprintln!("\n=== get_tensor called ===");
+    eprintln!("Looking for: '{}'", name);
+    eprintln!("Total tensors available: {}", tensors.len());
+    
+    // Print first few tensor names for debugging
+    if tensors.len() > 0 {
+        eprintln!("Sample tensor names:");
+        for (i, key) in tensors.keys().take(3).enumerate() {
+            eprintln!("  [{}] {}", i, key);
+        }
+    }
+    
+    // Try to get the tensor with the exact name first
+    if let Some(tensor) = tensors.get(name) {
+        eprintln!("  ✓ Found with exact name");
+        return tensor.dequantize();
+    }
+    
+    // If not found, try with the model.diffusion_model prefix
+    let prefixed_name = format!("model.diffusion_model.{}", name);
+    eprintln!("  Trying with prefix: '{}'", prefixed_name);
+    if let Some(tensor) = tensors.get(&prefixed_name) {
+        eprintln!("  ✓ Found with prefix!");
+        return tensor.dequantize();
+    }
+    
+    // If still not found, try without any prefix if the name already has one
+    if name.starts_with("model.diffusion_model.") {
+        let unprefixed = name.strip_prefix("model.diffusion_model.").unwrap();
+        eprintln!("  Trying without prefix: '{}'", unprefixed);
+        if let Some(tensor) = tensors.get(unprefixed) {
+            eprintln!("  ✓ Found without prefix!");
+            return tensor.dequantize();
+        }
+    }
+    
+    eprintln!("  ✗ NOT FOUND!");
+    eprintln!("  Available keys containing 'x_embedder':");
+    for key in tensors.keys() {
+        if key.contains("x_embedder") {
+            eprintln!("    - {}", key);
+        }
+    }
+    Err(candle_core::Error::Msg(format!("Tensor {} not found", name)))
 }
 
 /// Apply a linear layer using quantized weights
@@ -88,11 +129,66 @@ fn linear(
     prefix: &str,
 ) -> CandleResult<Tensor> {
     let weight = get_tensor(tensors, &format!("{}.weight", prefix))?;
-    let bias = tensors.get(&format!("{}.bias", prefix))
-        .map(|t| t.dequantize())
-        .transpose()?;
+    eprintln!("\nLinear layer: {}", prefix);
+    eprintln!("  Input shape: {:?}", x.shape());
+    eprintln!("  Weight shape: {:?}", weight.shape());
     
-    let out = x.matmul(&weight.t()?)?;
+    // Try to get bias - it's optional
+    let bias = get_tensor(tensors, &format!("{}.bias", prefix)).ok();
+    
+    // For linear layers, weight is typically [out_features, in_features]
+    // We need to transpose for matmul: [batch, seq, in] @ [in, out]
+    eprintln!("  Attempting transpose...");
+    let weight_t = match weight.t() {
+        Ok(t) => {
+            eprintln!("  Weight transposed shape: {:?}", t.shape());
+            t
+        },
+        Err(e) => {
+            eprintln!("  Transpose failed: {}", e);
+            return Err(e);
+        }
+    };
+    
+    eprintln!("  Attempting matmul: {:?} @ {:?}", x.shape(), weight_t.shape());
+    eprintln!("  x device: {:?}, dtype: {:?}", x.device(), x.dtype());
+    eprintln!("  weight_t device: {:?}, dtype: {:?}", weight_t.device(), weight_t.dtype());
+    
+    // For 3D tensors, we might need to reshape for matmul
+    let (batch_seq, in_dim) = if x.dims().len() == 3 {
+        let dims = x.dims();
+        let batch = dims[0];
+        let seq = dims[1];
+        let in_features = dims[2];
+        eprintln!("  Reshaping 3D tensor from [{}, {}, {}] to [{}, {}]", batch, seq, in_features, batch * seq, in_features);
+        let x_2d = x.reshape(&[batch * seq, in_features])?;
+        ((batch, seq), x_2d)
+    } else {
+        ((1, x.dims()[0]), x.clone())
+    };
+    
+    eprintln!("  Reshaped input: {:?}", in_dim.shape());
+    let out_2d = match in_dim.matmul(&weight_t) {
+        Ok(result) => {
+            eprintln!("  Matmul succeeded! Output shape: {:?}", result.shape());
+            result
+        },
+        Err(e) => {
+            eprintln!("  Matmul failed: {}", e);
+            eprintln!("  Error details: {:?}", e);
+            return Err(e);
+        }
+    };
+    
+    // Reshape back to 3D if needed
+    let out = if x.dims().len() == 3 {
+        let out_features = out_2d.dims()[1];
+        eprintln!("  Reshaping output back to [{}, {}, {}]", batch_seq.0, batch_seq.1, out_features);
+        out_2d.reshape(&[batch_seq.0, batch_seq.1, out_features])?
+    } else {
+        out_2d
+    };
+    
     match bias {
         Some(b) => out.broadcast_add(&b),
         None => Ok(out),
@@ -147,12 +243,23 @@ impl QuantizedMMDiT {
         let mut tensors = HashMap::new();
         let mut mmdit_tensor_count = 0;
         
+        // Debug: list x_embedder tensors
+        eprintln!("\nSearching for x_embedder tensors:");
+        for (name, _) in &content.tensor_infos {
+            if name.contains("x_embedder") {
+                eprintln!("  Found: {}", name);
+            }
+        }
+        eprintln!("");
+        
         // Load all MMDiT tensors
         for (name, info) in &content.tensor_infos {
             // Check if this tensor belongs to MMDiT component
             if Self::is_mmdit_tensor(name) {
-                eprintln!("Loading MMDiT tensor: {} (shape: {:?}, dtype: {:?})", 
-                    name, info.shape.dims(), info.ggml_dtype);
+                if mmdit_tensor_count < 10 || name.contains("x_embedder") {
+                    eprintln!("Loading MMDiT tensor: {} (shape: {:?}, dtype: {:?})", 
+                        name, info.shape.dims(), info.ggml_dtype);
+                }
                 
                 // Read tensor data from file
                 let tensor_data = Self::read_tensor_data(file, info)?;
@@ -304,8 +411,28 @@ impl QuantizedMMDiT {
         eprintln!("Input shapes - x: {:?}, timestep: {:?}, context: {:?}, y: {:?}", 
             x.shape(), timestep.shape(), context.shape(), y.shape());
         
+        // Debug: print available x_embedder tensors
+        eprintln!("\nTotal tensors in MMDiT: {}", self.tensors.len());
+        eprintln!("First 5 tensor names:");
+        for (i, name) in self.tensors.keys().take(5).enumerate() {
+            eprintln!("  {}: {}", i, name);
+        }
+        eprintln!("\nSearching for x_embedder tensors:");
+        let x_embedder_count = self.tensors.keys()
+            .filter(|name| name.contains("x_embedder"))
+            .count();
+        eprintln!("Found {} x_embedder tensors", x_embedder_count);
+        for name in self.tensors.keys() {
+            if name.contains("x_embedder") {
+                eprintln!("  - {}", name);
+            }
+        }
+        eprintln!("");
+        
         // 1. Patch embedding (x_embedder)
+        eprintln!("About to apply patch embedding...");
         let x_emb = self.apply_patch_embedding(x)?;
+        eprintln!("Patch embedding complete!");
         eprintln!("After patch embedding: {:?}", x_emb.shape());
         
         // 2. Timestep embedding (t_embedder)
@@ -337,30 +464,75 @@ impl QuantizedMMDiT {
     
     /// Apply patch embedding to input
     fn apply_patch_embedding(&self, x: &Tensor) -> CandleResult<Tensor> {
+        eprintln!("\n=== apply_patch_embedding called ===");
         // x_embedder in SD3 is a 2D convolution with patch_size=2
         // For GGUF, we'll implement it as a linear projection after reshaping
         
         let (b, c, h, w) = x.dims4()?;
+        eprintln!("Input shape: [{}, {}, {}, {}]", b, c, h, w);
         let patch_size = self.config.patch_size;
+        eprintln!("Patch size: {}", patch_size);
         
         // Reshape input into patches
         let n_patches_h = h / patch_size;
         let n_patches_w = w / patch_size;
         let n_patches = n_patches_h * n_patches_w;
+        eprintln!("Number of patches: {} ({}x{})", n_patches, n_patches_h, n_patches_w);
         
         // Reshape: (B, C, H, W) -> (B, n_patches, patch_size*patch_size*C)
+        eprintln!("Reshaping input...");
         let x_reshaped = x
             .reshape((b, c, n_patches_h, patch_size, n_patches_w, patch_size))?
             .permute((0, 2, 4, 1, 3, 5))?
             .reshape((b, n_patches, patch_size * patch_size * c))?;
+        eprintln!("Reshaped to: {:?}", x_reshaped.shape());
         
-        // Apply linear projection using x_embedder weights
-        let x_emb = linear(&x_reshaped, &self.tensors, "x_embedder.proj")?;
+        // Apply patch embedding using x_embedder weights
+        // x_embedder.proj is a Conv2d in SD3, so we need to handle it specially
+        eprintln!("\nApplying patch embedding...");
+        
+        // Get the conv weight and bias
+        let weight = get_tensor(&self.tensors, "x_embedder.proj.weight")?;
+        let bias = get_tensor(&self.tensors, "x_embedder.proj.bias")?;
+        
+        eprintln!("Conv weight shape: {:?}", weight.shape());
+        eprintln!("Input shape: {:?}", x.shape());
+        
+        // Apply 2D convolution
+        // For GGUF, we'll use the conv2d operation
+        // patch_size should be the stride, not the kernel size for patch embedding
+        let kernel_size = patch_size;
+        let stride = patch_size; 
+        let padding = 0;
+        let dilation = 1;
+        
+        eprintln!("Conv2d params: kernel={}, stride={}, padding={}, dilation={}", kernel_size, stride, padding, dilation);
+        let x_emb = x.conv2d(&weight, kernel_size, stride, padding, dilation)?;
+        eprintln!("After conv2d: {:?}", x_emb.shape());
+        
+        // Add bias
+        let x_emb = x_emb.broadcast_add(&bias.unsqueeze(0)?.unsqueeze(2)?.unsqueeze(3)?)?;
+        
+        // Reshape from (B, C, H, W) to (B, H*W, C) for transformer
+        let (b, c_out, h_out, w_out) = x_emb.dims4()?;
+        let x_emb = x_emb.permute((0, 2, 3, 1))?.reshape((b, h_out * w_out, c_out))?;
+        eprintln!("Final patch embedding shape: {:?}", x_emb.shape());
         
         // Add positional embeddings if available
-        if let Ok(pos_emb) = get_tensor(&self.tensors, "pos_embed") {
-            x_emb.broadcast_add(&pos_emb)
+        if let Ok(pos_embed) = get_tensor(&self.tensors, "pos_embed") {
+            eprintln!("\nAdding positional embeddings...");
+            eprintln!("pos_embed shape: {:?}", pos_embed.shape());
+            eprintln!("x_emb shape: {:?}", x_emb.shape());
+            
+            // pos_embed is [max_patches, hidden_dim], we need to slice it
+            let n_patches = x_emb.dims()[1];
+            let pos_embed_slice = pos_embed.narrow(0, 0, n_patches)?;
+            eprintln!("pos_embed_slice shape: {:?}", pos_embed_slice.shape());
+            
+            // Add positional embeddings
+            x_emb.broadcast_add(&pos_embed_slice.unsqueeze(0)?)
         } else {
+            eprintln!("No positional embeddings found");
             Ok(x_emb)
         }
     }
@@ -380,16 +552,56 @@ impl QuantizedMMDiT {
     
     /// Apply label embedding
     fn apply_label_embedding(&self, y: &Tensor) -> CandleResult<Tensor> {
-        // Label embedding for class conditioning
-        linear(y, &self.tensors, "y_embedder.embedding_table")
+        // In SD3, y is the pooled text embeddings, not class labels
+        // The y_embedder might not exist in all models
+        if self.tensors.contains_key("y_embedder.embedding_table.weight") || 
+           self.tensors.contains_key("model.diffusion_model.y_embedder.embedding_table.weight") {
+            linear(y, &self.tensors, "y_embedder.embedding_table")
+        } else {
+            // If no y_embedder, need to project pooled embeddings to match hidden_size
+            eprintln!("No y_embedder found, projecting pooled embeddings to hidden size");
+            
+            // Check if there's a pooled_projector
+            if self.tensors.contains_key("pooled_projector.weight") || 
+               self.tensors.contains_key("model.diffusion_model.pooled_projector.weight") {
+                linear(y, &self.tensors, "pooled_projector")
+            } else {
+                // Create a simple projection to match hidden_size
+                let (batch_size, pooled_dim) = y.dims2()?;
+                eprintln!("Pooled embedding shape: [{}, {}]", batch_size, pooled_dim);
+                eprintln!("Target hidden size: {}", self.config.hidden_size);
+                
+                // If dimensions match, use directly
+                if pooled_dim == self.config.hidden_size {
+                    Ok(y.clone())
+                } else {
+                    // Otherwise, we need to handle the dimension mismatch
+                    // For now, just slice or pad to match
+                    if pooled_dim > self.config.hidden_size {
+                        // Slice to match hidden_size
+                        y.narrow(1, 0, self.config.hidden_size)
+                    } else {
+                        // Pad with zeros
+                        let zeros = Tensor::zeros(&[batch_size, self.config.hidden_size - pooled_dim], y.dtype(), y.device())?;
+                        Tensor::cat(&[y, &zeros], 1)
+                    }
+                }
+            }
+        }
     }
     
     /// Apply context embedding for text conditioning
     fn apply_context_embedding(&self, context: &Tensor) -> CandleResult<Tensor> {
         // Context is already embedded by text encoder, just project it
-        if self.tensors.contains_key("context_embedder.weight") {
-            linear(context, &self.tensors, "context_embedder")
+        eprintln!("\nApplying context embedding...");
+        eprintln!("Context shape: {:?}", context.shape());
+        
+        if self.tensors.contains_key("context_embedder.weight") || self.tensors.contains_key("model.diffusion_model.context_embedder.weight") {
+            let result = linear(context, &self.tensors, "context_embedder")?;
+            eprintln!("Context after embedding: {:?}", result.shape());
+            Ok(result)
         } else {
+            eprintln!("No context embedder found, using context as-is");
             Ok(context.clone())
         }
     }
@@ -442,23 +654,103 @@ impl QuantizedMMDiT {
     ) -> CandleResult<Tensor> {
         let prefix = format!("joint_blocks.{}", block_idx);
         
-        // Self-attention
-        let x_norm = layer_norm(x, &self.tensors, &format!("{}.x_norm", prefix), 1e-6)?;
-        let attn_out = self.apply_attention(&x_norm, &x_norm, &format!("{}.attn", prefix))?;
-        let x = (x + attn_out)?;
+        // SD3 uses AdaLN modulation, not regular layer norm
+        // For now, let's use a simplified version that assumes standard attention blocks
         
-        // Cross-attention with context
-        let x_norm = layer_norm(&x, &self.tensors, &format!("{}.x_norm2", prefix), 1e-6)?;
-        let context_norm = layer_norm(context, &self.tensors, &format!("{}.context_norm", prefix), 1e-6)?;
-        let cross_attn_out = self.apply_attention(&x_norm, &context_norm, &format!("{}.cross_attn", prefix))?;
-        let x = (x + cross_attn_out)?;
+        // X-block (self-attention on image patches)
+        let x_block_prefix = format!("{}.x_block", prefix);
+        let x_attn = self.apply_attention_block(x, x, &x_block_prefix, "x")?;
+        let x = (x + x_attn)?;
         
-        // Feed-forward network
-        let x_norm = layer_norm(&x, &self.tensors, &format!("{}.x_norm3", prefix), 1e-6)?;
-        let ff_out = self.apply_feedforward(&x_norm, &prefix)?;
-        let x = (x + ff_out)?;
+        // Context block (cross-attention with text)
+        let context_block_prefix = format!("{}.context_block", prefix);
+        let context_attn = self.apply_attention_block(&x, context, &context_block_prefix, "context")?;
+        let x = (x + context_attn)?;
         
         Ok(x)
+    }
+    
+    /// Apply attention block with AdaLN modulation
+    fn apply_attention_block(
+        &self,
+        x: &Tensor,
+        context: &Tensor,
+        prefix: &str,
+        block_type: &str,
+    ) -> CandleResult<Tensor> {
+        eprintln!("Applying attention block: {}", prefix);
+        
+        // For SD3, attention blocks typically have:
+        // - attn.qkv for combined query/key/value projection
+        // - attn.proj for output projection
+        // - mlp.fc1 and mlp.fc2 for feedforward
+        // - adaLN_modulation for adaptive layer norm
+        
+        // Simple attention without AdaLN for now
+        let attn_prefix = format!("{}.attn", prefix);
+        
+        // Combined QKV projection
+        if let Ok(qkv) = linear(x, &self.tensors, &format!("{}.qkv", attn_prefix)) {
+            // Split QKV
+            let (b, seq_len, _) = x.dims3()?;
+            let head_dim = 64; // Typical head dimension
+            let n_heads = self.config.num_attention_heads;
+            let hidden_size = self.config.hidden_size;
+            
+            // Reshape QKV: [B, Seq, 3*Hidden] -> [B, Seq, 3, Heads, HeadDim]
+            let qkv = qkv.reshape(&[b, seq_len, 3, n_heads, head_dim])?;
+            let qkv = qkv.permute((2, 0, 3, 1, 4))?; // [3, B, Heads, Seq, HeadDim]
+            
+            let q = qkv.i(0)?;
+            let k = qkv.i(1)?;
+            let v = qkv.i(2)?;
+            
+            // Scaled dot-product attention
+            let d_k = (head_dim as f64).sqrt();
+            
+            // Ensure tensors are contiguous for matmul
+            let q = q.contiguous()?;
+            let k_t = k.transpose(D::Minus2, D::Minus1)?.contiguous()?;
+            let v = v.contiguous()?;
+            
+            let scores = q.matmul(&k_t)?;
+            let scores = (scores / d_k)?;
+            let weights = candle_nn::ops::softmax(&scores, D::Minus1)?;
+            let attn_out = weights.matmul(&v)?;
+            
+            // Reshape back: [B, Heads, Seq, HeadDim] -> [B, Seq, Hidden]
+            let attn_out = attn_out.permute((0, 2, 1, 3))?;
+            let attn_out = attn_out.reshape(&[b, seq_len, hidden_size])?;
+            
+            // Output projection (may not exist for all blocks)
+            let out = if let Ok(proj_out) = linear(&attn_out, &self.tensors, &format!("{}.proj", attn_prefix)) {
+                proj_out
+            } else {
+                eprintln!("Warning: No projection weights found for {}, using attention output directly", attn_prefix);
+                attn_out
+            };
+            
+            // Apply MLP if exists
+            let mlp_prefix = format!("{}.mlp", prefix);
+            if self.tensors.contains_key(&format!("{}.fc1.weight", mlp_prefix)) ||
+               self.tensors.contains_key(&format!("model.diffusion_model.{}.fc1.weight", mlp_prefix)) {
+                let mlp_out = self.apply_mlp(&out, &mlp_prefix)?;
+                Ok(mlp_out)
+            } else {
+                Ok(out)
+            }
+        } else {
+            // Fallback: just return zeros if attention weights not found
+            eprintln!("Warning: QKV weights not found for {}, returning zeros", prefix);
+            Tensor::zeros_like(x)
+        }
+    }
+    
+    /// Apply MLP block
+    fn apply_mlp(&self, x: &Tensor, prefix: &str) -> CandleResult<Tensor> {
+        let x = linear(x, &self.tensors, &format!("{}.fc1", prefix))?;
+        let x = gelu(&x)?;
+        linear(&x, &self.tensors, &format!("{}.fc2", prefix))
     }
     
     /// Apply attention mechanism
@@ -499,28 +791,48 @@ impl QuantizedMMDiT {
     
     /// Apply final layer and reshape output
     fn apply_final_layer(&self, hidden: &Tensor) -> CandleResult<Tensor> {
-        // Final normalization
-        let x = layer_norm(hidden, &self.tensors, "final_layer.norm_out", 1e-6)?;
+        eprintln!("\nApplying final layer...");
+        eprintln!("Hidden shape before final layer: {:?}", hidden.shape());
         
-        // Final linear projection
-        let x = linear(&x, &self.tensors, "final_layer.linear")?;
+        // SD3 uses AdaLN modulation for the final layer too
+        // For now, skip the norm and just apply linear projection if it exists
+        let x = if let Ok(linear_out) = linear(hidden, &self.tensors, "final_layer.linear") {
+            eprintln!("Applied final_layer.linear");
+            linear_out
+        } else if let Ok(linear_out) = linear(hidden, &self.tensors, "final_layer.proj_out") {
+            eprintln!("Applied final_layer.proj_out");
+            linear_out
+        } else {
+            eprintln!("Warning: No final layer projection found, using hidden state directly");
+            hidden.clone()
+        };
+        
+        eprintln!("Shape after final projection: {:?}", x.shape());
         
         // Unpatchify: reshape back to image format
-        let (b, n_patches, _) = x.dims3()?;
+        let (b, n_patches, channels) = x.dims3()?;
         let patch_size = self.config.patch_size;
         let h = (n_patches as f64).sqrt() as usize;
         let w = h; // Assume square for now
-        let c = x.dims()[2] / (patch_size * patch_size);
+        
+        // For SD3, the output should have channels = patch_size * patch_size * latent_channels
+        // where latent_channels = 16 for VAE input
+        let latent_channels = channels / (patch_size * patch_size);
+        eprintln!("Unpatchify - patches: {}, patch_size: {}, latent_channels: {}", n_patches, patch_size, latent_channels);
         
         // Reshape: (B, n_patches, patch_size*patch_size*C) -> (B, C, H, W)
-        x.reshape((b, h, w, patch_size, patch_size, c))?
+        let output = x.reshape((b, h, w, patch_size, patch_size, latent_channels))?
             .permute((0, 5, 1, 3, 2, 4))?
-            .reshape((b, c, h * patch_size, w * patch_size))
+            .reshape((b, latent_channels, h * patch_size, w * patch_size))?;
+        
+        eprintln!("Final output shape: {:?}", output.shape());
+        Ok(output)
     }
     
     /// Create sinusoidal timestep embeddings
     fn timestep_sinusoidal_embedding(&self, timesteps: &Tensor) -> CandleResult<Tensor> {
-        let dim = self.config.hidden_size;
+        // SD3 uses 256-dimensional timestep embeddings
+        let dim = 256;
         let half_dim = dim / 2;
         let max_period = 10000.0;
         
