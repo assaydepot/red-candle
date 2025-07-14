@@ -190,34 +190,36 @@ impl GGUFMetadata {
     fn is_vae_tensor(name: &str) -> bool {
         name.starts_with("first_stage_model.") ||
         name.starts_with("vae.") ||
-        name.contains(".encoder.") ||
-        name.contains(".decoder.") ||
-        name.contains(".quant_conv.") ||
-        name.contains(".post_quant_conv.")
+        (name.starts_with("encoder.") && !name.contains("text_encoder")) ||
+        (name.starts_with("decoder.") && !name.contains("text_encoder"))
     }
     
     /// Check if tensor name belongs to CLIP-G text encoder
     fn is_clip_g_tensor(name: &str) -> bool {
         name.starts_with("conditioner.embedders.0.") ||
         name.starts_with("text_encoder.") ||
+        name.starts_with("text_encoders.clip_g.") ||
         name.starts_with("cond_stage_model.0.") ||
-        (name.contains("clip") && name.contains("text") && name.contains("g"))
+        (name.contains("clip") && name.contains("_g.") && !name.contains("clip_l"))
     }
     
     /// Check if tensor name belongs to CLIP-L text encoder
     fn is_clip_l_tensor(name: &str) -> bool {
         name.starts_with("conditioner.embedders.1.") ||
         name.starts_with("text_encoder_2.") ||
+        name.starts_with("text_encoders.clip_l.") ||
         name.starts_with("cond_stage_model.1.") ||
-        (name.contains("clip") && name.contains("text") && name.contains("l"))
+        (name.contains("clip") && name.contains("_l.") && !name.contains("clip_g"))
     }
     
     /// Check if tensor name belongs to T5 text encoder
     fn is_t5_tensor(name: &str) -> bool {
         name.starts_with("conditioner.embedders.2.") ||
         name.starts_with("text_encoder_3.") ||
+        name.starts_with("text_encoders.t5xxl.") ||
         name.starts_with("t5.") ||
-        name.contains("t5_encoder")
+        name.starts_with("t5xxl.") ||
+        name.contains("t5_xxl")
     }
     
     /// Create component info from tensor list

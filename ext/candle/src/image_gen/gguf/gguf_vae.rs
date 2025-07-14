@@ -160,10 +160,8 @@ impl QuantizedVAE {
     fn is_vae_tensor(name: &str) -> bool {
         name.starts_with("first_stage_model.") ||
         name.starts_with("vae.") ||
-        name.contains(".encoder.") ||
-        name.contains(".decoder.") ||
-        name.contains(".quant_conv.") ||
-        name.contains(".post_quant_conv.")
+        (name.starts_with("encoder.") && !name.contains("text_encoder")) ||
+        (name.starts_with("decoder.") && !name.contains("text_encoder"))
     }
     
     /// Read tensor data from GGUF file
@@ -173,10 +171,11 @@ impl QuantizedVAE {
     ) -> CandleResult<Vec<u8>> {
         use std::io::{Read, Seek, SeekFrom};
         
-        // Calculate the size of the tensor data
-        let elem_count = info.shape.elem_count();
-        let type_size = info.ggml_dtype.type_size();
-        let data_size = elem_count * type_size;
+        // Calculate the actual data size for quantized formats
+        let data_size = Self::calculate_tensor_data_size(info)?;
+        
+        eprintln!("Reading tensor data: {} elements, {:?} dtype, {} bytes", 
+            info.shape.elem_count(), info.ggml_dtype, data_size);
         
         // Seek to the tensor data position
         file.seek(SeekFrom::Start(info.offset))
@@ -188,6 +187,47 @@ impl QuantizedVAE {
             .map_err(|e| candle_core::Error::Msg(format!("Failed to read tensor data: {}", e)))?;
         
         Ok(data)
+    }
+    
+    /// Calculate actual tensor data size for GGML formats
+    fn calculate_tensor_data_size(info: &gguf_file::TensorInfo) -> CandleResult<usize> {
+        let elem_count = info.shape.elem_count();
+        
+        let size = match info.ggml_dtype {
+            GgmlDType::Q4_0 => {
+                // Q4_0: 32 elements per block, 18 bytes per block
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 18
+            },
+            GgmlDType::Q5_0 => {
+                // Q5_0: 32 elements per block, 22 bytes per block
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 22
+            },
+            GgmlDType::Q8_0 => {
+                // Q8_0: 32 elements per block, 34 bytes per block
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 34
+            },
+            GgmlDType::Q4_1 => {
+                // Q4_1: 32 elements per block, 20 bytes per block
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 20
+            },
+            GgmlDType::Q5_1 => {
+                // Q5_1: 32 elements per block, 24 bytes per block
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 24
+            },
+            GgmlDType::F16 => elem_count * 2,
+            GgmlDType::F32 => elem_count * 4,
+            _ => {
+                // For other types, use the default type_size
+                elem_count * info.ggml_dtype.type_size()
+            }
+        };
+        
+        Ok(size)
     }
     
     /// Decode latents to images using the quantized VAE

@@ -2,6 +2,39 @@ use candle_core::{Device, Result as CandleResult, Tensor, Shape, quantized::{ggu
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// Calculate actual tensor data size for GGML formats
+fn calculate_tensor_data_size(info: &gguf_file::TensorInfo) -> CandleResult<usize> {
+    let elem_count = info.shape.elem_count();
+    
+    let size = match info.ggml_dtype {
+        GgmlDType::Q4_0 => {
+            let n_blocks = (elem_count + 31) / 32;
+            n_blocks * 18
+        },
+        GgmlDType::Q5_0 => {
+            let n_blocks = (elem_count + 31) / 32;
+            n_blocks * 22
+        },
+        GgmlDType::Q8_0 => {
+            let n_blocks = (elem_count + 31) / 32;
+            n_blocks * 34
+        },
+        GgmlDType::Q4_1 => {
+            let n_blocks = (elem_count + 31) / 32;
+            n_blocks * 20
+        },
+        GgmlDType::Q5_1 => {
+            let n_blocks = (elem_count + 31) / 32;
+            n_blocks * 24
+        },
+        GgmlDType::F16 => elem_count * 2,
+        GgmlDType::F32 => elem_count * 4,
+        _ => elem_count * info.ggml_dtype.type_size()
+    };
+    
+    Ok(size)
+}
+
 /// A quantized tensor that can be dequantized on demand
 #[derive(Clone)]
 pub struct QuantizedTensor {
@@ -78,10 +111,8 @@ impl QuantizedVarBuilder {
         
         // Load all tensors
         for (name, info) in &content.tensor_infos {
-            // Calculate tensor data size
-            let elem_count = info.shape.elem_count();
-            let type_size = info.ggml_dtype.type_size();
-            let data_size = elem_count * type_size;
+            // Calculate actual data size for quantized formats
+            let data_size = calculate_tensor_data_size(info)?;
             
             // Seek to tensor data
             file.seek(SeekFrom::Start(info.offset))

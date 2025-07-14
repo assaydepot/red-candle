@@ -245,16 +245,19 @@ impl QuantizedTextEncoder {
                 name.starts_with("cond_stage_model.") ||
                 name.starts_with("text_model.") ||
                 name.starts_with("clip_l.") ||
-                (name.contains("text_encoder") && !name.contains("text_encoder_2"))
+                name.starts_with("text_encoders.clip_l.") ||
+                (name.contains("text_encoder") && !name.contains("text_encoder_2") && !name.contains("clip_g"))
             },
             TextEncoderType::ClipG => {
                 name.starts_with("text_encoder_2.") ||
                 name.starts_with("clip_g.") ||
+                name.starts_with("text_encoders.clip_g.") ||
                 name.contains("text_model_g")
             },
             TextEncoderType::T5XXL => {
                 name.starts_with("text_encoder_3.") ||
                 name.starts_with("t5xxl.") ||
+                name.starts_with("text_encoders.t5xxl.") ||
                 name.contains("t5_xxl")
             },
         }
@@ -267,9 +270,8 @@ impl QuantizedTextEncoder {
     ) -> CandleResult<Vec<u8>> {
         use std::io::{Read, Seek, SeekFrom};
         
-        let elem_count = info.shape.elem_count();
-        let type_size = info.ggml_dtype.type_size();
-        let data_size = elem_count * type_size;
+        // Calculate the actual data size for quantized formats
+        let data_size = Self::calculate_tensor_data_size(info)?;
         
         file.seek(SeekFrom::Start(info.offset))
             .map_err(|e| candle_core::Error::Msg(format!("Failed to seek: {}", e)))?;
@@ -279,6 +281,39 @@ impl QuantizedTextEncoder {
             .map_err(|e| candle_core::Error::Msg(format!("Failed to read: {}", e)))?;
         
         Ok(data)
+    }
+    
+    /// Calculate actual tensor data size for GGML formats
+    fn calculate_tensor_data_size(info: &gguf_file::TensorInfo) -> CandleResult<usize> {
+        let elem_count = info.shape.elem_count();
+        
+        let size = match info.ggml_dtype {
+            GgmlDType::Q4_0 => {
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 18
+            },
+            GgmlDType::Q5_0 => {
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 22
+            },
+            GgmlDType::Q8_0 => {
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 34
+            },
+            GgmlDType::Q4_1 => {
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 20
+            },
+            GgmlDType::Q5_1 => {
+                let n_blocks = (elem_count + 31) / 32;
+                n_blocks * 24
+            },
+            GgmlDType::F16 => elem_count * 2,
+            GgmlDType::F32 => elem_count * 4,
+            _ => elem_count * info.ggml_dtype.type_size()
+        };
+        
+        Ok(size)
     }
     
     /// Encode text tokens to embeddings
