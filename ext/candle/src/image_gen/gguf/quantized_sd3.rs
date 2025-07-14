@@ -2,7 +2,7 @@ use candle_core::{DType, Device, Result as CandleResult, Tensor, IndexOp};
 use std::path::Path;
 
 use crate::image_gen::{ImageGenerationConfig, GenerationProgress, tensor_to_png};
-use super::{GGUFMetadata, ComponentType, QuantizedMMDiT, QuantizedVAE, load_component_tensors};
+use super::{GGUFMetadata, ComponentType, QuantizedMMDiT, QuantizedVAE, QuantizedTextEncoder, TextEncoderType, load_component_tensors};
 use crate::image_gen::sd3::{SchedulerConfig, EulerScheduler};
 use crate::image_gen::sd3::model::SD3Config;
 use crate::image_gen::sd3::model::TextEncoders;
@@ -83,7 +83,7 @@ impl QuantizedSD3Pipeline {
     /// Load text encoders from GGUF file or create dummy ones
     fn load_text_encoders(
         metadata: &GGUFMetadata,
-        _path: &Path,
+        path: &Path,
         device: &Device,
     ) -> CandleResult<TextEncoders> {
         // Check which text encoders are available
@@ -98,27 +98,76 @@ impl QuantizedSD3Pipeline {
             return TextEncoders::dummy(device);
         }
         
-        // For now, use dummy encoders even if text encoders are present
-        // TODO: Implement quantized text encoder loading
-        eprintln!("Text encoders found but quantized text encoder loading not yet implemented.");
+        eprintln!("Loading quantized text encoders from GGUF...");
         eprintln!("Available encoders:");
-        if has_clip_g {
-            if let Some(info) = metadata.get_component(&ComponentType::CLIPTextG) {
-                eprintln!("  - CLIP-G: {} tensors", info.tensor_count);
-            }
-        }
-        if has_clip_l {
-            if let Some(info) = metadata.get_component(&ComponentType::CLIPTextL) {
-                eprintln!("  - CLIP-L: {} tensors", info.tensor_count);
-            }
-        }
-        if has_t5 {
-            if let Some(info) = metadata.get_component(&ComponentType::T5Text) {
-                eprintln!("  - T5-XXL: {} tensors", info.tensor_count);
-            }
-        }
-        eprintln!("Using dummy encoders for now.");
         
+        // Load CLIP-L if available
+        let clip_l = if has_clip_l {
+            if let Some(info) = metadata.get_component(&ComponentType::CLIPTextL) {
+                eprintln!("  - CLIP-L: {} tensors, loading...", info.tensor_count);
+                let (clip_l_content, mut clip_l_file, clip_l_device) = 
+                    load_component_tensors(path, &ComponentType::CLIPTextL, device)?;
+                let encoder = QuantizedTextEncoder::from_gguf(
+                    clip_l_content, 
+                    &mut clip_l_file, 
+                    &clip_l_device,
+                    TextEncoderType::ClipL
+                )?;
+                Some(Box::new(encoder) as Box<dyn std::any::Any>)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        
+        // Load CLIP-G if available
+        let clip_g = if has_clip_g {
+            if let Some(info) = metadata.get_component(&ComponentType::CLIPTextG) {
+                eprintln!("  - CLIP-G: {} tensors, loading...", info.tensor_count);
+                let (clip_g_content, mut clip_g_file, clip_g_device) = 
+                    load_component_tensors(path, &ComponentType::CLIPTextG, device)?;
+                let encoder = QuantizedTextEncoder::from_gguf(
+                    clip_g_content,
+                    &mut clip_g_file,
+                    &clip_g_device,
+                    TextEncoderType::ClipG
+                )?;
+                Some(Box::new(encoder) as Box<dyn std::any::Any>)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        
+        // Load T5-XXL if available
+        let t5 = if has_t5 {
+            if let Some(info) = metadata.get_component(&ComponentType::T5Text) {
+                eprintln!("  - T5-XXL: {} tensors, loading...", info.tensor_count);
+                let (t5_content, mut t5_file, t5_device) = 
+                    load_component_tensors(path, &ComponentType::T5Text, device)?;
+                let encoder = QuantizedTextEncoder::from_gguf(
+                    t5_content,
+                    &mut t5_file,
+                    &t5_device,
+                    TextEncoderType::T5XXL
+                )?;
+                Some(Box::new(encoder) as Box<dyn std::any::Any>)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        
+        // For now, still use dummy encoders but log what we loaded
+        eprintln!("Loaded {} quantized text encoders", 
+            [&clip_l, &clip_g, &t5].iter().filter(|e| e.is_some()).count());
+        eprintln!("Note: Integration with TextEncoders struct pending");
+        
+        // TODO: Create a QuantizedTextEncoders wrapper that implements the same interface
+        // as TextEncoders but uses the quantized encoders
         TextEncoders::dummy(device)
     }
     
