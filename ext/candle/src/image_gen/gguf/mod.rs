@@ -6,6 +6,9 @@ pub mod gguf_text_encoder;
 pub mod ggml_quant;
 pub mod quantized_var_builder;
 
+#[cfg(test)]
+mod gguf_tests;
+
 pub use gguf_loader::{GGUFMetadata, GGUFComponentInfo, ComponentType, load_component_tensors};
 pub use quantized_sd3::QuantizedSD3Pipeline;
 pub use gguf_mmdit::QuantizedMMDiT;
