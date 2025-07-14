@@ -357,3 +357,8 @@ mod tests {
         assert_eq!(result.len(), 32);
     }
 }
+
+// Include comprehensive tests
+#[cfg(test)]
+#[path = "ggml_quant_test.rs"]
+mod ggml_quant_test;
