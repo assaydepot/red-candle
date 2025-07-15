@@ -55,15 +55,14 @@ graph LR
         D[Candle::EmbeddingModel]
         E[Candle::LLM]
         F[Candle::Reranker]
-        G[Candle::QTensor]
-        H[Candle::GenerationConfig]
+        G[Candle::GenerationConfig]
     end
     
     D --> A
     D --> B
     E --> A
     E --> B
-    E --> H
+    E --> G
     F --> A
     F --> B
     A --> C
@@ -305,17 +304,6 @@ sequenceDiagram
 - Ensure tests pass on all supported devices before committing
 - Keep error messages informative and actionable
 - Avoid adding comments unless explicitly requested
-
-## Recent Updates
-
-- Removed deprecated Rb-prefixed class names
-- Enhanced error handling and user guidance
-- Cleaned up unused type aliases
-- Added tokenizer registry with auto-detection for GGUF models
-- Implemented chat interface with model-specific templates
-- Improved GGUF model loading with better error messages
-- Added generation configuration presets (deterministic, creative, balanced)
-- Enhanced streaming with incremental decoding
 
 ## Tokenizer Registry System
 
