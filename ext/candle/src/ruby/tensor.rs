@@ -519,7 +519,7 @@ impl Tensor {
 }
 
 impl Tensor {
-    // fn cat(tensors: Vec<RbTensor>, dim: i64) -> Result<RbTensor> {
+    // fn cat(tensors: Vec<Tensor>, dim: i64) -> Result<Tensor> {
     //     if tensors.is_empty() {
     //         return Err(Error::new(
     //             magnus::exception::arg_error(),
@@ -528,13 +528,13 @@ impl Tensor {
     //     }
     //     let dim = actual_dim(&tensors[0].0, dim).map_err(wrap_candle_err)?;
     //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
-    //     let tensor = Tensor::cat(&tensors, dim).map_err(wrap_candle_err)?;
+    //     let tensor = CoreTensor::cat(&tensors, dim).map_err(wrap_candle_err)?;
     //     Ok(Tensor(tensor))
     // }
 
-    // fn stack(tensors: Vec<RbTensor>, dim: usize) -> Result<Self> {
+    // fn stack(tensors: Vec<Tensor>, dim: usize) -> Result<Self> {
     //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
-    //     let tensor = Tensor::stack(&tensors, dim).map_err(wrap_candle_err)?;
+    //     let tensor = CoreTensor::stack(&tensors, dim).map_err(wrap_candle_err)?;
     //     Ok(Self(tensor))
     // }
 
