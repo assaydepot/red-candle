@@ -2,8 +2,7 @@ use magnus::{function, Module, Object};
 
 use ::candle_core::Tensor as CoreTensor;
 
-use crate::ruby::errors::wrap_candle_err;
-use crate::ruby::{Result, Tensor};
+use crate::ruby::Result;
 
 pub fn actual_index(t: &CoreTensor, dim: usize, index: i64) -> candle_core::Result<usize> {
     let dim = t.dim(dim)?;
@@ -68,21 +67,4 @@ pub fn candle_utils(rb_candle: magnus::RModule) -> Result<()> {
     rb_utils.define_singleton_method("has_accelerate", function!(has_accelerate, 0))?;
     rb_utils.define_singleton_method("has_mkl", function!(has_mkl, 0))?;
     Ok(())
-}
-
-/// Applies the Softmax function to a given tensor.#
-/// &RETURNS&: Tensor
-#[allow(dead_code)]
-fn softmax(tensor: Tensor, dim: i64) -> Result<Tensor> {
-    let dim = actual_dim(&tensor, dim).map_err(wrap_candle_err)?;
-    let sm = candle_nn::ops::softmax(&tensor.0, dim).map_err(wrap_candle_err)?;
-    Ok(Tensor(sm))
-}
-
-/// Applies the Sigmoid Linear Unit (SiLU) function to a given tensor.
-/// &RETURNS&: Tensor
-#[allow(dead_code)]
-fn silu(tensor: Tensor) -> Result<Tensor> {
-    let s = candle_nn::ops::silu(&tensor.0).map_err(wrap_candle_err)?;
-    Ok(Tensor(s))
 }
