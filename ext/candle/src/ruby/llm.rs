@@ -2,7 +2,7 @@ use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule
 use std::cell::RefCell;
 
 use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma};
-use crate::ruby::{Result as RbResult, Device as RbDevice};
+use crate::ruby::{Result, Device};
 
 // Use an enum to handle different model types instead of trait objects
 #[derive(Debug)]
@@ -83,7 +83,7 @@ pub struct GenerationConfig {
 }
 
 impl GenerationConfig {
-    pub fn new(kwargs: RHash) -> RbResult<Self> {
+    pub fn new(kwargs: RHash) -> Result<Self> {
         let mut config = RustGenerationConfig::default();
         
         // Extract values from kwargs manually
@@ -192,13 +192,13 @@ impl GenerationConfig {
 pub struct LLM {
     model: std::sync::Arc<std::sync::Mutex<RefCell<ModelType>>>,
     model_id: String,
-    device: RbDevice,
+    device: Device,
 }
 
 impl LLM {
     /// Create a new LLM from a pretrained model
-    pub fn from_pretrained(model_id: String, device: Option<RbDevice>) -> RbResult<Self> {
-        let device = device.unwrap_or(RbDevice::Cpu);
+    pub fn from_pretrained(model_id: String, device: Option<Device>) -> Result<Self> {
+        let device = device.unwrap_or(Device::Cpu);
         let candle_device = device.as_device()?;
         
         // For now, we'll use tokio runtime directly
@@ -241,7 +241,7 @@ impl LLM {
     }
 
     /// Generate text from a prompt
-    pub fn generate(&self, prompt: String, config: Option<&GenerationConfig>) -> RbResult<String> {
+    pub fn generate(&self, prompt: String, config: Option<&GenerationConfig>) -> Result<String> {
         let config = config
             .map(|c| c.inner.clone())
             .unwrap_or_default();
@@ -254,7 +254,7 @@ impl LLM {
     }
 
     /// Generate text with streaming output
-    pub fn generate_stream(&self, prompt: String, config: Option<&GenerationConfig>) -> RbResult<String> {
+    pub fn generate_stream(&self, prompt: String, config: Option<&GenerationConfig>) -> Result<String> {
         let config = config
             .map(|c| c.inner.clone())
             .unwrap_or_default();
@@ -283,12 +283,12 @@ impl LLM {
     }
 
     /// Get the device the model is running on
-    pub fn device(&self) -> RbDevice {
+    pub fn device(&self) -> Device {
         self.device
     }
     
     /// Clear the model's cache (e.g., KV cache for transformers)
-    pub fn clear_cache(&self) -> RbResult<()> {
+    pub fn clear_cache(&self) -> Result<()> {
         let model = self.model.lock().unwrap();
         let mut model_ref = model.borrow_mut();
         model_ref.clear_cache();
@@ -296,7 +296,7 @@ impl LLM {
     }
     
     /// Apply chat template to messages
-    pub fn apply_chat_template(&self, messages: RArray) -> RbResult<String> {
+    pub fn apply_chat_template(&self, messages: RArray) -> Result<String> {
         // Convert Ruby array to JSON values
         let json_messages: Vec<serde_json::Value> = messages
             .into_iter()
@@ -332,7 +332,7 @@ impl LLM {
 }
 
 // Define a standalone function for from_pretrained that handles variable arguments
-fn from_pretrained_wrapper(args: &[Value]) -> RbResult<LLM> {
+fn from_pretrained_wrapper(args: &[Value]) -> Result<LLM> {
     match args.len() {
         1 => {
             let model_id: String = TryConvert::try_convert(args[0])?;
@@ -340,7 +340,7 @@ fn from_pretrained_wrapper(args: &[Value]) -> RbResult<LLM> {
         },
         2 => {
             let model_id: String = TryConvert::try_convert(args[0])?;
-            let device: RbDevice = TryConvert::try_convert(args[1])?;
+            let device: Device = TryConvert::try_convert(args[1])?;
             LLM::from_pretrained(model_id, Some(device))
         },
         _ => Err(Error::new(
@@ -350,7 +350,7 @@ fn from_pretrained_wrapper(args: &[Value]) -> RbResult<LLM> {
     }
 }
 
-pub fn init_llm(rb_candle: RModule) -> RbResult<()> {
+pub fn init_llm(rb_candle: RModule) -> Result<()> {
     let rb_generation_config = rb_candle.define_class("GenerationConfig", magnus::class::object())?;
     rb_generation_config.define_singleton_method("new", function!(GenerationConfig::new, 1))?;
     rb_generation_config.define_singleton_method("default", function!(GenerationConfig::default, 0))?;

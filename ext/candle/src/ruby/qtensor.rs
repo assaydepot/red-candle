@@ -2,7 +2,7 @@ use std::sync::Arc;
 use magnus::{method, class, RModule, Error, Module};
 
 use crate::ruby::errors::wrap_candle_err;
-use crate::ruby::{Tensor, Result as RbResult};
+use crate::ruby::{Tensor, Result};
 use ::candle_core::{quantized::QTensor as CoreQTensor, Device as CoreDevice};
 
 #[derive(Debug)]
@@ -47,19 +47,19 @@ impl QTensor {
 
     /// Dequantizes the tensor.
     /// &RETURNS&: Tensor
-    pub fn dequantize(&self) -> RbResult<Tensor> {
+    pub fn dequantize(&self) -> Result<Tensor> {
         let tensor = self.0.dequantize(&CoreDevice::Cpu).map_err(wrap_candle_err)?;
         Ok(Tensor(tensor))
     }
 
-    // fn matmul_t(&self, lhs: &Tensor) -> RbResult<Tensor> {
+    // fn matmul_t(&self, lhs: &Tensor) -> Result<Tensor> {
     //     let qmatmul = ::candle_core::quantized::QMatMul::from_arc(self.0.clone());
     //     let res = qmatmul.forward(lhs).map_err(wrap_candle_err)?;
     //     Ok(Tensor(res))
     // }
 }
 
-pub fn init(rb_candle: RModule) -> Result<(), Error> {
+pub fn init(rb_candle: RModule) -> Result<()> {
     let rb_qtensor = rb_candle.define_class("QTensor", class::object())?;
     rb_qtensor.define_method("ggml_dtype", method!(QTensor::ggml_dtype, 0))?;
     rb_qtensor.define_method("rank", method!(QTensor::rank, 0))?;

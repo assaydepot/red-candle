@@ -2,7 +2,7 @@ use magnus::Error;
 use magnus::{function, method, class, RModule, Module, Object};
 
 use ::candle_core::Device as CoreDevice;
-use crate::ruby::Result as RbResult;
+use crate::ruby::Result;
 
 #[cfg(any(feature = "cuda", feature = "metal"))]
 use crate::ruby::errors::wrap_candle_err;
@@ -68,7 +68,7 @@ impl Device {
     }
 
     /// Create a CUDA device (GPU)
-    pub fn cuda() -> RbResult<Self> {
+    pub fn cuda() -> Result<Self> {
         #[cfg(not(feature = "cuda"))]
         {
             return Err(Error::new(
@@ -82,7 +82,7 @@ impl Device {
     }
 
     /// Create a Metal device (Apple GPU)
-    pub fn metal() -> RbResult<Self> {
+    pub fn metal() -> Result<Self> {
         #[cfg(not(feature = "metal"))]
         {
             return Err(Error::new(
@@ -103,7 +103,7 @@ impl Device {
         }
     }
 
-    pub fn as_device(&self) -> RbResult<CoreDevice> {
+    pub fn as_device(&self) -> Result<CoreDevice> {
         match self {
             Self::Cpu => Ok(CoreDevice::Cpu),
             Self::Cuda => {
@@ -165,7 +165,7 @@ impl Device {
 }
 
 impl magnus::TryConvert for Device {
-    fn try_convert(val: magnus::Value) -> RbResult<Self> {
+    fn try_convert(val: magnus::Value) -> Result<Self> {
         // First check if it's already a wrapped Device object
         if let Ok(device) = <magnus::typed_data::Obj<Device> as magnus::TryConvert>::try_convert(val) {
             return Ok(*device);
@@ -184,7 +184,7 @@ impl magnus::TryConvert for Device {
     }
 }
 
-pub fn init(rb_candle: RModule) -> Result<(), Error> {
+pub fn init(rb_candle: RModule) -> Result<()> {
     let rb_device = rb_candle.define_class("Device", class::object())?;
     rb_device.define_singleton_method("cpu", function!(Device::cpu, 0))?;
     rb_device.define_singleton_method("cuda", function!(Device::cuda, 0))?;

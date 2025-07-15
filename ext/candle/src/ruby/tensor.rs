@@ -1,11 +1,11 @@
 use magnus::prelude::*;
-use magnus::{function, method, class, RModule, Error, Module, Object};
+use magnus::{function, method, class, RModule, Module, Object};
 
 use crate::ruby::{
     errors::wrap_candle_err,
     utils::{actual_dim, actual_index},
 };
-use crate::ruby::{DType, Device, Result as RbResult};
+use crate::ruby::{DType, Device, Result};
 use ::candle_core::{DType as CoreDType, Tensor as CoreTensor};
 
 #[derive(Clone, Debug)]
@@ -22,7 +22,7 @@ impl std::ops::Deref for Tensor {
 }
 
 impl Tensor {
-    pub fn new(array: magnus::RArray, dtype: Option<magnus::Symbol>, device: Option<Device>) -> RbResult<Self> {
+    pub fn new(array: magnus::RArray, dtype: Option<magnus::Symbol>, device: Option<Device>) -> Result<Self> {
         let dtype = dtype
             .map(|dtype| DType::from_rbobject(dtype))
             .unwrap_or(Ok(DType(CoreDType::F32)))?;
@@ -31,7 +31,7 @@ impl Tensor {
         let array = array
             .into_iter()
             .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64()))
-            .collect::<RbResult<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()?;
         Ok(Self(
             CoreTensor::new(array.as_slice(), &device)
                 .map_err(wrap_candle_err)?
@@ -40,7 +40,7 @@ impl Tensor {
         ))
     }
 
-    pub fn values(&self) -> RbResult<Vec<f64>> {
+    pub fn values(&self) -> Result<Vec<f64>> {
         let values = self
             .0
             .to_dtype(CoreDType::F64)
@@ -53,7 +53,7 @@ impl Tensor {
     }
 
     /// Get values as f32 without dtype conversion
-    pub fn values_f32(&self) -> RbResult<Vec<f32>> {
+    pub fn values_f32(&self) -> Result<Vec<f32>> {
         match self.0.dtype() {
             CoreDType::F32 => {
                 let values = self
@@ -72,7 +72,7 @@ impl Tensor {
     }
 
     /// Get a single scalar value from a rank-0 tensor
-    pub fn item(&self) -> RbResult<f64> {
+    pub fn item(&self) -> Result<f64> {
         if self.0.rank() != 0 {
             return Err(magnus::Error::new(
                 magnus::exception::runtime_error(),
@@ -148,32 +148,32 @@ impl Tensor {
 
     /// Performs the `sin` operation on the tensor.
     /// &RETURNS&: Tensor
-    pub fn sin(&self) -> RbResult<Self> {
+    pub fn sin(&self) -> Result<Self> {
         Ok(Tensor(self.0.sin().map_err(wrap_candle_err)?))
     }
 
     /// Performs the `cos` operation on the tensor.
     /// &RETURNS&: Tensor
-    pub fn cos(&self) -> RbResult<Self> {
+    pub fn cos(&self) -> Result<Self> {
         Ok(Tensor(self.0.cos().map_err(wrap_candle_err)?))
     }
 
     /// Performs the `log` operation on the tensor.
     /// &RETURNS&: Tensor
-    pub fn log(&self) -> RbResult<Self> {
+    pub fn log(&self) -> Result<Self> {
         Ok(Tensor(self.0.log().map_err(wrap_candle_err)?))
     }
 
     /// Squares the tensor.
     /// &RETURNS&: Tensor
-    pub fn sqr(&self) -> RbResult<Self> {
+    pub fn sqr(&self) -> Result<Self> {
         Ok(Tensor(self.0.sqr().map_err(wrap_candle_err)?))
     }
 
     /// Returns the mean along the specified axis.
     /// @param axis [Integer, optional] The axis to reduce over (default: 0)
     /// @return [Candle::Tensor]
-    pub fn mean(&self, axis: Option<i64>) -> RbResult<Self> {
+    pub fn mean(&self, axis: Option<i64>) -> Result<Self> {
         let axis = axis.unwrap_or(0) as usize;
         Ok(Tensor(self.0.mean(axis).map_err(wrap_candle_err)?))
     }
@@ -181,32 +181,32 @@ impl Tensor {
     /// Returns the sum along the specified axis.
     /// @param axis [Integer, optional] The axis to reduce over (default: 0)
     /// @return [Candle::Tensor]
-    pub fn sum(&self, axis: Option<i64>) -> RbResult<Self> {
+    pub fn sum(&self, axis: Option<i64>) -> Result<Self> {
         let axis = axis.unwrap_or(0) as usize;
         Ok(Tensor(self.0.sum(axis).map_err(wrap_candle_err)?))
     }
 
     /// Calculates the square root of the tensor.
     /// &RETURNS&: Tensor
-    pub fn sqrt(&self) -> RbResult<Self> {
+    pub fn sqrt(&self) -> Result<Self> {
         Ok(Tensor(self.0.sqrt().map_err(wrap_candle_err)?))
     }
 
     /// Get the `recip` of the tensor.
     /// &RETURNS&: Tensor
-    pub fn recip(&self) -> RbResult<Self> {
+    pub fn recip(&self) -> Result<Self> {
         Ok(Tensor(self.0.recip().map_err(wrap_candle_err)?))
     }
 
     /// Performs the `exp` operation on the tensor.
     /// &RETURNS&: Tensor
-    pub fn exp(&self) -> RbResult<Self> {
+    pub fn exp(&self) -> Result<Self> {
         Ok(Tensor(self.0.exp().map_err(wrap_candle_err)?))
     }
 
     /// Performs the `pow` operation on the tensor with the given exponent.
     /// &RETURNS&: Tensor
-    pub fn powf(&self, p: f64) -> RbResult<Self> {
+    pub fn powf(&self, p: f64) -> Result<Self> {
         Ok(Tensor(self.0.powf(p).map_err(wrap_candle_err)?))
     }
 
@@ -218,7 +218,7 @@ impl Tensor {
     /// the index from `indexes`. Other dimensions have the same number of elements as the input
     /// tensor.
     /// &RETURNS&: Tensor
-    pub fn index_select(&self, rhs: &Self, dim: i64) -> RbResult<Self> {
+    pub fn index_select(&self, rhs: &Self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(
             self.0.index_select(rhs, dim).map_err(wrap_candle_err)?,
@@ -227,13 +227,13 @@ impl Tensor {
 
     /// Performs a matrix multiplication between the two tensors.
     /// &RETURNS&: Tensor
-    pub fn matmul(&self, rhs: &Self) -> RbResult<Self> {
+    pub fn matmul(&self, rhs: &Self) -> Result<Self> {
         Ok(Tensor(self.0.matmul(rhs).map_err(wrap_candle_err)?))
     }
 
     /// Adds the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
     /// &RETURNS&: Tensor
-    pub fn broadcast_add(&self, rhs: &Self) -> RbResult<Self> {
+    pub fn broadcast_add(&self, rhs: &Self) -> Result<Self> {
         Ok(Tensor(
             self.0.broadcast_add(rhs).map_err(wrap_candle_err)?,
         ))
@@ -241,7 +241,7 @@ impl Tensor {
 
     /// Subtracts the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
     /// &RETURNS&: Tensor
-    pub fn broadcast_sub(&self, rhs: &Self) -> RbResult<Self> {
+    pub fn broadcast_sub(&self, rhs: &Self) -> Result<Self> {
         Ok(Tensor(
             self.0.broadcast_sub(rhs).map_err(wrap_candle_err)?,
         ))
@@ -249,7 +249,7 @@ impl Tensor {
 
     /// Multiplies the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
     /// &RETURNS&: Tensor
-    pub fn broadcast_mul(&self, rhs: &Self) -> RbResult<Self> {
+    pub fn broadcast_mul(&self, rhs: &Self) -> Result<Self> {
         Ok(Tensor(
             self.0.broadcast_mul(rhs).map_err(wrap_candle_err)?,
         ))
@@ -257,7 +257,7 @@ impl Tensor {
 
     /// Divides the two tensors, while broadcasting the right-hand-side tensor to match the shape of the left-hand-side tensor.
     /// &RETURNS&: Tensor
-    pub fn broadcast_div(&self, rhs: &Self) -> RbResult<Self> {
+    pub fn broadcast_div(&self, rhs: &Self) -> Result<Self> {
         Ok(Tensor(
             self.0.broadcast_div(rhs).map_err(wrap_candle_err)?,
         ))
@@ -267,7 +267,7 @@ impl Tensor {
     /// `on_true` if the input tensor value is not zero, and `on_false` at the positions where the
     /// input tensor is equal to zero.
     /// &RETURNS&: Tensor
-    pub fn where_cond(&self, on_true: &Self, on_false: &Self) -> RbResult<Self> {
+    pub fn where_cond(&self, on_true: &Self, on_false: &Self) -> Result<Self> {
         Ok(Tensor(
             self.0
                 .where_cond(on_true, on_false)
@@ -277,19 +277,19 @@ impl Tensor {
 
     /// Add two tensors.
     /// &RETURNS&: Tensor
-    pub fn __add__(&self, rhs: &Tensor) -> RbResult<Self> {
+    pub fn __add__(&self, rhs: &Tensor) -> Result<Self> {
         Ok(Self(self.0.add(&rhs.0).map_err(wrap_candle_err)?))
     }
 
     /// Multiply two tensors.
     /// &RETURNS&: Tensor
-    pub fn __mul__(&self, rhs: &Tensor) -> RbResult<Self> {
+    pub fn __mul__(&self, rhs: &Tensor) -> Result<Self> {
         Ok(Self(self.0.mul(&rhs.0).map_err(wrap_candle_err)?))
     }
 
     /// Subtract two tensors.
     /// &RETURNS&: Tensor
-    pub fn __sub__(&self, rhs: &Tensor) -> RbResult<Self> {
+    pub fn __sub__(&self, rhs: &Tensor) -> Result<Self> {
         Ok(Self(self.0.sub(&rhs.0).map_err(wrap_candle_err)?))
     }
 
@@ -298,7 +298,7 @@ impl Tensor {
     /// Divides this tensor by another tensor or a scalar (Float/Integer).
     /// @param rhs [Candle::Tensor, Float, or Integer]
     /// @return [Candle::Tensor]
-    pub fn __truediv__(&self, rhs: magnus::Value) -> RbResult<Self> {
+    pub fn __truediv__(&self, rhs: magnus::Value) -> Result<Self> {
         use magnus::TryConvert;
         if let Ok(tensor) = <&Tensor>::try_convert(rhs) {
             Ok(Self(self.0.broadcast_div(&tensor.0).map_err(wrap_candle_err)?))
@@ -315,13 +315,13 @@ impl Tensor {
 
     /// Reshapes the tensor to the given shape.
     /// &RETURNS&: Tensor
-    pub fn reshape(&self, shape: Vec<usize>) -> RbResult<Self> {
+    pub fn reshape(&self, shape: Vec<usize>) -> Result<Self> {
         Ok(Tensor(self.0.reshape(shape).map_err(wrap_candle_err)?))
     }
 
     /// Broadcasts the tensor to the given shape.
     /// &RETURNS&: Tensor
-    pub fn broadcast_as(&self, shape: Vec<usize>) -> RbResult<Self> {
+    pub fn broadcast_as(&self, shape: Vec<usize>) -> Result<Self> {
         Ok(Tensor(
             self.0.broadcast_as(shape).map_err(wrap_candle_err)?,
         ))
@@ -329,7 +329,7 @@ impl Tensor {
 
     /// Broadcasts the tensor to the given shape, adding new dimensions on the left.
     /// &RETURNS&: Tensor
-    pub fn broadcast_left(&self, shape: Vec<usize>) -> RbResult<Self> {
+    pub fn broadcast_left(&self, shape: Vec<usize>) -> Result<Self> {
         Ok(Tensor(
             self.0.broadcast_left(shape).map_err(wrap_candle_err)?,
         ))
@@ -337,27 +337,27 @@ impl Tensor {
 
     /// Creates a new tensor with the specified dimension removed if its size was one.
     /// &RETURNS&: Tensor
-    pub fn squeeze(&self, dim: i64) -> RbResult<Self> {
+    pub fn squeeze(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(self.0.squeeze(dim).map_err(wrap_candle_err)?))
     }
 
     /// Creates a new tensor with a dimension of size one inserted at the specified position.
     /// &RETURNS&: Tensor
-    pub fn unsqueeze(&self, dim: usize) -> RbResult<Self> {
+    pub fn unsqueeze(&self, dim: usize) -> Result<Self> {
         Ok(Tensor(self.0.unsqueeze(dim).map_err(wrap_candle_err)?))
     }
 
     /// Gets the value at the specified index.
     /// &RETURNS&: Tensor
-    pub fn get(&self, index: i64) -> RbResult<Self> {
+    pub fn get(&self, index: i64) -> Result<Self> {
         let index = actual_index(self, 0, index).map_err(wrap_candle_err)?;
         Ok(Tensor(self.0.get(index).map_err(wrap_candle_err)?))
     }
 
     /// Returns a tensor that is a transposed version of the input, the given dimensions are swapped.
     /// &RETURNS&: Tensor
-    pub fn transpose(&self, dim1: usize, dim2: usize) -> RbResult<Self> {
+    pub fn transpose(&self, dim1: usize, dim2: usize) -> Result<Self> {
         Ok(Tensor(
             self.0.transpose(dim1, dim2).map_err(wrap_candle_err)?,
         ))
@@ -366,7 +366,7 @@ impl Tensor {
     /// Returns a new tensor that is a narrowed version of the input, the dimension `dim`
     /// ranges from `start` to `start + len`.
     /// &RETURNS&: Tensor
-    pub fn narrow(&self, dim: i64, start: i64, len: usize) -> RbResult<Self> {
+    pub fn narrow(&self, dim: i64, start: i64, len: usize) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         let start = actual_index(self, dim, start).map_err(wrap_candle_err)?;
         Ok(Tensor(
@@ -376,7 +376,7 @@ impl Tensor {
 
     /// Returns the indices of the maximum value(s) across the selected dimension.
     /// &RETURNS&: Tensor
-    pub fn argmax_keepdim(&self, dim: i64) -> RbResult<Self> {
+    pub fn argmax_keepdim(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(
             self.0.argmax_keepdim(dim).map_err(wrap_candle_err)?,
@@ -385,7 +385,7 @@ impl Tensor {
 
     /// Returns the indices of the minimum value(s) across the selected dimension.
     /// &RETURNS&: Tensor
-    pub fn argmin_keepdim(&self, dim: i64) -> RbResult<Self> {
+    pub fn argmin_keepdim(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(
             self.0.argmin_keepdim(dim).map_err(wrap_candle_err)?,
@@ -394,51 +394,51 @@ impl Tensor {
 
     /// Gathers the maximum value across the selected dimension.
     /// &RETURNS&: Tensor
-    pub fn max_keepdim(&self, dim: i64) -> RbResult<Self> {
+    pub fn max_keepdim(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(self.0.max_keepdim(dim).map_err(wrap_candle_err)?))
     }
 
     /// Gathers the minimum value across the selected dimension.
     /// &RETURNS&: Tensor
-    pub fn min_keepdim(&self, dim: i64) -> RbResult<Self> {
+    pub fn min_keepdim(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(self.0.min_keepdim(dim).map_err(wrap_candle_err)?))
     }
 
-    // fn eq(&self, rhs: &Self) -> RbResult<Self> {
+    // fn eq(&self, rhs: &Self) -> Result<Self> {
     //     Ok(Tensor(self.0.eq(rhs).map_err(wrap_candle_err)?))
     // }
 
-    // fn ne(&self, rhs: &Self) -> RbResult<Self> {
+    // fn ne(&self, rhs: &Self) -> Result<Self> {
     //     Ok(Tensor(self.0.ne(rhs).map_err(wrap_candle_err)?))
     // }
 
-    // fn lt(&self, rhs: &Self) -> RbResult<Self> {
+    // fn lt(&self, rhs: &Self) -> Result<Self> {
     //     Ok(Tensor(self.0.lt(rhs).map_err(wrap_candle_err)?))
     // }
 
-    // fn gt(&self, rhs: &Self) -> RbResult<Self> {
+    // fn gt(&self, rhs: &Self) -> Result<Self> {
     //     Ok(Tensor(self.0.gt(rhs).map_err(wrap_candle_err)?))
     // }
 
-    // fn ge(&self, rhs: &Self) -> RbResult<Self> {
+    // fn ge(&self, rhs: &Self) -> Result<Self> {
     //     Ok(Tensor(self.0.ge(rhs).map_err(wrap_candle_err)?))
     // }
 
-    // fn le(&self, rhs: &Self) -> RbResult<Self> {
+    // fn le(&self, rhs: &Self) -> Result<Self> {
     //     Ok(Tensor(self.0.le(rhs).map_err(wrap_candle_err)?))
     // }
 
     /// Returns the sum of the tensor.
     /// &RETURNS&: Tensor
-    pub fn sum_all(&self) -> RbResult<Self> {
+    pub fn sum_all(&self) -> Result<Self> {
         Ok(Tensor(self.0.sum_all().map_err(wrap_candle_err)?))
     }
 
     /// Returns the mean of the tensor.
     /// &RETURNS&: Tensor
-    pub fn mean_all(&self) -> RbResult<Self> {
+    pub fn mean_all(&self) -> Result<Self> {
         let elements = self.0.elem_count();
         let sum = self.0.sum_all().map_err(wrap_candle_err)?;
         let mean = (sum / elements as f64).map_err(wrap_candle_err)?;
@@ -447,33 +447,33 @@ impl Tensor {
 
     /// Flattens the tensor on the dimension indexes from `dim` (inclusive) to the last dimension.
     /// &RETURNS&: Tensor
-    pub fn flatten_from(&self, dim: i64) -> RbResult<Self> {
+    pub fn flatten_from(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(self.0.flatten_from(dim).map_err(wrap_candle_err)?))
     }
 
     ///Flattens the tensor on the dimension indexes from `0` to `dim` (inclusive).
     /// &RETURNS&: Tensor
-    pub fn flatten_to(&self, dim: i64) -> RbResult<Self> {
+    pub fn flatten_to(&self, dim: i64) -> Result<Self> {
         let dim = actual_dim(self, dim).map_err(wrap_candle_err)?;
         Ok(Tensor(self.0.flatten_to(dim).map_err(wrap_candle_err)?))
     }
 
     /// Flattens the tensor into a 1D tensor.
     /// &RETURNS&: Tensor
-    pub fn flatten_all(&self) -> RbResult<Self> {
+    pub fn flatten_all(&self) -> Result<Self> {
         Ok(Tensor(self.0.flatten_all().map_err(wrap_candle_err)?))
     }
 
     /// Transposes the tensor.
     /// &RETURNS&: Tensor
-    pub fn t(&self) -> RbResult<Self> {
+    pub fn t(&self) -> Result<Self> {
         Ok(Tensor(self.0.t().map_err(wrap_candle_err)?))
     }
 
     /// Makes the tensor contiguous in memory.
     /// &RETURNS&: Tensor
-    pub fn contiguous(&self) -> RbResult<Self> {
+    pub fn contiguous(&self) -> Result<Self> {
         Ok(Tensor(self.0.contiguous().map_err(wrap_candle_err)?))
     }
 
@@ -491,26 +491,26 @@ impl Tensor {
 
     /// Detach the tensor from the computation graph.
     /// &RETURNS&: Tensor
-    pub fn detach(&self) -> RbResult<Self> {
+    pub fn detach(&self) -> Result<Self> {
         Ok(Tensor(self.0.detach()))
     }
 
     /// Returns a copy of the tensor.
     /// &RETURNS&: Tensor
-    pub fn copy(&self) -> RbResult<Self> {
+    pub fn copy(&self) -> Result<Self> {
         Ok(Tensor(self.0.copy().map_err(wrap_candle_err)?))
     }
 
     /// Convert the tensor to a new dtype.
     /// &RETURNS&: Tensor
-    pub fn to_dtype(&self, dtype: magnus::Symbol) -> RbResult<Self> {
+    pub fn to_dtype(&self, dtype: magnus::Symbol) -> Result<Self> {
         let dtype = DType::from_rbobject(dtype)?;
         Ok(Tensor(self.0.to_dtype(dtype.0).map_err(wrap_candle_err)?))
     }
 
     /// Move the tensor to a new device.
     /// &RETURNS&: Tensor
-    pub fn to_device(&self, device: Device) -> RbResult<Self> {
+    pub fn to_device(&self, device: Device) -> Result<Self> {
         let device = device.as_device()?;
         Ok(Tensor(
             self.0.to_device(&device).map_err(wrap_candle_err)?,
@@ -519,7 +519,7 @@ impl Tensor {
 }
 
 impl Tensor {
-    // fn cat(tensors: Vec<RbTensor>, dim: i64) -> RbResult<RbTensor> {
+    // fn cat(tensors: Vec<RbTensor>, dim: i64) -> Result<RbTensor> {
     //     if tensors.is_empty() {
     //         return Err(Error::new(
     //             magnus::exception::arg_error(),
@@ -532,7 +532,7 @@ impl Tensor {
     //     Ok(Tensor(tensor))
     // }
 
-    // fn stack(tensors: Vec<RbTensor>, dim: usize) -> RbResult<Self> {
+    // fn stack(tensors: Vec<RbTensor>, dim: usize) -> Result<Self> {
     //     let tensors = tensors.into_iter().map(|t| t.0).collect::<Vec<_>>();
     //     let tensor = Tensor::stack(&tensors, dim).map_err(wrap_candle_err)?;
     //     Ok(Self(tensor))
@@ -540,7 +540,7 @@ impl Tensor {
 
     /// Creates a new tensor with random values.
     /// &RETURNS&: Tensor
-    pub fn rand(shape: Vec<usize>, device: Option<Device>) -> RbResult<Self> {
+    pub fn rand(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         Ok(Self(
             CoreTensor::rand(0f32, 1f32, shape, &device).map_err(wrap_candle_err)?,
@@ -549,7 +549,7 @@ impl Tensor {
 
     /// Creates a new tensor with random values from a normal distribution.
     /// &RETURNS&: Tensor
-    pub fn randn(shape: Vec<usize>, device: Option<Device>) -> RbResult<Self> {
+    pub fn randn(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         Ok(Self(
             CoreTensor::randn(0f32, 1f32, shape, &device).map_err(wrap_candle_err)?,
@@ -558,7 +558,7 @@ impl Tensor {
 
     /// Creates a new tensor filled with ones.
     /// &RETURNS&: Tensor
-    pub fn ones(shape: Vec<usize>, device: Option<Device>) -> RbResult<Self> {
+    pub fn ones(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         Ok(Self(
             CoreTensor::ones(shape, CoreDType::F32, &device).map_err(wrap_candle_err)?,
@@ -566,7 +566,7 @@ impl Tensor {
     }
     /// Creates a new tensor filled with zeros.
     /// &RETURNS&: Tensor
-    pub fn zeros(shape: Vec<usize>, device: Option<Device>) -> RbResult<Self> {
+    pub fn zeros(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         Ok(Self(
             CoreTensor::zeros(shape, CoreDType::F32, &device).map_err(wrap_candle_err)?,
@@ -574,7 +574,7 @@ impl Tensor {
     }
 }
 
-pub fn init(rb_candle: RModule) -> Result<(), Error> {
+pub fn init(rb_candle: RModule) -> Result<()> {
     let rb_tensor = rb_candle.define_class("Tensor", class::object())?;
     rb_tensor.define_singleton_method("new", function!(Tensor::new, 3))?;
     // rb_tensor.define_singleton_method("cat", function!(Tensor::cat, 2))?;

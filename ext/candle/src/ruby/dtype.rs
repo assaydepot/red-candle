@@ -1,8 +1,8 @@
 use magnus::value::ReprValue;
-use magnus::{method, class, RModule, Error, Module};
+use magnus::{method, class, RModule, Module};
 
 use ::candle_core::DType as CoreDType;
-use crate::ruby::Result as RbResult;
+use crate::ruby::Result;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::DType", free_immediately, size)]
@@ -21,7 +21,7 @@ impl DType {
 }
 
 impl DType {
-    pub fn from_rbobject(dtype: magnus::Symbol) -> RbResult<Self> {
+    pub fn from_rbobject(dtype: magnus::Symbol) -> Result<Self> {
         let dtype = unsafe { dtype.to_s() }.unwrap().into_owned();
         use std::str::FromStr;
         let dtype = CoreDType::from_str(&dtype).unwrap();
@@ -29,7 +29,7 @@ impl DType {
     }
 }
 
-pub fn init(rb_candle: RModule) -> Result<(), Error> {
+pub fn init(rb_candle: RModule) -> Result<()> {
     let rb_dtype = rb_candle.define_class("DType", class::object())?;
     rb_dtype.define_method("to_s", method!(DType::__str__, 0))?;
     rb_dtype.define_method("inspect", method!(DType::__repr__, 0))?;

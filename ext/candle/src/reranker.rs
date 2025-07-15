@@ -5,7 +5,7 @@ use candle_nn::{VarBuilder, Linear, Module, ops::sigmoid};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::{PaddingParams, Tokenizer, EncodeInput};
 use std::thread;
-use crate::ruby::{Device as RbDevice, Result as RbResult};
+use crate::ruby::{Device, Result};
 
 #[magnus::wrap(class = "Candle::Reranker", free_immediately, size)]
 pub struct Reranker {
@@ -17,14 +17,14 @@ pub struct Reranker {
 }
 
 impl Reranker {
-    pub fn new(model_id: String, device: Option<RbDevice>) -> RbResult<Self> {
-        let device = device.unwrap_or(RbDevice::Cpu).as_device()?;
+    pub fn new(model_id: String, device: Option<Device>) -> Result<Self> {
+        let device = device.unwrap_or(Device::Cpu).as_device()?;
         Self::new_with_core_device(model_id, device)
     }
         
-    fn new_with_core_device(model_id: String, device: CoreDevice) -> Result<Self, Error> {
+    fn new_with_core_device(model_id: String, device: CoreDevice) -> std::result::Result<Self, Error> {
         let device_clone = device.clone();
-        let handle = thread::spawn(move || -> Result<(BertModel, Tokenizer, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
+        let handle = thread::spawn(move || -> std::result::Result<(BertModel, Tokenizer, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
             let repo = api.repo(Repo::new(model_id.clone(), RepoType::Model));
             
@@ -71,7 +71,7 @@ impl Reranker {
         }
     }
     
-    pub fn debug_tokenization(&self, query: String, document: String) -> Result<magnus::RHash, Error> {
+    pub fn debug_tokenization(&self, query: String, document: String) -> std::result::Result<magnus::RHash, Error> {
         // Create query-document pair for cross-encoder
         let query_doc_pair: EncodeInput = (query.clone(), document.clone()).into();
         
@@ -95,7 +95,7 @@ impl Reranker {
         Ok(result)
     }
     
-    pub fn rerank_with_options(&self, query: String, documents: RArray, pooling_method: String, apply_sigmoid: bool) -> Result<RArray, Error> {
+    pub fn rerank_with_options(&self, query: String, documents: RArray, pooling_method: String, apply_sigmoid: bool) -> std::result::Result<RArray, Error> {
         let documents: Vec<String> = documents.to_vec()?;
         
         // Create query-document pairs for cross-encoder
@@ -258,7 +258,7 @@ impl Reranker {
     }
 }
 
-pub fn init(rb_candle: RModule) -> Result<(), Error> {
+pub fn init(rb_candle: RModule) -> std::result::Result<(), Error> {
     let c_reranker = rb_candle.define_class("Reranker", class::object())?;
     c_reranker.define_singleton_method("_create", function!(Reranker::new, 2))?;
     c_reranker.define_method("rerank_with_options", method!(Reranker::rerank_with_options, 4))?;
