@@ -110,7 +110,50 @@
 <li><strong>Mistral</strong>: All Mistral models (e.g., <code>mistralai/Mistral-7B-Instruct-v0.1</code>)</li>
 </ul>
 
+<h3 id="quantized-model-support-gguf">Quantized Model Support (GGUF)</h3>
+
+<p>Red-Candle supports quantized models in GGUF format, offering 4-8x memory reduction:</p>
+
 <blockquote>
+<p><strong>Note on GGUF Support</strong>: Red-Candle now uses a unified GGUF loader that automatically detects the model architecture from the GGUF file. This means all GGUF models (including Mistral models from TheBloke) should now work correctly! The loader automatically selects the appropriate tokenizer based on the model type to ensure proper text generation.</p>
+</blockquote>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Load quantized models - always specify the GGUF filename
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/Llama-2-7B-Chat-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> 
+                                  <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>llama-2-7b-chat.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Register custom tokenizer mappings for your models
+</span><span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_register_tokenizer'><span class='object_link'><a href="Candle/LLM.html#register_tokenizer-class_method" title="Candle::LLM.register_tokenizer (method)">register_tokenizer</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-org/my-model-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-org/my-tokenizer</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Popular quantized model sources:
+</span><span class='comment'># - TheBloke: Extensive collection of GGUF models
+</span><span class='comment'># - Search HuggingFace for &quot;GGUF&quot; models
+</span></code></pre>
+
+<p><strong>Memory usage comparison (7B models):</strong></p>
+
+<ul>
+<li>Full precision: ~28 GB</li>
+<li>Q8_0 (8-bit): ~7 GB - Best quality, larger size</li>
+<li>Q5_K_M (5-bit): ~4.5 GB - Very good quality<br></li>
+<li>Q4_K_M (4-bit): ~4 GB - Recommended default, best balance</li>
+<li>Q3_K_M (3-bit): ~3 GB - Good for memory-constrained systems</li>
+</ul>
+
+<p><strong>Quantization levels explained:</strong></p>
+
+<ul>
+<li><strong>Q8_0</strong>: Almost identical to full model, use when quality is paramount</li>
+<li><strong>Q5_K_M</strong>: Excellent quality with good compression</li>
+<li><strong>Q4_K_M</strong>: Best balance of quality/size/speed (recommended default)</li>
+<li><strong>Q3_K_M</strong>: Noticeable quality reduction but very compact</li>
+<li><strong>Q2_K</strong>: ⚠️ <strong>Not recommended</strong> - Can cause inference errors due to extreme quantization</li>
+</ul>
+
+<blockquote>
+<p><strong>Warning</strong>: Q2_K quantization can lead to &quot;weight is negative, too large or not a valid number&quot; errors during inference. Use Q3_K_M or higher for stable operation.</p>
+
 <h3 id="huggingface-login-warning">⚠️ Huggingface login warning</h3>
 
 <p>Many models, including the one below, require you to agree to the terms. You&#39;ll need to:</p>
@@ -165,9 +208,40 @@
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>   <span class='comment'># Linux/Windows with NVIDIA GPU
 </span></code></pre>
 
-<h2 id="model-format-requirement-safetensors-only">⚠️ Model Format Requirement: Safetensors Only</h2>
+<h3 id="debugging-token-generation">Debugging Token Generation</h3>
 
-<p>Red-Candle <strong>only supports embedding models that provide their weights in the <a href="https://github.com/huggingface/safetensors">safetensors</a> format</strong> (i.e., the model repo must contain a <code>model.safetensors</code> file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do <strong>not</strong> provide safetensors; many Sentence Transformers and JinaBERT models do.</p>
+<p>For debugging purposes, you can enable raw token output to see both token IDs and their raw representations:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Enable debug mode to see raw tokens during generation
+</span><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="Candle/GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='lparen'>(</span><span class='label'>debug_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+
+<span class='comment'># Non-streaming generation with debug tokens
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>config:</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_puts'>puts</span> <span class='id identifier rubyid_result'>result</span>
+<span class='comment'># Output: [15043:Hello][11:,][1917:world][0:!]
+</span>
+<span class='comment'># Streaming generation with debug tokens
+</span><span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_generate_stream'>generate_stream</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>config:</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_text'>text</span><span class='op'>|</span>
+  <span class='id identifier rubyid_print'>print</span> <span class='id identifier rubyid_text'>text</span>  <span class='comment'># Will show each token as it&#39;s generated: [15043:Hello][11:,][1917:world][0:!]
+</span><span class='kw'>end</span>
+
+<span class='comment'># Works with all models (Llama, Mistral, Gemma, and quantized GGUF models)
+</span></code></pre>
+
+<p>This is particularly useful for:</p>
+
+<ul>
+<li>Debugging tokenization issues</li>
+<li>Understanding how the model processes text</li>
+<li>Troubleshooting generation problems</li>
+<li>Analyzing model behavior</li>
+</ul>
+
+<h2 id="model-format-requirements">⚠️ Model Format Requirements</h2>
+
+<h3 id="embeddingmodels-and-rerankers-safetensors-only">EmbeddingModels and Rerankers: Safetensors Only</h3>
+
+<p>Red-Candle <strong>only supports embedding models and rerankers that provide their weights in the <a href="https://github.com/huggingface/safetensors">safetensors</a> format</strong> (i.e., the model repo must contain a <code>model.safetensors</code> file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do <strong>not</strong> provide safetensors; many Sentence Transformers and JinaBERT models do.</p>
 
 <p><strong>If you encounter an error like:</strong></p>
 
@@ -175,6 +249,17 @@
 </code></pre>
 
 <p>this means the selected model is not compatible. Please choose a model repo that provides the required file.</p>
+
+<h3 id="llms-safetensors-and-gguf-support">LLMs: Safetensors and GGUF Support</h3>
+
+<p>LLM models support two formats:</p>
+
+<ol>
+<li><strong>Safetensors format</strong> - Standard HuggingFace models (e.g., <code>TinyLlama/TinyLlama-1.1B-Chat-v1.0</code>)</li>
+<li><strong>GGUF quantized format</strong> - Memory-efficient quantized models (e.g., <code>TheBloke/Llama-2-7B-Chat-GGUF</code>)</li>
+</ol>
+
+<p>See the <a href="#quantized-model-support-gguf">Quantized Model Support</a> section for details on using GGUF models.</p>
 
 <h2 id="supported-embedding-models">Supported Embedding Models</h2>
 
@@ -357,6 +442,114 @@ print(embedding)
 
 <p>This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.</p>
 
+<h2 id="common-runtime-errors">Common Runtime Errors</h2>
+
+<h3 id="1-weight-is-negative-too-large-or-not-a-valid-number">1. Weight is negative, too large or not a valid number</h3>
+
+<p><strong>Error:</strong></p>
+
+<pre class="code ruby"><code class="ruby">/Users/cpetersen/src/scientist/red-candle/lib/candle/llm.rb:25:in `_generate_stream&#39;: Generation failed: A weight is negative, too large or not a valid number (RuntimeError)
+    from /Users/cpetersen/src/scientist/red-candle/lib/candle/llm.rb:25:in `generate_stream&#39;
+    ...
+</code></pre>
+
+<p><strong>Cause:</strong> This error occurs when using overly aggressive quantization levels (particularly Q2_K) that result in numerical instability during inference. The 2-bit quantization can cause weights to become corrupted or produce NaN/Inf values.</p>
+
+<p><strong>Solution:</strong> Use a higher quantization level. Recommended options:</p>
+
+<ul>
+<li>Q4_K_M (4-bit) - Best balance of quality and size</li>
+<li>Q5_K_M (5-bit) - Higher quality with slightly larger size</li>
+<li>Q3_K_M (3-bit) - Minimum recommended quantization</li>
+</ul>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Instead of Q2_K:
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> 
+                                  <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="2-cannot-find-tensor-model-embed_tokens-weight">2. Cannot find tensor model.embed_tokens.weight</h3>
+
+<p><strong>Error:</strong></p>
+
+<pre class="code ruby"><code class="ruby">Failed to load quantized model: cannot find tensor model.embed_tokens.weight (RuntimeError)
+</code></pre>
+
+<p><strong>Cause:</strong> This error was common in earlier versions when loading GGUF files with incompatible tensor naming conventions. The unified GGUF loader in version 1.0.0+ should handle most GGUF files correctly.</p>
+
+<p><strong>If you still encounter this error:</strong></p>
+
+<ol>
+<li>Ensure you&#39;re using the latest version of red-candle (1.0.0 or higher)</li>
+<li>Make sure to specify the exact GGUF filename:
+<code>ruby
+llm = Candle::LLM.from_pretrained(&quot;TheBloke/Mistral-7B-Instruct-v0.2-GGUF&quot;, 
+                                 device: device,
+                                 gguf_file: &quot;mistral-7b-instruct-v0.2.Q4_K_M.gguf&quot;)
+</code></li>
+<li>If the error persists, the GGUF file may use an unsupported architecture or format</li>
+</ol>
+
+<h3 id="3-no-gguf-file-found-in-repository">3. No GGUF file found in repository</h3>
+
+<p><strong>Error:</strong></p>
+
+<pre class="code ruby"><code class="ruby">Failed to load quantized model: No GGUF file found in repository TheBloke/model-name-GGUF. Try specifying a quantization level like Q4_K_M, Q5_K_M, or Q8_0. (RuntimeError)
+</code></pre>
+
+<p><strong>Cause:</strong> The automatic GGUF file detection couldn&#39;t find a matching file, often due to naming variations.</p>
+
+<p><strong>Solution:</strong> Specify the exact GGUF filename:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Visit the HuggingFace repository to find the exact filename
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/Llama-2-7B-Chat-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> 
+                                  <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>llama-2-7b-chat.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="4-failed-to-download-tokenizer">4. Failed to download tokenizer</h3>
+
+<p><strong>Error:</strong></p>
+
+<pre class="code ruby"><code class="ruby">Failed to load quantized model: Failed to download tokenizer: request error: HTTP status client error (404 Not Found)
+</code></pre>
+
+<p><strong>Cause:</strong> GGUF repositories often don&#39;t include separate tokenizer files since they&#39;re embedded in the GGUF format.</p>
+
+<p><strong>Solution:</strong> The code now includes fallback tokenizer loading. If you still encounter this error, ensure you&#39;re using the latest version of red-candle.</p>
+
+<h3 id="5-missing-metadata-in-gguf-file">5. Missing metadata in GGUF file</h3>
+
+<p><strong>Error:</strong></p>
+
+<pre class="code ruby"><code class="ruby">Failed to load GGUF model: cannot find gemma3.attention.head_count in metadata (RuntimeError)
+</code></pre>
+
+<p>or</p>
+
+<pre class="code ruby"><code class="ruby">Failed to load GGUF model: cannot find llama.attention.head_count in metadata (RuntimeError)
+</code></pre>
+
+<p><strong>Cause:</strong> Some GGUF files may have been created with older conversion tools that don&#39;t include all required metadata fields.</p>
+
+<p><strong>Solution:</strong> </p>
+
+<ul>
+<li>Try a different GGUF file from the same model</li>
+<li>Look for GGUF files from TheBloke or other reputable sources</li>
+<li>Check if a newer version of the GGUF file is available</li>
+<li>Some Gemma GGUF files may not be compatible with the current loader</li>
+</ul>
+
+<p><strong>Known compatibility issues:</strong></p>
+
+<ul>
+<li><code>lmstudio-ai/gemma-2b-it-GGUF</code> - Missing required metadata fields</li>
+<li>Gemma 3 GGUF files may require specific tokenizers that are not publicly available</li>
+<li>For best compatibility, use Llama or Mistral GGUF files from TheBloke</li>
+</ul>
+
 <h2 id="development">Development</h2>
 
 <p>FORK IT!</p>
@@ -380,7 +573,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Tue Jul 15 03:45:27 2025 by
+  Generated on Tue Jul 15 03:45:41 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.4).
 </div>
