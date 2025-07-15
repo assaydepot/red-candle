@@ -2,7 +2,7 @@ use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule
 use std::cell::RefCell;
 
 use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma, QuantizedGGUF as RustQuantizedGGUF};
-use crate::ruby::{Result as RbResult, Device as RbDevice};
+use crate::ruby::{Result, Device};
 
 // Use an enum to handle different model types instead of trait objects
 #[derive(Debug)]
@@ -320,7 +320,7 @@ impl LLM {
     }
     
     /// Clear the model's cache (e.g., KV cache for transformers)
-    pub fn clear_cache(&self) -> RbResult<()> {
+    pub fn clear_cache(&self) -> Result<()> {
         let model = match self.model.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
