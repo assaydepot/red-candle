@@ -66,7 +66,7 @@ module DeviceTestHelper
 
   # Should we run benchmarks?
   def self.run_benchmarks?
-    ENV['CANDLE_RUN_BENCHMARKS'] == 'true'
+    false  # Benchmarks are now run separately via rake test:benchmark
   end
 end
 
@@ -76,6 +76,5 @@ if ENV['CANDLE_TEST_VERBOSE'] || ARGV.include?('-v') || ARGV.include?('--verbose
   puts "  Available devices: #{DeviceTestHelper::AVAILABLE_DEVICES.select { |_, v| v }.keys.join(', ')}"
   puts "  Testing devices: #{DeviceTestHelper.devices_to_test.join(', ')}"
   puts "  Benchmarks: #{DeviceTestHelper.run_benchmarks? ? 'enabled' : 'disabled'}"
-  puts "  LLM tests: #{ENV['CANDLE_TEST_SKIP_LLM'] == 'true' ? 'skipped' : 'enabled'}"
   puts
 end

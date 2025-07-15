@@ -1,13 +1,10 @@
 use candle_core::{Result as CandleResult, Tensor};
 use candle_transformers::generation::LogitsProcessor;
-use rand::{rngs::StdRng, SeedableRng};
 
 use super::GenerationConfig;
 
 /// Helper struct for text generation process
 pub struct TextGeneration {
-    #[allow(dead_code)]
-    rng: StdRng,
     logits_processor: LogitsProcessor,
     tokens: Vec<u32>,
     eos_token_id: Option<u32>,
@@ -25,7 +22,6 @@ impl TextGeneration {
         let logits_processor = LogitsProcessor::new(seed, temperature, top_p);
         
         Self {
-            rng: StdRng::seed_from_u64(seed),
             logits_processor,
             tokens: Vec::new(),
             eos_token_id: None,

@@ -1,7 +1,7 @@
 use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule, Ruby, TryConvert, Value};
 use std::cell::RefCell;
 
-use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma};
+use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma, QuantizedGGUF as RustQuantizedGGUF};
 use crate::ruby::{Result, Device};
 
 // Use an enum to handle different model types instead of trait objects
@@ -10,6 +10,7 @@ enum ModelType {
     Mistral(RustMistral),
     Llama(RustLlama),
     Gemma(RustGemma),
+    QuantizedGGUF(RustQuantizedGGUF),
 }
 
 impl ModelType {
@@ -18,6 +19,7 @@ impl ModelType {
             ModelType::Mistral(m) => m.generate(prompt, config),
             ModelType::Llama(m) => m.generate(prompt, config),
             ModelType::Gemma(m) => m.generate(prompt, config),
+            ModelType::QuantizedGGUF(m) => m.generate(prompt, config),
         }
     }
 
@@ -31,15 +33,7 @@ impl ModelType {
             ModelType::Mistral(m) => m.generate_stream(prompt, config, callback),
             ModelType::Llama(m) => m.generate_stream(prompt, config, callback),
             ModelType::Gemma(m) => m.generate_stream(prompt, config, callback),
-        }
-    }
-
-    #[allow(dead_code)]
-    fn model_name(&self) -> &str {
-        match self {
-            ModelType::Mistral(m) => m.model_name(),
-            ModelType::Llama(m) => m.model_name(),
-            ModelType::Gemma(m) => m.model_name(),
+            ModelType::QuantizedGGUF(m) => m.generate_stream(prompt, config, callback),
         }
     }
     
@@ -48,6 +42,7 @@ impl ModelType {
             ModelType::Mistral(m) => m.clear_cache(),
             ModelType::Llama(m) => m.clear_cache(),
             ModelType::Gemma(m) => m.clear_cache(),
+            ModelType::QuantizedGGUF(m) => m.clear_cache(),
         }
     }
     
@@ -72,6 +67,7 @@ impl ModelType {
             },
             ModelType::Llama(m) => m.apply_chat_template(messages),
             ModelType::Gemma(m) => m.apply_chat_template(messages),
+            ModelType::QuantizedGGUF(m) => m.apply_chat_template(messages),
         }
     }
 }
@@ -144,6 +140,12 @@ impl GenerationConfig {
             }
         }
         
+        if let Some(value) = kwargs.get(magnus::Symbol::new("debug_tokens")) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                config.debug_tokens = v;
+            }
+        }
+        
         Ok(Self { inner: config })
     }
 
@@ -185,6 +187,10 @@ impl GenerationConfig {
     pub fn include_prompt(&self) -> bool {
         self.inner.include_prompt
     }
+
+    pub fn debug_tokens(&self) -> bool {
+        self.inner.debug_tokens
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -206,31 +212,51 @@ impl LLM {
         let rt = tokio::runtime::Runtime::new()
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to create runtime: {}", e)))?;
         
-        // Determine model type from ID and load appropriately
+        // Determine model type from ID and whether it's quantized
         let model_lower = model_id.to_lowercase();
-        let model = if model_lower.contains("mistral") {
-            let mistral = rt.block_on(async {
-                RustMistral::from_pretrained(&model_id, candle_device).await
+        let is_quantized = model_lower.contains("gguf") || model_lower.contains("-q4") || model_lower.contains("-q5") || model_lower.contains("-q8");
+        
+        let model = if is_quantized {
+            // Extract tokenizer source if provided in model_id
+            let (model_id_clean, tokenizer_source) = if let Some(pos) = model_id.find("@@") {
+                let (id, _tok) = model_id.split_at(pos);
+                (id.to_string(), Some(&model_id[pos+2..]))
+            } else {
+                (model_id.clone(), None)
+            };
+            
+            // Use unified GGUF loader for all quantized models
+            let gguf_model = rt.block_on(async {
+                RustQuantizedGGUF::from_pretrained(&model_id_clean, candle_device, tokenizer_source).await
             })
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
-            ModelType::Mistral(mistral)
-        } else if model_lower.contains("llama") || model_lower.contains("meta-llama") || model_lower.contains("tinyllama") {
-            let llama = rt.block_on(async {
-                RustLlama::from_pretrained(&model_id, candle_device).await
-            })
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
-            ModelType::Llama(llama)
-        } else if model_lower.contains("gemma") || model_lower.contains("google/gemma") {
-            let gemma = rt.block_on(async {
-                RustGemma::from_pretrained(&model_id, candle_device).await
-            })
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
-            ModelType::Gemma(gemma)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load GGUF model: {}", e)))?;
+            ModelType::QuantizedGGUF(gguf_model)
         } else {
-            return Err(Error::new(
-                magnus::exception::runtime_error(),
-                format!("Unsupported model type: {}. Currently Mistral, Llama, and Gemma models are supported.", model_id),
-            ));
+            // Load non-quantized models
+            if model_lower.contains("mistral") {
+                let mistral = rt.block_on(async {
+                    RustMistral::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Mistral(mistral)
+            } else if model_lower.contains("llama") || model_lower.contains("meta-llama") || model_lower.contains("tinyllama") {
+                let llama = rt.block_on(async {
+                    RustLlama::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Llama(llama)
+            } else if model_lower.contains("gemma") || model_lower.contains("google/gemma") {
+                let gemma = rt.block_on(async {
+                    RustGemma::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Gemma(gemma)
+            } else {
+                return Err(Error::new(
+                    magnus::exception::runtime_error(),
+                    format!("Unsupported model type: {}. Currently Mistral, Llama, and Gemma models are supported.", model_id),
+                ));
+            }
         };
         
         Ok(Self {
@@ -246,7 +272,10 @@ impl LLM {
             .map(|c| c.inner.clone())
             .unwrap_or_default();
         
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let mut model_ref = model.borrow_mut();
         
         model_ref.generate(&prompt, &config)
@@ -266,7 +295,10 @@ impl LLM {
         }
         let block = block.unwrap();
         
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let mut model_ref = model.borrow_mut();
         
         let result = model_ref.generate_stream(&prompt, &config, |token| {
@@ -289,7 +321,14 @@ impl LLM {
     
     /// Clear the model's cache (e.g., KV cache for transformers)
     pub fn clear_cache(&self) -> Result<()> {
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                // If the mutex is poisoned, we can still recover the data
+                // This happens when another thread panicked while holding the lock
+                poisoned.into_inner()
+            }
+        };
         let mut model_ref = model.borrow_mut();
         model_ref.clear_cache();
         Ok(())
@@ -323,7 +362,10 @@ impl LLM {
             })
             .collect();
         
-        let model = self.model.lock().unwrap();
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let model_ref = model.borrow();
         
         model_ref.apply_chat_template(&json_messages)
@@ -363,6 +405,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("seed", method!(GenerationConfig::seed, 0))?;
     rb_generation_config.define_method("stop_sequences", method!(GenerationConfig::stop_sequences, 0))?;
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
+    rb_generation_config.define_method("debug_tokens", method!(GenerationConfig::debug_tokens, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
     rb_llm.define_singleton_method("_from_pretrained", function!(from_pretrained_wrapper, -1))?;

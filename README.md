@@ -51,6 +51,42 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 - **Llama**: Llama 2 and Llama 3 models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, `meta-llama/Llama-2-7b-hf`, `NousResearch/Llama-2-7b-hf`)
 - **Mistral**: All Mistral models (e.g., `mistralai/Mistral-7B-Instruct-v0.1`)
 
+### Quantized Model Support (GGUF)
+
+Red-Candle supports quantized models in GGUF format, offering 4-8x memory reduction:
+
+> **Note on GGUF Support**: Red-Candle now uses a unified GGUF loader that automatically detects the model architecture from the GGUF file. This means all GGUF models (including Mistral models from TheBloke) should now work correctly! The loader automatically selects the appropriate tokenizer based on the model type to ensure proper text generation.
+
+```ruby
+# Load quantized models - always specify the GGUF filename
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", 
+                                  device: device, 
+                                  gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
+
+# Register custom tokenizer mappings for your models
+Candle::LLM.register_tokenizer("my-org/my-model-GGUF", "my-org/my-tokenizer")
+
+# Popular quantized model sources:
+# - TheBloke: Extensive collection of GGUF models
+# - Search HuggingFace for "GGUF" models
+```
+
+**Memory usage comparison (7B models):**
+- Full precision: ~28 GB
+- Q8_0 (8-bit): ~7 GB - Best quality, larger size
+- Q5_K_M (5-bit): ~4.5 GB - Very good quality  
+- Q4_K_M (4-bit): ~4 GB - Recommended default, best balance
+- Q3_K_M (3-bit): ~3 GB - Good for memory-constrained systems
+
+**Quantization levels explained:**
+- **Q8_0**: Almost identical to full model, use when quality is paramount
+- **Q5_K_M**: Excellent quality with good compression
+- **Q4_K_M**: Best balance of quality/size/speed (recommended default)
+- **Q3_K_M**: Noticeable quality reduction but very compact
+- **Q2_K**: ⚠️ **Not recommended** - Can cause inference errors due to extreme quantization
+
+> **Warning**: Q2_K quantization can lead to "weight is negative, too large or not a valid number" errors during inference. Use Q3_K_M or higher for stable operation.
+
 > ### ⚠️ Huggingface login warning
 > 
 > Many models, including the one below, require you to agree to the terms. You'll need to:
@@ -103,9 +139,38 @@ device = Candle::Device.metal
 device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
 ```
 
-## ⚠️ Model Format Requirement: Safetensors Only
+### Debugging Token Generation
 
-Red-Candle **only supports embedding models that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do.
+For debugging purposes, you can enable raw token output to see both token IDs and their raw representations:
+
+```ruby
+# Enable debug mode to see raw tokens during generation
+config = Candle::GenerationConfig.balanced(debug_tokens: true)
+
+# Non-streaming generation with debug tokens
+result = llm.generate("Hello, world!", config: config)
+puts result
+# Output: [15043:Hello][11:,][1917:world][0:!]
+
+# Streaming generation with debug tokens
+llm.generate_stream("Hello, world!", config: config) do |text|
+  print text  # Will show each token as it's generated: [15043:Hello][11:,][1917:world][0:!]
+end
+
+# Works with all models (Llama, Mistral, Gemma, and quantized GGUF models)
+```
+
+This is particularly useful for:
+- Debugging tokenization issues
+- Understanding how the model processes text
+- Troubleshooting generation problems
+- Analyzing model behavior
+
+## ⚠️ Model Format Requirements
+
+### EmbeddingModels and Rerankers: Safetensors Only
+
+Red-Candle **only supports embedding models and rerankers that provide their weights in the [safetensors](https://github.com/huggingface/safetensors) format** (i.e., the model repo must contain a `model.safetensors` file). If the model repo does not provide the required file, loading will fail with a clear error. Most official BERT and DistilBERT models do **not** provide safetensors; many Sentence Transformers and JinaBERT models do.
 
 **If you encounter an error like:**
 
@@ -114,6 +179,14 @@ RuntimeError: model.safetensors not found after download. Only safetensors model
 ```
 
 this means the selected model is not compatible. Please choose a model repo that provides the required file.
+
+### LLMs: Safetensors and GGUF Support
+
+LLM models support two formats:
+1. **Safetensors format** - Standard HuggingFace models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`)
+2. **GGUF quantized format** - Memory-efficient quantized models (e.g., `TheBloke/Llama-2-7B-Chat-GGUF`)
+
+See the [Quantized Model Support](#quantized-model-support-gguf) section for details on using GGUF models.
 
 ## Supported Embedding Models
 
@@ -288,6 +361,102 @@ The reranker uses a BERT-based architecture that:
 4. Uses a classifier layer to produce a single relevance score
 
 This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.
+
+## Common Runtime Errors
+
+### 1. Weight is negative, too large or not a valid number
+
+**Error:**
+```
+/Users/cpetersen/src/scientist/red-candle/lib/candle/llm.rb:25:in `_generate_stream': Generation failed: A weight is negative, too large or not a valid number (RuntimeError)
+    from /Users/cpetersen/src/scientist/red-candle/lib/candle/llm.rb:25:in `generate_stream'
+    ...
+```
+
+**Cause:** This error occurs when using overly aggressive quantization levels (particularly Q2_K) that result in numerical instability during inference. The 2-bit quantization can cause weights to become corrupted or produce NaN/Inf values.
+
+**Solution:** Use a higher quantization level. Recommended options:
+- Q4_K_M (4-bit) - Best balance of quality and size
+- Q5_K_M (5-bit) - Higher quality with slightly larger size
+- Q3_K_M (3-bit) - Minimum recommended quantization
+
+```ruby
+# Instead of Q2_K:
+llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
+                                  device: device, 
+                                  gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
+```
+
+### 2. Cannot find tensor model.embed_tokens.weight
+
+**Error:**
+```
+Failed to load quantized model: cannot find tensor model.embed_tokens.weight (RuntimeError)
+```
+
+**Cause:** This error was common in earlier versions when loading GGUF files with incompatible tensor naming conventions. The unified GGUF loader in version 1.0.0+ should handle most GGUF files correctly.
+
+**If you still encounter this error:**
+1. Ensure you're using the latest version of red-candle (1.0.0 or higher)
+2. Make sure to specify the exact GGUF filename:
+   ```ruby
+   llm = Candle::LLM.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-GGUF", 
+                                     device: device,
+                                     gguf_file: "mistral-7b-instruct-v0.2.Q4_K_M.gguf")
+   ```
+3. If the error persists, the GGUF file may use an unsupported architecture or format
+
+### 3. No GGUF file found in repository
+
+**Error:**
+```
+Failed to load quantized model: No GGUF file found in repository TheBloke/model-name-GGUF. Try specifying a quantization level like Q4_K_M, Q5_K_M, or Q8_0. (RuntimeError)
+```
+
+**Cause:** The automatic GGUF file detection couldn't find a matching file, often due to naming variations.
+
+**Solution:** Specify the exact GGUF filename:
+```ruby
+# Visit the HuggingFace repository to find the exact filename
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", 
+                                  device: device, 
+                                  gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
+```
+
+### 4. Failed to download tokenizer
+
+**Error:**
+```
+Failed to load quantized model: Failed to download tokenizer: request error: HTTP status client error (404 Not Found)
+```
+
+**Cause:** GGUF repositories often don't include separate tokenizer files since they're embedded in the GGUF format.
+
+**Solution:** The code now includes fallback tokenizer loading. If you still encounter this error, ensure you're using the latest version of red-candle.
+
+### 5. Missing metadata in GGUF file
+
+**Error:**
+```
+Failed to load GGUF model: cannot find gemma3.attention.head_count in metadata (RuntimeError)
+```
+or
+```
+Failed to load GGUF model: cannot find llama.attention.head_count in metadata (RuntimeError)
+```
+
+**Cause:** Some GGUF files may have been created with older conversion tools that don't include all required metadata fields.
+
+**Solution:** 
+- Try a different GGUF file from the same model
+- Look for GGUF files from TheBloke or other reputable sources
+- Check if a newer version of the GGUF file is available
+- Some Gemma GGUF files may not be compatible with the current loader
+
+**Known compatibility issues:**
+- `lmstudio-ai/gemma-2b-it-GGUF` - Missing required metadata fields
+- Gemma 3 GGUF files may require specific tokenizers that are not publicly available
+- For best compatibility, use Llama or Mistral GGUF files from TheBloke
 
 ## Development
 
