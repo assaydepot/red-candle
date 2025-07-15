@@ -127,6 +127,8 @@ response = llm.chat(messages)
 
 ### GPU Acceleration
 
+We see an 18x speed up running LLMs under CUDA vs CPU and a >3x speed up running under Metal vs CPU. Details [here](DEVICE_SUPPORT.md#performance-considerations).
+
 ```ruby
 # CPU works for all models
 device = Candle::Device.cpu

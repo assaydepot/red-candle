@@ -43,7 +43,6 @@ fn init(ruby: &Ruby) -> Result<()> {
     ruby::init_llm(rb_candle)?;
     reranker::init(rb_candle)?;
     ruby::dtype::init(rb_candle)?;
-    ruby::qtensor::init(rb_candle)?;
     ruby::device::init(rb_candle)?;
     ruby::tensor::init(rb_candle)?;
     candle_utils(rb_candle)?;
