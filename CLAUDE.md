@@ -44,6 +44,8 @@ graph TB
 
 ## Module Structure
 
+### Ruby Module Structure
+
 ```mermaid
 graph LR
     subgraph "Candle Module"
@@ -54,16 +56,74 @@ graph LR
         E[Candle::LLM]
         F[Candle::Reranker]
         G[Candle::QTensor]
+        H[Candle::GenerationConfig]
     end
     
     D --> A
     D --> B
     E --> A
     E --> B
+    E --> H
     F --> A
     F --> B
     A --> C
     A --> B
+```
+
+### Rust Class Structure
+
+```mermaid
+graph TB
+    subgraph "LLM Module Structure"
+        A[ModelType enum]
+        B[Mistral]
+        C[Llama]
+        D[Gemma]
+        E[QuantizedGGUF]
+        
+        A --> B
+        A --> C
+        A --> D
+        A --> E
+    end
+    
+    subgraph "Traits"
+        F[TextGenerator]
+        G[generate]
+        H[generate_stream]
+        I[clear_cache]
+        
+        F --> G
+        F --> H
+        F --> I
+    end
+    
+    subgraph "GGUF Internals"
+        J[QuantizedGGUF]
+        K[ModelType::Llama]
+        L[ModelType::Gemma]
+        M[Architecture Detection]
+        N[Tokenizer Download]
+        
+        J --> M
+        J --> N
+        J --> K
+        J --> L
+    end
+    
+    subgraph "Support Types"
+        O[GenerationConfig]
+        P[TokenizerWrapper]
+        Q[TextGeneration]
+        
+        O --> Q
+        P --> Q
+    end
+    
+    B -.-> F
+    C -.-> F
+    D -.-> F
+    E -.-> F
 ```
 
 ## Directory Structure
@@ -207,6 +267,8 @@ graph LR
 3. **Feature Detection**: Automatic detection of available hardware acceleration
 4. **Modular Design**: Clear separation between Ruby interface and Rust implementation
 5. **Testing Strategy**: Comprehensive testing with device-specific considerations
+6. **Tokenizer Registry**: Automatic tokenizer detection and fallback system for GGUF models
+7. **Chat Templates**: Model-specific chat template application for proper formatting
 
 ## Data Flow
 
@@ -249,3 +311,126 @@ sequenceDiagram
 - Removed deprecated Rb-prefixed class names
 - Enhanced error handling and user guidance
 - Cleaned up unused type aliases
+- Added tokenizer registry with auto-detection for GGUF models
+- Implemented chat interface with model-specific templates
+- Improved GGUF model loading with better error messages
+- Added generation configuration presets (deterministic, creative, balanced)
+- Enhanced streaming with incremental decoding
+
+## Tokenizer Registry System
+
+The LLM module now includes an intelligent tokenizer registry for GGUF models:
+
+```ruby
+# Register custom tokenizer mappings
+Candle::LLM.register_tokenizer("model-pattern", "tokenizer-id")
+Candle::LLM.register_tokenizer(/regex-pattern/, "tokenizer-id")
+
+# Automatic detection for common models
+# TheBloke/Mistral-7B-Instruct-v0.2-GGUF -> mistralai/Mistral-7B-Instruct-v0.2
+```
+
+When loading GGUF models without embedded tokenizers:
+1. First attempts to load without tokenizer
+2. If missing, auto-detects appropriate tokenizer source
+3. Falls back with clear error messages and solutions
+
+## GGUF Model Loading
+
+### Syntax Options
+
+```ruby
+# Basic GGUF loading
+llm = Candle::LLM.from_pretrained("TheBloke/Model-GGUF", 
+                                  gguf_file: "model.Q4_K_M.gguf")
+
+# With explicit tokenizer
+llm = Candle::LLM.from_pretrained("TheBloke/Model-GGUF",
+                                  gguf_file: "model.Q4_K_M.gguf",
+                                  tokenizer: "original/model-source")
+
+# Advanced syntax (used internally)
+# model_id@gguf_file@@tokenizer_source
+```
+
+### Architecture Detection
+
+The unified GGUF loader automatically detects:
+- Model architecture from GGUF metadata
+- Appropriate tokenizer based on model patterns
+- Correct chat template for the model type
+
+## Chat Interface
+
+New chat methods provide conversation-style interactions:
+
+```ruby
+messages = [
+  { role: "system", content: "You are a helpful assistant." },
+  { role: "user", content: "What is Ruby?" }
+]
+
+# Synchronous chat
+response = llm.chat(messages)
+
+# Streaming chat
+llm.chat_stream(messages) do |token|
+  print token
+end
+```
+
+Model-specific templates are automatically applied:
+- Llama 2: `<s>[INST] <<SYS>>...</SYS>> user [/INST] assistant </s>`
+- Llama 3: `<|begin_of_text|><|start_header_id|>...<|end_header_id|>`
+- Mistral: `[INST] user [/INST] assistant</s>`
+- Gemma: `<start_of_turn>user...model<end_of_turn>`
+
+## Generation Configuration
+
+### Presets
+
+```ruby
+# Temperature = 0, fixed seed
+config = Candle::GenerationConfig.deterministic
+
+# Higher temperature, more randomness
+config = Candle::GenerationConfig.creative
+
+# Balanced settings
+config = Candle::GenerationConfig.balanced
+
+# Chain modifications
+config = Candle::GenerationConfig.balanced.with(max_length: 1000)
+```
+
+### Debug Mode
+
+```ruby
+# Shows token IDs and pieces during generation
+config = Candle::GenerationConfig.new(debug_tokens: true)
+llm.generate("Hello", config: config)
+# Output: [128000:Hello][1299: world][128001:<|eot_id|>]
+```
+
+## Error Handling Improvements
+
+Enhanced error messages now provide:
+- Specific failure reasons
+- Multiple solution suggestions
+- Network connectivity hints
+- Authentication guidance (HF_TOKEN)
+- Alternative model/tokenizer recommendations
+
+Example error output:
+```
+Failed to load GGUF model with auto-detected tokenizer.
+
+Original error: No tokenizer found in GGUF repository
+Tokenizer error: Failed to find tokenizer in specified source
+
+Possible solutions:
+1. Specify a tokenizer explicitly
+2. Check your network connection
+3. Set HF_TOKEN environment variable
+4. Try a different model source
+```
