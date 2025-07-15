@@ -73,7 +73,7 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "LLM Module Structure"
+    subgraph "LLM Module"
         A[ModelType enum]
         B[Mistral]
         C[Llama]
@@ -84,6 +84,39 @@ graph TB
         A --> C
         A --> D
         A --> E
+    end
+    
+    subgraph "Embedding Module"
+        EM[EmbeddingModel]
+        EMI[EmbeddingModelInner]
+        EMT[EmbeddingModelType]
+        EMV[EmbeddingModelVariant]
+        JB[JinaBert]
+        SB[StandardBert]
+        DB[DistilBert]
+        ML[MiniLM]
+        
+        EM --> EMI
+        EMI --> EMV
+        EMT --> JB
+        EMT --> SB
+        EMT --> DB
+        EMT --> ML
+        EMV --> JB
+        EMV --> SB
+        EMV --> DB
+        EMV --> ML
+    end
+    
+    subgraph "Reranker Module"
+        R[Reranker]
+        RM[BertModel]
+        RP[Pooler Linear]
+        RC[Classifier Linear]
+        
+        R --> RM
+        R --> RP
+        R --> RC
     end
     
     subgraph "Traits"
@@ -114,6 +147,8 @@ graph TB
         O[GenerationConfig]
         P[TokenizerWrapper]
         Q[TextGeneration]
+        T[Tokenizer]
+        DEV[Device]
         
         O --> Q
         P --> Q
@@ -123,6 +158,12 @@ graph TB
     C -.-> F
     D -.-> F
     E -.-> F
+    
+    EM -.-> T
+    EM -.-> DEV
+    R -.-> T
+    R -.-> DEV
+    A -.-> DEV
 ```
 
 ## Directory Structure
@@ -210,10 +251,6 @@ impl ClassName {
 - Error handling: Uses `Result<T, magnus::Error>` type
 - Magnus integration: Wrapper structs with `#[magnus::wrap]`
 - Feature flags: Conditional compilation for CUDA/Metal support
-
-### Important Note on Rb-Prefixed Types
-
-**STOP**: If you see any classes or types prefixed with `Rb` (like `RbTensor`), please notify immediately. The codebase has been cleaned of these prefixes, with only a few remaining as type aliases in dead code that should be removed.
 
 ## Testing
 
