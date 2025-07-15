@@ -3,7 +3,7 @@
 use crate::ruby::{
     errors::{wrap_candle_err, wrap_hf_err, wrap_std_err},
 };
-use crate::ruby::{Tensor, Device, Result as RbResult};
+use crate::ruby::{Tensor, Device, Result};
 use candle_core::{DType as CoreDType, Device as CoreDevice, Module, Tensor as CoreTensor};
 use safetensors::tensor::SafeTensors;
 use candle_nn::VarBuilder;
@@ -75,7 +75,7 @@ pub struct EmbeddingModelInner {
 }
 
 impl EmbeddingModel {
-    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> RbResult<Self> {
+    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         let embedding_model_type = embedding_model_type
             .and_then(|mt| EmbeddingModelType::from_string(&mt))
@@ -102,7 +102,7 @@ impl EmbeddingModel {
     /// Generates an embedding vector for the input text using the specified pooling method.
     /// &RETURNS&: Tensor
     /// pooling_method: "pooled", "pooled_normalized", or "cls" (default: "pooled")
-    pub fn embedding(&self, input: String, pooling_method: String) -> RbResult<Tensor> {
+    pub fn embedding(&self, input: String, pooling_method: String) -> Result<Tensor> {
         match &self.0.model {
             Some(model) => {
                 match &self.0.tokenizer {
@@ -116,7 +116,7 @@ impl EmbeddingModel {
 
     /// Returns the unpooled embedding tensor ([1, SEQLENGTH, DIM]) for the input text
     /// &RETURNS&: Tensor
-    pub fn embeddings(&self, input: String) -> RbResult<Tensor> {
+    pub fn embeddings(&self, input: String) -> Result<Tensor> {
         match &self.0.model {
             Some(model) => {
                 match &self.0.tokenizer {
@@ -130,27 +130,27 @@ impl EmbeddingModel {
 
     /// Pools and normalizes a sequence embedding tensor ([1, SEQLENGTH, DIM]) to [1, DIM]
     /// &RETURNS&: Tensor
-    pub fn pool_embedding(&self, tensor: &Tensor) -> RbResult<Tensor> {
+    pub fn pool_embedding(&self, tensor: &Tensor) -> Result<Tensor> {
         let pooled = Self::pooled_embedding(&tensor.0)?;
         Ok(Tensor(pooled))
     }
 
     /// Pools and normalizes a sequence embedding tensor ([1, SEQLENGTH, DIM]) to [1, DIM]
     /// &RETURNS&: Tensor
-    pub fn pool_and_normalize_embedding(&self, tensor: &Tensor) -> RbResult<Tensor> {
+    pub fn pool_and_normalize_embedding(&self, tensor: &Tensor) -> Result<Tensor> {
         let pooled = Self::pooled_normalized_embedding(&tensor.0)?;
         Ok(Tensor(pooled))
     }
 
     /// Pools the embedding tensor by extracting the CLS token ([1, SEQLENGTH, DIM] -> [1, DIM])
     /// &RETURNS&: Tensor
-    pub fn pool_cls_embedding(&self, tensor: &Tensor) -> RbResult<Tensor> {
+    pub fn pool_cls_embedding(&self, tensor: &Tensor) -> Result<Tensor> {
         let pooled = Self::pooled_cls_embedding(&tensor.0)?;
         Ok(Tensor(pooled))
     }
 
     /// Infers and validates the embedding size from a safetensors file
-    fn resolve_embedding_size(model_path: &Path, embedding_size: Option<usize>) -> Result<usize, magnus::Error> {
+    fn resolve_embedding_size(model_path: &Path, embedding_size: Option<usize>) -> std::result::Result<usize, magnus::Error> {
         match embedding_size {
             Some(user_dim) => {
                 Ok(user_dim)
@@ -170,7 +170,7 @@ impl EmbeddingModel {
         }
     }
 
-    fn build_embedding_model(model_path: &Path, device: CoreDevice, embedding_model_type: EmbeddingModelType, embedding_size: Option<usize>) -> RbResult<EmbeddingModelVariant> {
+    fn build_embedding_model(model_path: &Path, device: CoreDevice, embedding_model_type: EmbeddingModelType, embedding_size: Option<usize>) -> Result<EmbeddingModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let api = Api::new().map_err(wrap_hf_err)?;
         let repo = Repo::new(model_path.to_str().unwrap().to_string(), RepoType::Model);
@@ -257,7 +257,7 @@ impl EmbeddingModel {
         }
     }
 
-    fn build_tokenizer(tokenizer_path: String) -> RbResult<Tokenizer> {
+    fn build_tokenizer(tokenizer_path: String) -> Result<Tokenizer> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let tokenizer_path = Api::new()
                 .map_err(wrap_hf_err)?
@@ -280,7 +280,7 @@ impl EmbeddingModel {
 
     /// Pools the embedding tensor by extracting the CLS token ([1, SEQLENGTH, DIM] -> [1, DIM])
     /// &RETURNS&: Tensor
-    fn pooled_cls_embedding(result: &CoreTensor) -> Result<CoreTensor, Error> {
+    fn pooled_cls_embedding(result: &CoreTensor) -> std::result::Result<CoreTensor, Error> {
         // 1) sanity-check that we have a 3D tensor
         let (_batch, _seq_len, _hidden_size) = result.dims3().map_err(wrap_candle_err)?;
     
@@ -298,14 +298,14 @@ impl EmbeddingModel {
         Ok(cls)
     }
 
-    fn pooled_embedding(result: &CoreTensor) -> Result<CoreTensor, Error> {
+    fn pooled_embedding(result: &CoreTensor) -> std::result::Result<CoreTensor, Error> {
         let (_n_sentence, n_tokens, _hidden_size) = result.dims3().map_err(wrap_candle_err)?;
         let sum = result.sum(1).map_err(wrap_candle_err)?;
         let mean = (sum / (n_tokens as f64)).map_err(wrap_candle_err)?;
         Ok(mean)
     }
 
-    fn pooled_normalized_embedding(result: &CoreTensor) -> Result<CoreTensor, Error> {
+    fn pooled_normalized_embedding(result: &CoreTensor) -> std::result::Result<CoreTensor, Error> {
         let mean = Self::pooled_embedding(result)?;
         let norm = Self::normalize_l2(&mean).map_err(wrap_candle_err)?;
         Ok(norm)
@@ -316,7 +316,7 @@ impl EmbeddingModel {
         prompt: String,
         model: &EmbeddingModelVariant,
         tokenizer: &Tokenizer,
-    ) -> Result<CoreTensor, Error> {
+    ) -> std::result::Result<CoreTensor, Error> {
         let tokens = tokenizer
             .encode(prompt, true)
             .map_err(wrap_std_err)?
@@ -357,7 +357,7 @@ impl EmbeddingModel {
         model: &EmbeddingModelVariant,
         tokenizer: &Tokenizer,
         pooling_method: &str,
-    ) -> Result<CoreTensor, Error> {
+    ) -> std::result::Result<CoreTensor, Error> {
         let result = self.compute_embeddings(prompt, model, tokenizer)?;
         match pooling_method {
             "pooled" => Self::pooled_embedding(&result),
@@ -368,7 +368,7 @@ impl EmbeddingModel {
     }
 
     #[allow(dead_code)]
-    fn normalize_l2(v: &CoreTensor) -> Result<CoreTensor, candle_core::Error> {
+    fn normalize_l2(v: &CoreTensor) -> candle_core::Result<CoreTensor> {
         v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
 
@@ -394,7 +394,7 @@ impl EmbeddingModel {
     }
 }
 
-pub fn init(rb_candle: RModule) -> Result<(), Error> {
+pub fn init(rb_candle: RModule) -> Result<()> {
     let rb_embedding_model = rb_candle.define_class("EmbeddingModel", class::object())?;
     rb_embedding_model.define_singleton_method("_create", function!(EmbeddingModel::new, 5))?;
     // Expose embedding with an optional pooling_method argument (default: "pooled")

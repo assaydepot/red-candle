@@ -1,7 +1,7 @@
 use magnus::{function, prelude::*, Ruby};
 
 use crate::ruby::candle_utils;
-use crate::ruby::Result as RbResult;
+use crate::ruby::Result;
 
 pub mod llm;
 pub mod reranker;
@@ -33,7 +33,7 @@ pub fn get_build_info() -> magnus::RHash {
 }
 
 #[magnus::init]
-fn init(ruby: &Ruby) -> RbResult<()> {
+fn init(ruby: &Ruby) -> Result<()> {
     let rb_candle = ruby.define_module("Candle")?;
     
     // Export build info

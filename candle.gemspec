@@ -34,4 +34,13 @@ Gem::Specification.new do |spec|
   spec.required_rubygems_version = ">= 3.3.26"
 
   spec.add_dependency "rb_sys"
+  
+  # Development dependencies
+  spec.add_development_dependency "minitest"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "rake-compiler"
+  spec.add_development_dependency "yard"
+  spec.add_development_dependency "yard-rustdoc"
+  spec.add_development_dependency "redcarpet", "~> 3.6"
+  spec.add_development_dependency "informers"
 end

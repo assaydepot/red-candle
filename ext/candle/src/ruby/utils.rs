@@ -1,11 +1,11 @@
-use magnus::{function, Error, Module, Object};
+use magnus::{function, Module, Object};
 
-use ::candle_core::Tensor;
+use ::candle_core::Tensor as CoreTensor;
 
 use crate::ruby::errors::wrap_candle_err;
-use crate::ruby::{Result as RbResult, Tensor as RbTensor};
+use crate::ruby::{Result, Tensor};
 
-pub fn actual_index(t: &Tensor, dim: usize, index: i64) -> candle_core::Result<usize> {
+pub fn actual_index(t: &CoreTensor, dim: usize, index: i64) -> candle_core::Result<usize> {
     let dim = t.dim(dim)?;
     if 0 <= index {
         let index = index as usize;
@@ -21,7 +21,7 @@ pub fn actual_index(t: &Tensor, dim: usize, index: i64) -> candle_core::Result<u
     }
 }
 
-pub fn actual_dim(t: &Tensor, dim: i64) -> candle_core::Result<usize> {
+pub fn actual_dim(t: &CoreTensor, dim: i64) -> candle_core::Result<usize> {
     let rank = t.rank();
     if 0 <= dim {
         let dim = dim as usize;
@@ -61,7 +61,7 @@ fn get_num_threads() -> usize {
     candle_core::utils::get_num_threads()
 }
 
-pub fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
+pub fn candle_utils(rb_candle: magnus::RModule) -> Result<()> {
     let rb_utils = rb_candle.define_module("Utils")?;
     rb_utils.define_singleton_method("cuda_is_available", function!(cuda_is_available, 0))?;
     rb_utils.define_singleton_method("get_num_threads", function!(get_num_threads, 0))?;
@@ -73,16 +73,16 @@ pub fn candle_utils(rb_candle: magnus::RModule) -> Result<(), Error> {
 /// Applies the Softmax function to a given tensor.#
 /// &RETURNS&: Tensor
 #[allow(dead_code)]
-fn softmax(tensor: RbTensor, dim: i64) -> RbResult<RbTensor> {
+fn softmax(tensor: Tensor, dim: i64) -> Result<Tensor> {
     let dim = actual_dim(&tensor, dim).map_err(wrap_candle_err)?;
     let sm = candle_nn::ops::softmax(&tensor.0, dim).map_err(wrap_candle_err)?;
-    Ok(RbTensor(sm))
+    Ok(Tensor(sm))
 }
 
 /// Applies the Sigmoid Linear Unit (SiLU) function to a given tensor.
 /// &RETURNS&: Tensor
 #[allow(dead_code)]
-fn silu(tensor: RbTensor) -> RbResult<RbTensor> {
+fn silu(tensor: Tensor) -> Result<Tensor> {
     let s = candle_nn::ops::silu(&tensor.0).map_err(wrap_candle_err)?;
-    Ok(RbTensor(s))
+    Ok(Tensor(s))
 }

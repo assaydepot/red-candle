@@ -1,0 +1,251 @@
+# Red Candle Development Guide
+
+This guide captures the coding conventions and patterns used in the red-candle Ruby gem.
+
+## Project Overview
+
+Red Candle is a Ruby gem that uses the Magnus Rust crate to embed Rust code in Ruby, providing access to the Candle ML library from Hugging Face. It enables Ruby developers to use embedding models, rerankers, and LLMs.
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Ruby Layer"
+        A[Ruby Application]
+        B[Candle Module]
+        C[Model Classes]
+        D[Device Utils]
+    end
+    
+    subgraph "Native Extension (Rust)"
+        E[Magnus Bindings]
+        F[Candle Core]
+        G[Model Implementations]
+        H[Hardware Abstraction]
+    end
+    
+    subgraph "Hardware"
+        I[CPU]
+        J[Metal/GPU]
+        K[CUDA/GPU]
+    end
+    
+    A --> B
+    B --> C
+    C --> E
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    H --> J
+    H --> K
+```
+
+## Module Structure
+
+```mermaid
+graph LR
+    subgraph "Candle Module"
+        A[Candle::Tensor]
+        B[Candle::Device]
+        C[Candle::DType]
+        D[Candle::EmbeddingModel]
+        E[Candle::LLM]
+        F[Candle::Reranker]
+        G[Candle::QTensor]
+    end
+    
+    D --> A
+    D --> B
+    E --> A
+    E --> B
+    F --> A
+    F --> B
+    A --> C
+    A --> B
+```
+
+## Directory Structure
+
+```
+red-candle/
+├── lib/              # Ruby source files
+│   └── candle/       # Main module namespace
+├── ext/              # Native extensions
+│   └── candle/       # Rust extension
+│       └── src/      # Rust source files
+├── test/             # Test suite
+├── examples/         # Usage examples
+├── docs/             # Additional documentation
+└── bin/              # Executables
+```
+
+## Ruby Conventions
+
+### Module and Class Structure
+
+- Single module namespace: `Candle`
+- Clear class responsibilities:
+  - `Tensor` - Core tensor operations
+  - `LLM` - Language model functionality
+  - `EmbeddingModel` - Text embeddings
+  - `Reranker` - Document reranking
+
+### Ruby Style
+
+```ruby
+module Candle
+  class ClassName
+    # Constants first
+    CONSTANT_NAME = value
+    
+    # Class methods
+    class << self
+      def class_method
+      end
+    end
+    
+    # Public instance methods
+    def public_method
+    end
+    
+    private
+    
+    def private_method
+    end
+  end
+end
+```
+
+### Naming Conventions
+
+- Classes: `PascalCase`
+- Methods: `snake_case`
+- Constants: `UPPER_SNAKE_CASE`
+- Files: `snake_case.rb`
+- Use modern hash syntax with symbols
+- Use keyword arguments for optional parameters
+
+## Rust Conventions
+
+### Rust Configuration (rustfmt.toml)
+
+- Indentation: 4 spaces
+- Line width: 100 characters max
+- Edition: Rust 2021
+
+### Rust Patterns
+
+```rust
+#[magnus::wrap(class = "Candle::ClassName", free_immediately, size)]
+pub struct ClassName(pub InternalType);
+
+impl ClassName {
+    pub fn new(params: Type) -> Result<Self> {
+        // Implementation with proper error wrapping
+    }
+}
+```
+
+- Error handling: Uses `Result<T, magnus::Error>` type
+- Magnus integration: Wrapper structs with `#[magnus::wrap]`
+- Feature flags: Conditional compilation for CUDA/Metal support
+
+### Important Note on Rb-Prefixed Types
+
+**STOP**: If you see any classes or types prefixed with `Rb` (like `RbTensor`), please notify immediately. The codebase has been cleaned of these prefixes, with only a few remaining as type aliases in dead code that should be removed.
+
+## Testing
+
+### Framework: Minitest
+
+```ruby
+require_relative "test_helper"
+
+class ClassNameTest < Minitest::Test
+  def test_feature_description
+    # Test implementation
+  end
+end
+```
+
+### Test Commands
+
+```bash
+rake              # Run default tests
+rake test         # Run unit tests
+rake test:device  # Run device compatibility tests
+rake test:benchmark # Run benchmarks
+rake test:all     # Run all tests
+rake test:device:cpu/metal/cuda # Test specific device
+```
+
+## Development Workflow
+
+```mermaid
+graph LR
+    A[bundle install] --> B[rake compile]
+    B --> C[rake test]
+    C --> D{Tests Pass?}
+    D -->|No| E[Fix Issues]
+    E --> B
+    D -->|Yes| F[Development Complete]
+```
+
+## Build Commands
+
+- **Compile**: `rake compile`
+- **Test**: `rake test`
+- **Lint**: Check if lint command exists in project
+- **Type check**: Check if type checking is configured
+
+## Key Patterns
+
+1. **Error Handling**: Consistent use of Result types with proper error wrapping
+2. **Device Abstraction**: Clean abstraction for CPU/Metal/CUDA devices
+3. **Feature Detection**: Automatic detection of available hardware acceleration
+4. **Modular Design**: Clear separation between Ruby interface and Rust implementation
+5. **Testing Strategy**: Comprehensive testing with device-specific considerations
+
+## Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Ruby
+    participant Magnus
+    participant Rust
+    participant Candle
+    participant Hardware
+    
+    Ruby->>Magnus: Call method
+    Magnus->>Rust: Convert Ruby objects
+    Rust->>Candle: Execute ML operation
+    Candle->>Hardware: Compute on device
+    Hardware-->>Candle: Return results
+    Candle-->>Rust: Tensor results
+    Rust-->>Magnus: Wrap in Ruby objects
+    Magnus-->>Ruby: Return Ruby objects
+```
+
+## Documentation Style
+
+- YARD documentation for Ruby code
+- Rust documentation integrated
+- Clear examples in code
+- Markdown files for specific topics (UPPER_CASE.md for important docs)
+
+## Important Notes
+
+- Do not modify the 'ignored' directory
+- Use frozen string literals in Ruby files
+- Follow existing patterns when adding new functionality
+- Ensure tests pass on all supported devices before committing
+- Keep error messages informative and actionable
+- Avoid adding comments unless explicitly requested
+
+## Recent Updates
+
+- Removed deprecated Rb-prefixed class names
+- Enhanced error handling and user guidance
+- Cleaned up unused type aliases
