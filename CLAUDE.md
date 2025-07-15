@@ -4,7 +4,7 @@ This guide captures the coding conventions and patterns used in the red-candle R
 
 ## Project Overview
 
-Red Candle is a Ruby gem that uses the Magnus Rust crate to embed Rust code in Ruby, providing access to the Candle ML library from Hugging Face. It enables Ruby developers to use embedding models, rerankers, LLMs, text-to-image models, and more.
+Red Candle is a Ruby gem that uses the Magnus Rust crate to embed Rust code in Ruby, providing access to the Candle ML library from Hugging Face. It enables Ruby developers to use embedding models, rerankers, and LLMs.
 
 ## Architecture Overview
 
@@ -247,7 +247,5 @@ sequenceDiagram
 ## Recent Updates
 
 - Removed deprecated Rb-prefixed class names
-- Enhanced image generation support with GGUF infrastructure
-- Added FP8 model detection and guidance
-- Improved Stable Diffusion 3 pipeline loading
 - Enhanced error handling and user guidance
+- Cleaned up unused type aliases
