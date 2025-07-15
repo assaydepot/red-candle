@@ -10,3 +10,6 @@ gem "yard", require: false
 gem "yard-rustdoc", require: false
 
 gem "redcarpet", "~> 3.6"
+
+# For comparison tests
+gem "informers", require: false

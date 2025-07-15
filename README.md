@@ -120,8 +120,9 @@ this means the selected model is not compatible. Please choose a model repo that
 Red-Candle supports the following embedding model types from Hugging Face:
 
 1. `Candle::EmbeddingModelType::JINA_BERT` - Jina BERT models (e.g., `jinaai/jina-embeddings-v2-base-en`) (**safetensors required**)
-2. `Candle::EmbeddingModelType::STANDARD_BERT` - Standard BERT models (e.g., `sentence-transformers/all-MiniLM-L6-v2`) (**safetensors required**)
+2. `Candle::EmbeddingModelType::MINILM` - MINILM models (e.g., `sentence-transformers/all-MiniLM-L6-v2`) (**safetensors required**)
 3. `Candle::EmbeddingModelType::DISTILBERT` - DistilBERT models (e.g., `distilbert-base-uncased-finetuned-sst-2-english`) (**safetensors required**)
+4. `Candle::EmbeddingModelType::STANDARD_BERT` - Standard BERT models (e.g., `scientistcom/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext`) (**safetensors required**)
 
 > **Note:** Most official BERT and DistilBERT models do _not_ provide safetensors. Please check the model repo before use.
 
