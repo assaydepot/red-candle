@@ -67,5 +67,12 @@ target
 *.a
 *.o
 *.lock
+*.dSYM/
+.sitearchdir.time
 
 lib.py.rs
+
+# Other common build artifacts
+/ext/*/Makefile
+/ext/*/mkmf.log
+
