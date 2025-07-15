@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use magnus::{method, class, RModule, Error, Module};
+use magnus::{method, class, RModule, Module};
 
 use crate::ruby::errors::wrap_candle_err;
 use crate::ruby::{Tensor, Result};

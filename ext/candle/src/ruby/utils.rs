@@ -1,4 +1,4 @@
-use magnus::{function, Error, Module, Object};
+use magnus::{function, Module, Object};
 
 use ::candle_core::Tensor;
 
