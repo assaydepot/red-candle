@@ -10,7 +10,7 @@ module Candle
       _create(model_path, device)
     end
 
-    # Returns the embedding for a string using the specified pooling method.
+    # Returns documents ranked by relevance using the specified pooling method.
     # @param query [String] The input text
     # @param documents [Array<String>] The list of documents to compare against
     # @param pooling_method [String] Pooling method: "pooler", "cls", or "mean". Default: "pooler"
