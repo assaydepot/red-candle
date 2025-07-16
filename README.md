@@ -273,7 +273,7 @@ ranked_results = reranker.rerank(query, documents, pooling_method: "pooler", app
 # Or apply sigmoid activation to get scores between 0 and 1
 sigmoid_results = reranker.rerank(query, documents, pooling_method: "pooler", apply_sigmoid: true)
 
-# The pooler method is the default and is recommended for cross-encoders, as is apply_sigmod, so the above is the same as:
+# The pooler method is the default and is recommended for cross-encoders, as is apply_sigmoid, so the above is the same as:
 ranked_results = reranker.rerank(query, documents)
 
 # Results are returned as an array of hashes, sorted by relevance
