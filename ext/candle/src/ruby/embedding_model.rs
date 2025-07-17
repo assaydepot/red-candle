@@ -385,6 +385,14 @@ impl EmbeddingModel {
     pub fn __str__(&self) -> String {
         self.__repr__()
     }
+
+    /// Get the tokenizer used by this model
+    pub fn tokenizer(&self) -> Result<crate::ruby::tokenizer::Tokenizer> {
+        match &self.0.tokenizer {
+            Some(tokenizer) => Ok(crate::ruby::tokenizer::Tokenizer(tokenizer.clone())),
+            None => Err(magnus::Error::new(magnus::exception::runtime_error(), "No tokenizer loaded for this model"))
+        }
+    }
 }
 
 pub fn init(rb_candle: RModule) -> Result<()> {
@@ -399,5 +407,6 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_embedding_model.define_method("embedding_model_type", method!(EmbeddingModel::embedding_model_type, 0))?;
     rb_embedding_model.define_method("to_s", method!(EmbeddingModel::__str__, 0))?;
     rb_embedding_model.define_method("inspect", method!(EmbeddingModel::__repr__, 0))?;
+    rb_embedding_model.define_method("tokenizer", method!(EmbeddingModel::tokenizer, 0))?;
     Ok(())
 }

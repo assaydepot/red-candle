@@ -28,6 +28,11 @@ impl Llama {
         }
     }
     
+    /// Get the tokenizer
+    pub fn tokenizer(&self) -> &TokenizerWrapper {
+        &self.tokenizer
+    }
+    
     /// Load a Llama model from HuggingFace Hub
     pub async fn from_pretrained(model_id: &str, device: Device) -> CandleResult<Self> {
         let api = Api::new()

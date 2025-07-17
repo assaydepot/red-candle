@@ -4,7 +4,7 @@ use tokenizers::Tokenizer;
 pub mod loader;
 
 /// Common structure for managing tokenizer
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TokenizerWrapper {
     tokenizer: Tokenizer,
 }

@@ -318,6 +318,23 @@ impl LLM {
     pub fn device(&self) -> Device {
         self.device
     }
+
+    /// Get the tokenizer used by this model
+    pub fn tokenizer(&self) -> Result<crate::ruby::tokenizer::Tokenizer> {
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let model_ref = model.borrow();
+        
+        // Clone the tokenizer from the model
+        match &*model_ref {
+            ModelType::Mistral(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
+            ModelType::Llama(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
+            ModelType::Gemma(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
+            ModelType::QuantizedGGUF(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
+        }
+    }
     
     /// Clear the model's cache (e.g., KV cache for transformers)
     pub fn clear_cache(&self) -> Result<()> {
@@ -413,6 +430,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_llm.define_method("_generate_stream", method!(LLM::generate_stream, 2))?;
     rb_llm.define_method("model_name", method!(LLM::model_name, 0))?;
     rb_llm.define_method("device", method!(LLM::device, 0))?;
+    rb_llm.define_method("tokenizer", method!(LLM::tokenizer, 0))?;
     rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;
     rb_llm.define_method("apply_chat_template", method!(LLM::apply_chat_template, 1))?;
     

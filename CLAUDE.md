@@ -191,6 +191,7 @@ red-candle/
   - `LLM` - Language model functionality
   - `EmbeddingModel` - Text embeddings
   - `Reranker` - Document reranking
+  - `Tokenizer` - Text tokenization
 
 ### Ruby Style
 
@@ -459,3 +460,69 @@ Possible solutions:
 3. Set HF_TOKEN environment variable
 4. Try a different model source
 ```
+
+## Tokenizer API
+
+The tokenizer functionality is now exposed to Ruby for direct use:
+
+### Standalone Tokenizer Usage
+
+```ruby
+# Load from HuggingFace
+tokenizer = Candle::Tokenizer.from_pretrained("bert-base-uncased")
+
+# Load from local file
+tokenizer = Candle::Tokenizer.from_file("/path/to/tokenizer.json")
+
+# Encode text
+tokens = tokenizer.encode("Hello, world!")
+tokens = tokenizer.encode("Hello", add_special_tokens: false)
+
+# Batch encoding
+batch = tokenizer.encode_batch(["Hello", "World"])
+
+# Decode tokens
+text = tokenizer.decode([101, 7592, 102])
+text = tokenizer.decode(tokens, skip_special_tokens: false)
+
+# Vocabulary operations
+vocab_size = tokenizer.vocab_size
+vocab = tokenizer.get_vocab  # Returns Hash of token => id
+token_str = tokenizer.id_to_token(101)  # "[CLS]"
+
+# Configuration
+padded = tokenizer.with_padding(length: 128)
+truncated = tokenizer.with_truncation(512)
+```
+
+### Model Tokenizer Access
+
+All model types now expose their tokenizers:
+
+```ruby
+# From LLM
+llm_tokenizer = llm.tokenizer
+
+# From EmbeddingModel
+emb_tokenizer = embedding_model.tokenizer
+
+# From Reranker
+rank_tokenizer = reranker.tokenizer
+```
+
+### Use Cases
+
+- **Token Analysis**: Inspect how text is tokenized
+- **Preprocessing**: Custom tokenization for specific tasks
+- **NER Preparation**: Token-level named entity recognition
+- **Debugging**: Understand model tokenization behavior
+- **Custom Pipelines**: Build specialized text processing
+
+## Recent Updates
+
+- Unified tokenizer implementation across all model types
+- Exposed tokenizer API to Ruby with comprehensive functionality
+- Added tokenizer access methods to LLM, EmbeddingModel, and Reranker
+- Created standardized padding and truncation configurations
+- Improved error messages with specific solutions
+- Removed deprecated Rb-prefixed class names

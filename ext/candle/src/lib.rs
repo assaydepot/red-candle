@@ -46,6 +46,7 @@ fn init(ruby: &Ruby) -> Result<()> {
     ruby::dtype::init(rb_candle)?;
     ruby::device::init(rb_candle)?;
     ruby::tensor::init(rb_candle)?;
+    ruby::tokenizer::init(rb_candle)?;
     candle_utils(rb_candle)?;
 
     Ok(())

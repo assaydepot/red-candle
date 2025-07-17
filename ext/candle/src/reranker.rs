@@ -253,6 +253,11 @@ impl Reranker {
         }
         Ok(result_array)
     }
+
+    /// Get the tokenizer used by this model
+    pub fn tokenizer(&self) -> std::result::Result<crate::ruby::tokenizer::Tokenizer, Error> {
+        Ok(crate::ruby::tokenizer::Tokenizer(self.tokenizer.clone()))
+    }
 }
 
 pub fn init(rb_candle: RModule) -> std::result::Result<(), Error> {
@@ -260,5 +265,6 @@ pub fn init(rb_candle: RModule) -> std::result::Result<(), Error> {
     c_reranker.define_singleton_method("_create", function!(Reranker::new, 2))?;
     c_reranker.define_method("rerank_with_options", method!(Reranker::rerank_with_options, 4))?;
     c_reranker.define_method("debug_tokenization", method!(Reranker::debug_tokenization, 2))?;
+    c_reranker.define_method("tokenizer", method!(Reranker::tokenizer, 0))?;
     Ok(())
 }
