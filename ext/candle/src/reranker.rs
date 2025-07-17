@@ -3,14 +3,15 @@ use candle_transformers::models::bert::{BertModel, Config};
 use candle_core::{Device as CoreDevice, Tensor, IndexOp, DType};
 use candle_nn::{VarBuilder, Linear, Module, ops::sigmoid};
 use hf_hub::{api::sync::Api, Repo, RepoType};
-use tokenizers::{PaddingParams, Tokenizer, EncodeInput};
+use tokenizers::{EncodeInput, Tokenizer};
 use std::thread;
 use crate::ruby::{Device, Result};
+use crate::tokenizer::{TokenizerWrapper, loader::TokenizerLoader};
 
 #[magnus::wrap(class = "Candle::Reranker", free_immediately, size)]
 pub struct Reranker {
     model: BertModel,
-    tokenizer: Tokenizer,
+    tokenizer: TokenizerWrapper,
     pooler: Linear,
     classifier: Linear,
     device: CoreDevice,
@@ -24,7 +25,7 @@ impl Reranker {
         
     fn new_with_core_device(model_id: String, device: CoreDevice) -> std::result::Result<Self, Error> {
         let device_clone = device.clone();
-        let handle = thread::spawn(move || -> std::result::Result<(BertModel, Tokenizer, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
+        let handle = thread::spawn(move || -> std::result::Result<(BertModel, TokenizerWrapper, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
             let repo = api.repo(Repo::new(model_id.clone(), RepoType::Model));
             
@@ -38,12 +39,8 @@ impl Reranker {
             let config: Config = serde_json::from_str(&config)?;
 
             // Setup tokenizer with padding
-            let mut tokenizer = Tokenizer::from_file(tokenizer_filename)?;
-            let pp = PaddingParams {
-                strategy: tokenizers::PaddingStrategy::BatchLongest,
-                ..Default::default()
-            };
-            tokenizer.with_padding(Some(pp));
+            let tokenizer = Tokenizer::from_file(tokenizer_filename)?;
+            let tokenizer = TokenizerLoader::with_padding(tokenizer, None);
             
             // Load model weights
             let vb = unsafe {
@@ -59,7 +56,7 @@ impl Reranker {
             // Load classifier layer for cross-encoder (single output score)
             let classifier = candle_nn::linear(config.hidden_size, 1, vb.pp("classifier"))?;
             
-            Ok((model, tokenizer, pooler, classifier))
+            Ok((model, TokenizerWrapper::new(tokenizer), pooler, classifier))
         });
         
         match handle.join() {
@@ -75,8 +72,8 @@ impl Reranker {
         // Create query-document pair for cross-encoder
         let query_doc_pair: EncodeInput = (query.clone(), document.clone()).into();
         
-        // Tokenize
-        let encoding = self.tokenizer.encode(query_doc_pair, true)
+        // Tokenize using the inner tokenizer for detailed info
+        let encoding = self.tokenizer.inner().encode(query_doc_pair, true)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tokenization failed: {}", e)))?;
         
         // Get token information
@@ -104,8 +101,8 @@ impl Reranker {
             .map(|d| (query.clone(), d.clone()).into())
             .collect();
 
-        // Tokenize batch
-        let encodings = self.tokenizer.encode_batch(query_and_docs, true)
+        // Tokenize batch using inner tokenizer for access to token type IDs
+        let encodings = self.tokenizer.inner().encode_batch(query_and_docs, true)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tokenization failed: {}", e)))?;
         
         // Convert to tensors

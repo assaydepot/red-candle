@@ -6,6 +6,7 @@ use crate::ruby::Result;
 pub mod llm;
 pub mod reranker;
 pub mod ruby;
+pub mod tokenizer;
 
 // Configuration detection from build.rs
 #[cfg(all(has_metal, not(force_cpu)))]
