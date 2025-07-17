@@ -36,6 +36,22 @@ impl Tokenizer {
         
         Ok(RArray::from_vec(token_ids.into_iter().map(|id| id as i64).collect()))
     }
+    
+    /// Encode text into token strings (words/subwords)
+    pub fn encode_to_tokens(&self, text: String, add_special_tokens: Option<bool>) -> Result<RArray> {
+        let add_special = add_special_tokens.unwrap_or(true);
+        let token_ids = self.0.encode(&text, add_special)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
+        
+        let mut tokens = Vec::new();
+        for id in token_ids {
+            let token = self.0.token_to_piece(id)
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
+            tokens.push(token);
+        }
+        
+        Ok(RArray::from_vec(tokens))
+    }
 
     /// Encode multiple texts in batch
     pub fn encode_batch(&self, texts: RArray, add_special_tokens: Option<bool>) -> Result<RArray> {
@@ -52,7 +68,49 @@ impl Tokenizer {
         
         Ok(result)
     }
+    
+    /// Encode multiple texts in batch, returning token strings
+    pub fn encode_batch_to_tokens(&self, texts: RArray, add_special_tokens: Option<bool>) -> Result<RArray> {
+        let texts: Vec<String> = texts.to_vec()?;
+        let add_special = add_special_tokens.unwrap_or(true);
+        
+        let token_ids_batch = self.0.encode_batch(texts, add_special)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
+        
+        let result = RArray::new();
+        for token_ids in token_ids_batch {
+            let mut tokens = Vec::new();
+            for id in token_ids {
+                let token = self.0.token_to_piece(id)
+                    .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
+                tokens.push(token);
+            }
+            result.push(RArray::from_vec(tokens))?;
+        }
+        
+        Ok(result)
+    }
 
+    /// Encode text and return both token IDs and token strings
+    pub fn encode_with_tokens(&self, text: String, add_special_tokens: Option<bool>) -> Result<RHash> {
+        let add_special = add_special_tokens.unwrap_or(true);
+        let token_ids = self.0.encode(&text, add_special)
+            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
+        
+        let mut tokens = Vec::new();
+        for &id in &token_ids {
+            let token = self.0.token_to_piece(id)
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
+            tokens.push(token);
+        }
+        
+        let hash = RHash::new();
+        hash.aset("ids", RArray::from_vec(token_ids.into_iter().map(|id| id as i64).collect()))?;
+        hash.aset("tokens", RArray::from_vec(tokens))?;
+        
+        Ok(hash)
+    }
+    
     /// Decode token IDs back to text
     pub fn decode(&self, token_ids: RArray, skip_special_tokens: Option<bool>) -> Result<String> {
         let token_ids: Vec<i64> = token_ids.to_vec()?;
@@ -193,7 +251,10 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     
     // Instance methods
     tokenizer_class.define_method("encode", method!(Tokenizer::encode, 2))?;
+    tokenizer_class.define_method("encode_to_tokens", method!(Tokenizer::encode_to_tokens, 2))?;
+    tokenizer_class.define_method("encode_with_tokens", method!(Tokenizer::encode_with_tokens, 2))?;
     tokenizer_class.define_method("encode_batch", method!(Tokenizer::encode_batch, 2))?;
+    tokenizer_class.define_method("encode_batch_to_tokens", method!(Tokenizer::encode_batch_to_tokens, 2))?;
     tokenizer_class.define_method("decode", method!(Tokenizer::decode, 2))?;
     tokenizer_class.define_method("id_to_token", method!(Tokenizer::id_to_token, 1))?;
     tokenizer_class.define_method("get_vocab", method!(Tokenizer::get_vocab, 1))?;

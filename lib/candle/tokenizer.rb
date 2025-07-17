@@ -26,7 +26,10 @@ module Candle
     # - from_file(path) - Load tokenizer from a JSON file
     # - from_pretrained(model_id) - Load tokenizer from HuggingFace
     # - encode(text, add_special_tokens = true) - Encode text to token IDs
-    # - encode_batch(texts, add_special_tokens = true) - Encode multiple texts
+    # - encode_to_tokens(text, add_special_tokens = true) - Encode text to token strings
+    # - encode_with_tokens(text, add_special_tokens = true) - Get both IDs and tokens
+    # - encode_batch(texts, add_special_tokens = true) - Encode multiple texts to IDs
+    # - encode_batch_to_tokens(texts, add_special_tokens = true) - Encode multiple texts to tokens
     # - decode(token_ids, skip_special_tokens = true) - Decode token IDs to text
     # - id_to_token(token_id) - Get token string for a token ID
     # - get_vocab(with_added_tokens = true) - Get vocabulary as hash
@@ -41,7 +44,10 @@ module Candle
     # for better Ruby ergonomics. We need to call the native methods with positional args.
     
     alias_method :_native_encode, :encode
+    alias_method :_native_encode_to_tokens, :encode_to_tokens
+    alias_method :_native_encode_with_tokens, :encode_with_tokens
     alias_method :_native_encode_batch, :encode_batch
+    alias_method :_native_encode_batch_to_tokens, :encode_batch_to_tokens
     alias_method :_native_decode, :decode
     alias_method :_native_get_vocab, :get_vocab
     alias_method :_native_vocab_size, :vocab_size
@@ -56,6 +62,24 @@ module Candle
       _native_encode(text, add_special_tokens)
     end
 
+    # Encode text into token strings (words/subwords)
+    #
+    # @param text [String] The text to encode
+    # @param add_special_tokens [Boolean] Whether to add special tokens (default: true)
+    # @return [Array<String>] Token strings
+    def encode_to_tokens(text, add_special_tokens: true)
+      _native_encode_to_tokens(text, add_special_tokens)
+    end
+
+    # Encode text and return both IDs and token strings
+    #
+    # @param text [String] The text to encode
+    # @param add_special_tokens [Boolean] Whether to add special tokens (default: true)
+    # @return [Hash] Hash with :ids and :tokens arrays
+    def encode_with_tokens(text, add_special_tokens: true)
+      _native_encode_with_tokens(text, add_special_tokens)
+    end
+
     # Encode multiple texts with convenient keyword arguments
     #
     # @param texts [Array<String>] The texts to encode
@@ -63,6 +87,15 @@ module Candle
     # @return [Array<Array<Integer>>] Arrays of token IDs
     def encode_batch(texts, add_special_tokens: true)
       _native_encode_batch(texts, add_special_tokens)
+    end
+
+    # Encode multiple texts into token strings
+    #
+    # @param texts [Array<String>] The texts to encode
+    # @param add_special_tokens [Boolean] Whether to add special tokens (default: true)
+    # @return [Array<Array<String>>] Arrays of token strings
+    def encode_batch_to_tokens(texts, add_special_tokens: true)
+      _native_encode_batch_to_tokens(texts, add_special_tokens)
     end
 
     # Decode token IDs with convenient keyword arguments

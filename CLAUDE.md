@@ -474,12 +474,22 @@ tokenizer = Candle::Tokenizer.from_pretrained("bert-base-uncased")
 # Load from local file
 tokenizer = Candle::Tokenizer.from_file("/path/to/tokenizer.json")
 
-# Encode text
+# Encode text to IDs
 tokens = tokenizer.encode("Hello, world!")
 tokens = tokenizer.encode("Hello", add_special_tokens: false)
 
+# Encode text to token strings (useful for visualization)
+token_strings = tokenizer.encode_to_tokens("Hello, world!")
+# => ["[CLS]", "hello", ",", "world", "!", "[SEP]"]
+
+# Get both IDs and tokens together
+result = tokenizer.encode_with_tokens("Hello, world!")
+# => {"ids" => [101, 7592, 1010, 2088, 999, 102], 
+#     "tokens" => ["[CLS]", "hello", ",", "world", "!", "[SEP]"]}
+
 # Batch encoding
 batch = tokenizer.encode_batch(["Hello", "World"])
+batch_tokens = tokenizer.encode_batch_to_tokens(["Hello", "World"])
 
 # Decode tokens
 text = tokenizer.decode([101, 7592, 102])
@@ -512,11 +522,13 @@ rank_tokenizer = reranker.tokenizer
 
 ### Use Cases
 
-- **Token Analysis**: Inspect how text is tokenized
+- **Token Analysis**: Inspect how text is tokenized with `encode_to_tokens`
+- **Visualization**: See exactly which subwords are created from input text
 - **Preprocessing**: Custom tokenization for specific tasks
-- **NER Preparation**: Token-level named entity recognition
-- **Debugging**: Understand model tokenization behavior
+- **NER Preparation**: Token-level named entity recognition with aligned tokens
+- **Debugging**: Understand model tokenization behavior with token strings
 - **Custom Pipelines**: Build specialized text processing
+- **Education**: Teach how modern tokenizers handle text
 
 ## Recent Updates
 
