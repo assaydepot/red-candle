@@ -4,6 +4,11 @@ require "minitest/autorun"
 
 require "candle"
 
+# Suppress warnings during tests
+module Kernel
+  def warn(*args); end
+end
+
 # Device testing helpers
 module DeviceTestHelper
   # Cache device availability to avoid repeated checks
