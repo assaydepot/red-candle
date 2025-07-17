@@ -9,7 +9,7 @@ module Candle
   # with custom entity types.
   #
   # @example Load a pre-trained NER model
-  #   ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
+  #   ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
   #
   # @example Extract entities from text
   #   entities = ner.extract_entities("Apple Inc. was founded by Steve Jobs in Cupertino.")
@@ -36,7 +36,7 @@ module Candle
       # Popular pre-trained models for different domains
       def suggested_models
         {
-          general: "dslim/bert-base-NER",
+          general: "Babelscape/wikineural-multilingual-ner",
           multilingual: "Davlan/bert-base-multilingual-cased-ner-hrl",
           biomedical: "dmis-lab/biobert-base-cased-v1.2",
           clinical: "emilyalsentzer/Bio_ClinicalBERT",
@@ -45,7 +45,18 @@ module Candle
       end
     end
     
-    # Native methods are defined in Rust, no need to alias
+    # Create an alias for the native method
+    alias_method :_extract_entities, :extract_entities
+    
+    # Extract entities from text
+    #
+    # @param text [String] The text to analyze
+    # @param confidence_threshold [Float] Minimum confidence score (default: 0.9)
+    # @return [Array<Hash>] Array of entity hashes with text, label, start, end, confidence
+    def extract_entities(text, confidence_threshold: 0.9)
+      # Call the native method with positional arguments
+      _extract_entities(text, confidence_threshold)
+    end
     
     # Get available entity types
     #

@@ -539,7 +539,7 @@ Red Candle now supports Named Entity Recognition for extracting entities from te
 
 ```ruby
 # Load pre-trained NER model
-ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
+ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
 
 # Extract entities
 entities = ner.extract_entities("Apple Inc. was founded by Steve Jobs.")
@@ -568,7 +568,7 @@ drug_recognizer = Candle::GazetteerEntityRecognizer.new("DRUG",
   ["aspirin", "ibuprofen", "metformin"])
 
 # Hybrid approach
-hybrid = Candle::HybridNER.new("dslim/bert-base-NER")
+hybrid = Candle::HybridNER.new("Babelscape/wikineural-multilingual-ner")
 hybrid.add_pattern_recognizer("GENE", gene_patterns)
 hybrid.add_gazetteer_recognizer("DRUG", drug_list)
 ```

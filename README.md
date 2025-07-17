@@ -495,7 +495,7 @@ Load pre-trained NER models from HuggingFace:
 require 'candle'
 
 # Load a pre-trained NER model
-ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
+ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
 
 # Extract entities from text
 text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California."
@@ -566,7 +566,7 @@ Combine ML models with rule-based approaches for best results:
 
 ```ruby
 # Create hybrid NER system
-hybrid = Candle::HybridNER.new("dslim/bert-base-NER")
+hybrid = Candle::HybridNER.new("Babelscape/wikineural-multilingual-ner")
 
 # Add pattern recognizers
 hybrid.add_pattern_recognizer("EMAIL", [/\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b/])
@@ -619,8 +619,8 @@ case_recognizer = Candle::PatternEntityRecognizer.new("CASE", case_patterns)
 Popular NER models on HuggingFace:
 
 ```ruby
-# General English NER (4 entity types: PER, ORG, LOC, MISC)
-ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
+# General multilingual NER (4 entity types: PER, ORG, LOC, MISC)
+ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
 
 # Multilingual NER  
 ner = Candle::NER.from_pretrained("Davlan/bert-base-multilingual-cased-ner-hrl")
@@ -637,7 +637,7 @@ ner = Candle::NER.from_pretrained("allenai/scibert_scivocab_uncased")
 
 1. **Device Selection**: Use GPU for faster inference
    ```ruby
-   ner = Candle::NER.from_pretrained("dslim/bert-base-NER", device: Candle::Device.metal)
+   ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner", device: Candle::Device.metal)
    ```
 
 2. **Batch Processing**: Process multiple texts together when possible
