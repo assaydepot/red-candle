@@ -36,7 +36,7 @@ pub struct NER {
 }
 
 impl NER {
-    pub fn new(model_id: String, device: Option<Device>) -> Result<Self> {
+    pub fn new(model_id: String, device: Option<Device>, tokenizer_id: Option<String>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         
         // Load model in a separate thread to avoid blocking
@@ -49,7 +49,20 @@ impl NER {
             
             // Download model files
             let config_filename = repo.get("config.json")?;
-            let tokenizer_filename = repo.get("tokenizer.json")?;
+            
+            // Handle tokenizer loading with optional tokenizer_id
+            let tokenizer = if let Some(tok_id) = tokenizer_id {
+                // Use the specified tokenizer
+                let tok_repo = api.repo(Repo::new(tok_id, RepoType::Model));
+                let tokenizer_filename = tok_repo.get("tokenizer.json")?;
+                let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
+                TokenizerLoader::with_padding(tokenizer, None)
+            } else {
+                // Try to load tokenizer from model repo
+                let tokenizer_filename = repo.get("tokenizer.json")?;
+                let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
+                TokenizerLoader::with_padding(tokenizer, None)
+            };
             let weights_filename = repo.get("pytorch_model.safetensors")
                 .or_else(|_| repo.get("model.safetensors"))?;
             
@@ -76,10 +89,6 @@ impl NER {
             
             let num_labels = id2label.len();
             let ner_config = NERConfig { id2label, label2id };
-            
-            // Setup tokenizer with appropriate settings
-            let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
-            let tokenizer = TokenizerLoader::with_padding(tokenizer, None);
             
             // Load model weights
             let vb = unsafe {
@@ -403,7 +412,7 @@ impl NER {
 
 pub fn init(rb_candle: RModule) -> Result<()> {
     let ner_class = rb_candle.define_class("NER", class::object())?;
-    ner_class.define_singleton_method("new", function!(NER::new, 2))?;
+    ner_class.define_singleton_method("new", function!(NER::new, 3))?;
     ner_class.define_method("extract_entities", method!(NER::extract_entities, 2))?;
     ner_class.define_method("predict_tokens", method!(NER::predict_tokens, 1))?;
     ner_class.define_method("labels", method!(NER::labels, 0))?;

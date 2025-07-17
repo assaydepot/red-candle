@@ -11,6 +11,9 @@ module Candle
   # @example Load a pre-trained NER model
   #   ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
   #
+  # @example Load a model with a specific tokenizer
+  #   ner = Candle::NER.from_pretrained("dslim/bert-base-NER", tokenizer: "bert-base-cased")
+  #
   # @example Extract entities from text
   #   entities = ner.extract_entities("Apple Inc. was founded by Steve Jobs in Cupertino.")
   #   # => [
@@ -28,19 +31,40 @@ module Candle
       #
       # @param model_id [String] HuggingFace model ID (e.g., "dslim/bert-base-NER")
       # @param device [Device, nil] Device to run on (defaults to best available)
+      # @param tokenizer [String, nil] Tokenizer model ID to use (defaults to same as model_id)
       # @return [NER] NER instance
-      def from_pretrained(model_id, device: nil)
-        new(model_id, device)
+      def from_pretrained(model_id, device: nil, tokenizer: nil)
+        new(model_id, device, tokenizer)
       end
       
       # Popular pre-trained models for different domains
       def suggested_models
         {
-          general: "Babelscape/wikineural-multilingual-ner",
-          multilingual: "Davlan/bert-base-multilingual-cased-ner-hrl",
-          biomedical: "dmis-lab/biobert-base-cased-v1.2",
-          clinical: "emilyalsentzer/Bio_ClinicalBERT",
-          scientific: "allenai/scibert_scivocab_uncased"
+          general: {
+            model: "Babelscape/wikineural-multilingual-ner",
+            note: "Has tokenizer.json"
+          },
+          general_alt: {
+            model: "dslim/bert-base-NER",
+            tokenizer: "bert-base-cased",
+            note: "Requires separate tokenizer"
+          },
+          multilingual: {
+            model: "Davlan/bert-base-multilingual-cased-ner-hrl",
+            note: "Check tokenizer availability"
+          },
+          biomedical: {
+            model: "dmis-lab/biobert-base-cased-v1.2",
+            note: "May require specific tokenizer"
+          },
+          clinical: {
+            model: "emilyalsentzer/Bio_ClinicalBERT",
+            note: "May require specific tokenizer"
+          },
+          scientific: {
+            model: "allenai/scibert_scivocab_uncased",
+            note: "May require specific tokenizer"
+          }
         }
       end
     end

@@ -103,17 +103,17 @@ class NERTest < Minitest::Test
   end
   
   def test_ner_from_pretrained
-    # Using a model that has tokenizer.json file
-    ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
+    # Test with dslim/bert-base-NER using custom tokenizer
+    ner = Candle::NER.from_pretrained("dslim/bert-base-NER", tokenizer: "bert-base-cased")
     assert_instance_of Candle::NER, ner
     
     # Test entity extraction
     text = "Apple Inc. was founded by Steve Jobs in Cupertino."
     entities = ner.extract_entities(text)
     
-    # This model uses different label format (without B-/I- prefixes in some cases)
-    assert entities.any? { |e| e["label"] =~ /ORG|MISC/ }
-    assert entities.any? { |e| e["label"] =~ /PER/ }
-    assert entities.any? { |e| e["label"] =~ /LOC/ }
+    # Check for expected entities
+    assert entities.any? { |e| e["label"] == "ORG" && e["text"].include?("Apple") }
+    assert entities.any? { |e| e["label"] == "PER" && e["text"].include?("Steve Jobs") }
+    assert entities.any? { |e| e["label"] == "LOC" && e["text"].include?("Cupertino") }
   end
 end

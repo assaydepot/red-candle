@@ -497,6 +497,9 @@ require 'candle'
 # Load a pre-trained NER model
 ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
 
+# Or load a model with a specific tokenizer (for models without tokenizer.json)
+ner = Candle::NER.from_pretrained("dslim/bert-base-NER", tokenizer: "bert-base-cased")
+
 # Extract entities from text
 text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California."
 entities = ner.extract_entities(text)
@@ -621,6 +624,9 @@ Popular NER models on HuggingFace:
 ```ruby
 # General multilingual NER (4 entity types: PER, ORG, LOC, MISC)
 ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
+
+# English NER (requires separate tokenizer)
+ner = Candle::NER.from_pretrained("dslim/bert-base-NER", tokenizer: "bert-base-cased")
 
 # Multilingual NER  
 ner = Candle::NER.from_pretrained("Davlan/bert-base-multilingual-cased-ner-hrl")

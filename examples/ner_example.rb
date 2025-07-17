@@ -15,8 +15,8 @@ puts "=" * 60
 puts "\n1. Model-based NER (requires model download):"
 
 # Load a pre-trained NER model
-# Note: Using a model that includes tokenizer.json file
-ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
+# You can use dslim/bert-base-NER with a custom tokenizer
+ner = Candle::NER.from_pretrained("dslim/bert-base-NER", tokenizer: "bert-base-cased")
 
 # Example text
 text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California in April 1976."
