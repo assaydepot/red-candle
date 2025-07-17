@@ -115,8 +115,6 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_llm
-    skip "Requires model download" unless ENV["RUN_MODEL_TESTS"]
-    
     llm = Candle::LLM.new(
       model_id: "hf-internal-testing/tiny-random-LlamaForCausalLM",
       device: Candle::Device::Cpu
@@ -133,8 +131,6 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_embedding_model
-    skip "Requires model download" unless ENV["RUN_MODEL_TESTS"]
-    
     model = Candle::EmbeddingModel.new(
       model_path: "sentence-transformers/all-MiniLM-L6-v2",
       tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2"
@@ -151,8 +147,6 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_reranker
-    skip "Requires model download" unless ENV["RUN_MODEL_TESTS"]
-    
     reranker = Candle::Reranker.new(
       model_id: "cross-encoder/ms-marco-MiniLM-L-6-v2"
     )

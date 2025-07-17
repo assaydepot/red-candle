@@ -102,9 +102,7 @@ class NERTest < Minitest::Test
     assert_equal 0, entities.length
   end
   
-  def test_ner_from_pretrained_skip
-    skip "Requires model download" unless ENV["RUN_MODEL_TESTS"]
-    
+  def test_ner_from_pretrained
     ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
     assert_instance_of Candle::NER, ner
     

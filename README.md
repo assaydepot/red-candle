@@ -483,6 +483,186 @@ complex = tokenizer.encode_to_tokens("preprocessing tokenization")
 - **Educational**: Teach how modern NLP models handle text
 - **NER Preparation**: Get aligned tokens for named entity recognition tasks
 
+## Named Entity Recognition (NER)
+
+Red-Candle includes comprehensive Named Entity Recognition capabilities for extracting entities like people, organizations, locations, and custom entity types from text.
+
+### Model-based NER
+
+Load pre-trained NER models from HuggingFace:
+
+```ruby
+require 'candle'
+
+# Load a pre-trained NER model
+ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
+
+# Extract entities from text
+text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California."
+entities = ner.extract_entities(text)
+
+entities.each do |entity|
+  puts "#{entity['text']} (#{entity['label']}) - confidence: #{entity['confidence'].round(2)}"
+end
+# Output:
+# Apple Inc. (ORG) - confidence: 0.99
+# Steve Jobs (PER) - confidence: 0.99
+# Steve Wozniak (PER) - confidence: 0.98
+# Cupertino (LOC) - confidence: 0.97
+# California (LOC) - confidence: 0.98
+
+# Adjust confidence threshold (default: 0.9)
+entities = ner.extract_entities(text, confidence_threshold: 0.95)
+
+# Get token-level predictions for detailed analysis
+tokens = ner.predict_tokens(text)
+```
+
+### Pattern-based Recognition
+
+For domain-specific entities, use regex patterns:
+
+```ruby
+# Create pattern-based recognizers
+email_recognizer = Candle::PatternEntityRecognizer.new("EMAIL", [
+  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
+])
+
+phone_recognizer = Candle::PatternEntityRecognizer.new("PHONE", [
+  /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,         # 555-123-4567
+  /\b\(\d{3}\)\s*\d{3}[-.]?\d{4}\b/,      # (555) 123-4567
+  /\b\+1\s*\d{3}[-.]?\d{3}[-.]?\d{4}\b/   # +1 555-123-4567
+])
+
+# Extract entities
+text = "Contact us at info@example.com or call 555-123-4567"
+email_entities = email_recognizer.recognize(text)
+phone_entities = phone_recognizer.recognize(text)
+```
+
+### Gazetteer-based Recognition
+
+Use dictionaries for known entities:
+
+```ruby
+# Create gazetteer recognizers
+companies = ["Apple", "Google", "Microsoft", "Amazon", "Tesla"]
+company_recognizer = Candle::GazetteerEntityRecognizer.new("COMPANY", companies)
+
+# Load from file
+drug_recognizer = Candle::GazetteerEntityRecognizer.new("DRUG")
+drug_recognizer.load_from_file("drug_names.txt")
+
+# Case-sensitive matching
+product_recognizer = Candle::GazetteerEntityRecognizer.new("PRODUCT", 
+  ["iPhone", "iPad", "MacBook"], 
+  case_sensitive: true
+)
+```
+
+### Hybrid NER
+
+Combine ML models with rule-based approaches for best results:
+
+```ruby
+# Create hybrid NER system
+hybrid = Candle::HybridNER.new("dslim/bert-base-NER")
+
+# Add pattern recognizers
+hybrid.add_pattern_recognizer("EMAIL", [/\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b/])
+hybrid.add_pattern_recognizer("PHONE", [/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/])
+
+# Add gazetteer recognizers  
+hybrid.add_gazetteer_recognizer("COMPANY", ["Apple", "Google", "Microsoft"])
+hybrid.add_gazetteer_recognizer("PRODUCT", ["iPhone", "Android", "Windows"])
+
+# Extract all entities
+text = "John Smith (john@apple.com) from Apple called about the new iPhone. Reach him at 555-0123."
+entities = hybrid.extract_entities(text)
+
+# Results include entities from all recognizers
+# Overlapping entities are automatically resolved (highest confidence wins)
+```
+
+### Custom Entity Types
+
+Perfect for specialized domains:
+
+```ruby
+# Biomedical entities
+gene_patterns = [
+  /\b[A-Z][A-Z0-9]{2,}\b/,      # TP53, BRCA1, EGFR
+  /\bCD\d+\b/,                  # CD4, CD8, CD34
+  /\b[A-Z]+\d[A-Z]\d*\b/        # RAD51C, PALB2
+]
+gene_recognizer = Candle::PatternEntityRecognizer.new("GENE", gene_patterns)
+
+# Financial entities
+ticker_patterns = [
+  /\$[A-Z]{1,5}\b/,             # $AAPL, $GOOGL
+  /\b[A-Z]{1,5}\.NYSE\b/,       # AAPL.NYSE
+  /\b[A-Z]{1,5}\.NASDAQ\b/      # GOOGL.NASDAQ
+]
+ticker_recognizer = Candle::PatternEntityRecognizer.new("TICKER", ticker_patterns)
+
+# Legal entities
+case_patterns = [
+  /\b\d+\s+F\.\d+\s+\d+\b/,     # 123 F.3d 456
+  /\b\d+\s+U\.S\.\s+\d+\b/,     # 123 U.S. 456
+  /\bNo\.\s+\d+-\d+\b/          # No. 20-1234
+]
+case_recognizer = Candle::PatternEntityRecognizer.new("CASE", case_patterns)
+```
+
+### Available Pre-trained Models
+
+Popular NER models on HuggingFace:
+
+```ruby
+# General English NER (4 entity types: PER, ORG, LOC, MISC)
+ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
+
+# Multilingual NER  
+ner = Candle::NER.from_pretrained("Davlan/bert-base-multilingual-cased-ner-hrl")
+
+# OntoNotes 5 (18 entity types including DATE, TIME, MONEY, etc.)
+ner = Candle::NER.from_pretrained("flair/ner-english-ontonotes-large")
+
+# Biomedical NER
+ner = Candle::NER.from_pretrained("dmis-lab/biobert-base-cased-v1.2")
+ner = Candle::NER.from_pretrained("allenai/scibert_scivocab_uncased")
+```
+
+### Performance Tips
+
+1. **Device Selection**: Use GPU for faster inference
+   ```ruby
+   ner = Candle::NER.from_pretrained("dslim/bert-base-NER", device: Candle::Device.metal)
+   ```
+
+2. **Batch Processing**: Process multiple texts together when possible
+   
+3. **Confidence Threshold**: Balance precision/recall with appropriate thresholds
+   
+4. **Entity Resolution**: The hybrid NER automatically handles overlapping entities
+
+### Output Format
+
+All NER methods return entities in a consistent format:
+
+```ruby
+{
+  "text" => "Apple Inc.",          # The entity text
+  "label" => "ORG",               # Entity type
+  "start" => 0,                   # Character start position
+  "end" => 10,                    # Character end position  
+  "confidence" => 0.99,           # Confidence score (0-1)
+  "token_start" => 0,             # Token start index (model-based only)
+  "token_end" => 2,               # Token end index (model-based only)
+  "source" => "model"             # Source: "model", "pattern", or "gazetteer"
+}
+```
+
 ## Common Runtime Errors
 
 ### 1. Weight is negative, too large or not a valid number

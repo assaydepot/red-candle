@@ -12,45 +12,42 @@ puts "=" * 60
 # Note: This example demonstrates the API, but requires downloading a model
 # For testing without downloads, see the pattern-based examples below
 
-if ENV["RUN_MODEL_TESTS"]
-  puts "\n1. Model-based NER (requires model download):"
-  
-  # Load a pre-trained NER model
-  ner = Candle::NER.from_pretrained("dslim/bert-base-NER")
-  
-  # Example text
-  text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California in April 1976."
-  
-  puts "Text: \"#{text}\""
-  puts "\nExtracted entities:"
-  
-  # Extract entities with default confidence threshold
-  entities = ner.extract_entities(text)
-  
-  entities.each do |entity|
-    puts "  - '#{entity['text']}' [#{entity['label']}] " \
-         "at positions #{entity['start']}-#{entity['end']} " \
-         "(confidence: #{entity['confidence'].round(3)})"
-  end
-  
-  # Get token-level predictions
-  puts "\nToken-level analysis:"
-  tokens = ner.predict_tokens(text)
-  
-  # Show first 10 tokens
-  tokens[0..9].each do |token_info|
-    if token_info["label"] != "O"
-      puts "  Token: '#{token_info['token']}' → #{token_info['label']} " \
-           "(#{token_info['confidence'].round(3)})"
-    end
-  end
-  
-  # Check supported entity types
-  puts "\nSupported entity types:"
-  puts "  #{ner.entity_types.join(', ')}"
-else
-  puts "\n1. Model-based NER requires setting RUN_MODEL_TESTS=1"
+puts "\n1. Model-based NER (requires model download):"
+
+# Load a pre-trained NER model
+# Note: Using a model that includes tokenizer.json file
+ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
+
+# Example text
+text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California in April 1976."
+
+puts "Text: \"#{text}\""
+puts "\nExtracted entities:"
+
+# Extract entities with default confidence threshold
+entities = ner.extract_entities(text)
+
+entities.each do |entity|
+  puts "  - '#{entity['text']}' [#{entity['label']}] " \
+        "at positions #{entity['start']}-#{entity['end']} " \
+        "(confidence: #{entity['confidence'].round(3)})"
 end
+
+# Get token-level predictions
+puts "\nToken-level analysis:"
+tokens = ner.predict_tokens(text)
+
+# Show first 10 tokens
+tokens[0..9].each do |token_info|
+  if token_info["label"] != "O"
+    puts "  Token: '#{token_info['token']}' → #{token_info['label']} " \
+          "(#{token_info['confidence'].round(3)})"
+  end
+end
+
+# Check supported entity types
+puts "\nSupported entity types:"
+puts "  #{ner.entity_types.join(', ')}"
 
 # Pattern-based NER (works without model downloads)
 puts "\n2. Pattern-based Entity Recognition:"
