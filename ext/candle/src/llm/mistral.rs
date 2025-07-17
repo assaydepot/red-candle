@@ -21,6 +21,11 @@ impl Mistral {
         self.model.clear_kv_cache();
     }
     
+    /// Get the tokenizer
+    pub fn tokenizer(&self) -> &TokenizerWrapper {
+        &self.tokenizer
+    }
+    
     /// Load a Mistral model from HuggingFace Hub
     pub async fn from_pretrained(model_id: &str, device: Device) -> CandleResult<Self> {
         let api = Api::new()

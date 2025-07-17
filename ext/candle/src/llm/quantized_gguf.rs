@@ -28,6 +28,11 @@ enum ModelType {
 }
 
 impl QuantizedGGUF {
+    /// Get the tokenizer
+    pub fn tokenizer(&self) -> &TokenizerWrapper {
+        &self.tokenizer
+    }
+    
     /// Load a quantized model from a GGUF file
     pub async fn from_pretrained(model_id: &str, device: Device, tokenizer_source: Option<&str>) -> CandleResult<Self> {
         // Check if user specified an exact GGUF filename

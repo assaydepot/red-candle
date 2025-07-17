@@ -4,6 +4,7 @@ use crate::ruby::{
     errors::{wrap_candle_err, wrap_hf_err, wrap_std_err},
 };
 use crate::ruby::{Tensor, Device, Result};
+use crate::tokenizer::{TokenizerWrapper, loader::TokenizerLoader};
 use candle_core::{DType as CoreDType, Device as CoreDevice, Module, Tensor as CoreTensor};
 use safetensors::tensor::SafeTensors;
 use candle_nn::VarBuilder;
@@ -14,7 +15,6 @@ use candle_transformers::models::{
 };
 use magnus::{class, function, method, prelude::*, Error, RModule};
 use std::path::Path;
-use tokenizers::Tokenizer;
 use serde_json;
 
 
@@ -70,7 +70,7 @@ pub struct EmbeddingModelInner {
     model_path: Option<String>,
     embedding_model_type: Option<EmbeddingModelType>,
     model: Option<EmbeddingModelVariant>,
-    tokenizer: Option<Tokenizer>,
+    tokenizer: Option<TokenizerWrapper>,
     embedding_size: Option<usize>,
 }
 
@@ -257,7 +257,7 @@ impl EmbeddingModel {
         }
     }
 
-    fn build_tokenizer(tokenizer_path: String) -> Result<Tokenizer> {
+    fn build_tokenizer(tokenizer_path: String) -> Result<TokenizerWrapper> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let tokenizer_path = Api::new()
                 .map_err(wrap_hf_err)?
@@ -267,15 +267,11 @@ impl EmbeddingModel {
                 ))
                 .get("tokenizer.json")
                 .map_err(wrap_hf_err)?;
-        let mut tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path)
+        let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_path)
             .map_err(wrap_std_err)?;
-        let pp = tokenizers::PaddingParams {
-            strategy: tokenizers::PaddingStrategy::BatchLongest,
-            ..Default::default()
-        };
-        tokenizer.with_padding(Some(pp));
-
-        Ok(tokenizer)
+        
+        let tokenizer = TokenizerLoader::with_padding(tokenizer, None);
+        Ok(TokenizerWrapper::new(tokenizer))
     }
 
     /// Pools the embedding tensor by extracting the CLS token ([1, SEQLENGTH, DIM] -> [1, DIM])
@@ -315,13 +311,11 @@ impl EmbeddingModel {
         &self,
         prompt: String,
         model: &EmbeddingModelVariant,
-        tokenizer: &Tokenizer,
+        tokenizer: &TokenizerWrapper,
     ) -> std::result::Result<CoreTensor, Error> {
         let tokens = tokenizer
-            .encode(prompt, true)
-            .map_err(wrap_std_err)?
-            .get_ids()
-            .to_vec();
+            .encode(&prompt, true)
+            .map_err(wrap_candle_err)?;
         let token_ids = CoreTensor::new(&tokens[..], &self.0.device)
             .map_err(wrap_candle_err)?
             .unsqueeze(0)
@@ -355,7 +349,7 @@ impl EmbeddingModel {
         &self,
         prompt: String,
         model: &EmbeddingModelVariant,
-        tokenizer: &Tokenizer,
+        tokenizer: &TokenizerWrapper,
         pooling_method: &str,
     ) -> std::result::Result<CoreTensor, Error> {
         let result = self.compute_embeddings(prompt, model, tokenizer)?;
@@ -391,6 +385,14 @@ impl EmbeddingModel {
     pub fn __str__(&self) -> String {
         self.__repr__()
     }
+
+    /// Get the tokenizer used by this model
+    pub fn tokenizer(&self) -> Result<crate::ruby::tokenizer::Tokenizer> {
+        match &self.0.tokenizer {
+            Some(tokenizer) => Ok(crate::ruby::tokenizer::Tokenizer(tokenizer.clone())),
+            None => Err(magnus::Error::new(magnus::exception::runtime_error(), "No tokenizer loaded for this model"))
+        }
+    }
 }
 
 pub fn init(rb_candle: RModule) -> Result<()> {
@@ -405,5 +407,6 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_embedding_model.define_method("embedding_model_type", method!(EmbeddingModel::embedding_model_type, 0))?;
     rb_embedding_model.define_method("to_s", method!(EmbeddingModel::__str__, 0))?;
     rb_embedding_model.define_method("inspect", method!(EmbeddingModel::__repr__, 0))?;
+    rb_embedding_model.define_method("tokenizer", method!(EmbeddingModel::tokenizer, 0))?;
     Ok(())
 }

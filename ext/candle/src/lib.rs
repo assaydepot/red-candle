@@ -6,6 +6,7 @@ use crate::ruby::Result;
 pub mod llm;
 pub mod reranker;
 pub mod ruby;
+pub mod tokenizer;
 
 // Configuration detection from build.rs
 #[cfg(all(has_metal, not(force_cpu)))]
@@ -45,6 +46,7 @@ fn init(ruby: &Ruby) -> Result<()> {
     ruby::dtype::init(rb_candle)?;
     ruby::device::init(rb_candle)?;
     ruby::tensor::init(rb_candle)?;
+    ruby::tokenizer::init(rb_candle)?;
     candle_utils(rb_candle)?;
 
     Ok(())

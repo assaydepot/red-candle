@@ -6,6 +6,7 @@ pub mod result;
 pub mod errors;
 pub mod utils;
 pub mod llm;
+pub mod tokenizer;
 
 pub use embedding_model::{EmbeddingModel, EmbeddingModelInner};
 pub use tensor::Tensor;
