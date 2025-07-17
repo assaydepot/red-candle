@@ -444,6 +444,121 @@ print(embedding)
 
 <p>This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.</p>
 
+<h2 id="tokenizer">Tokenizer</h2>
+
+<p>Red-Candle provides direct access to tokenizers for text preprocessing and analysis. This is useful for understanding how models process text, debugging issues, and building custom NLP pipelines.</p>
+
+<h3 id="basic-usage">Basic Usage</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
+
+<span class='comment'># Load a tokenizer from HuggingFace
+</span><span class='id identifier rubyid_tokenizer'>tokenizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Tokenizer.html" title="Candle::Tokenizer (class)">Tokenizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bert-base-uncased</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Encode text to token IDs
+</span><span class='id identifier rubyid_token_ids'>token_ids</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode'>encode</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='comment'># =&gt; [101, 7592, 1010, 2088, 999, 102]
+</span>
+<span class='comment'># Decode token IDs back to text
+</span><span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_decode'>decode</span><span class='lparen'>(</span><span class='id identifier rubyid_token_ids'>token_ids</span><span class='rparen'>)</span>
+<span class='comment'># =&gt; &quot;hello, world!&quot;
+</span>
+<span class='comment'># Get token strings (subwords) - useful for visualization
+</span><span class='id identifier rubyid_tokens'>tokens</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_to_tokens'>encode_to_tokens</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='comment'># =&gt; [&quot;[CLS]&quot;, &quot;hello&quot;, &quot;,&quot;, &quot;world&quot;, &quot;!&quot;, &quot;[SEP]&quot;]
+</span>
+<span class='comment'># Get both IDs and tokens together
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_with_tokens'>encode_with_tokens</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>preprocessing</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='comment'># =&gt; {&quot;ids&quot; =&gt; [101, 3653, 22618, 2527, 102], 
+</span><span class='comment'>#     &quot;tokens&quot; =&gt; [&quot;[CLS]&quot;, &quot;prep&quot;, &quot;##ro&quot;, &quot;##ces&quot;, &quot;##sing&quot;, &quot;[SEP]&quot;]}
+</span></code></pre>
+
+<h3 id="batch-processing">Batch Processing</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Encode multiple texts at once
+</span><span class='id identifier rubyid_texts'>texts</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello world</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>How are you?</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tokenizers are cool</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_batch_ids'>batch_ids</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_batch'>encode_batch</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='rparen'>)</span>
+
+<span class='comment'># Get token strings for multiple texts
+</span><span class='id identifier rubyid_batch_tokens'>batch_tokens</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_batch_to_tokens'>encode_batch_to_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="vocabulary-access">Vocabulary Access</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Get vocabulary size
+</span><span class='id identifier rubyid_vocab_size'>vocab_size</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_vocab_size'>vocab_size</span>
+<span class='comment'># =&gt; 30522
+</span>
+<span class='comment'># Get full vocabulary as a hash
+</span><span class='id identifier rubyid_vocab'>vocab</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_get_vocab'>get_vocab</span>
+<span class='comment'># vocab[&quot;hello&quot;] =&gt; 7592
+</span>
+<span class='comment'># Convert a specific token ID to its string
+</span><span class='id identifier rubyid_token_str'>token_str</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_id_to_token'>id_to_token</span><span class='lparen'>(</span><span class='int'>7592</span><span class='rparen'>)</span>
+<span class='comment'># =&gt; &quot;hello&quot;
+</span>
+<span class='comment'># Get special tokens
+</span><span class='id identifier rubyid_special'>special</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_get_special_tokens'>get_special_tokens</span>
+<span class='comment'># =&gt; {&quot;cls_token&quot; =&gt; 101, &quot;sep_token&quot; =&gt; 102, &quot;pad_token&quot; =&gt; 0, ...}
+</span></code></pre>
+
+<h3 id="configuration">Configuration</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Create a tokenizer with padding enabled
+</span><span class='id identifier rubyid_padded_tokenizer'>padded_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_with_padding'>with_padding</span><span class='lparen'>(</span><span class='label'>length:</span> <span class='int'>128</span><span class='rparen'>)</span>
+
+<span class='comment'># Create a tokenizer with truncation
+</span><span class='id identifier rubyid_truncated_tokenizer'>truncated_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_with_truncation'>with_truncation</span><span class='lparen'>(</span><span class='int'>512</span><span class='rparen'>)</span>
+
+<span class='comment'># Configure padding with more options
+</span><span class='id identifier rubyid_padded_tokenizer'>padded_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_with_padding'>with_padding</span><span class='lparen'>(</span>
+  <span class='label'>length:</span> <span class='int'>128</span><span class='comma'>,</span>          <span class='comment'># Fixed length padding
+</span>  <span class='label'>direction:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>right</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>   <span class='comment'># Pad on the right (default)
+</span>  <span class='label'>pad_token:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[PAD]</span><span class='tstring_end'>&quot;</span></span>    <span class='comment'># Padding token
+</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="model-integration">Model Integration</h3>
+
+<p>All models expose their tokenizers:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># From LLM
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TinyLlama/TinyLlama-1.1B-Chat-v1.0</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_llm_tokenizer'>llm_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_tokenizer'>tokenizer</span>
+
+<span class='comment'># From EmbeddingModel
+</span><span class='id identifier rubyid_embedding_model'>embedding_model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
+<span class='id identifier rubyid_emb_tokenizer'>emb_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_embedding_model'>embedding_model</span><span class='period'>.</span><span class='id identifier rubyid_tokenizer'>tokenizer</span>
+
+<span class='comment'># From Reranker
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_rank_tokenizer'>rank_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_tokenizer'>tokenizer</span>
+</code></pre>
+
+<h3 id="understanding-subword-tokenization">Understanding Subword Tokenization</h3>
+
+<p>Modern tokenizers split unknown or rare words into subword pieces:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># See how words are split into subwords
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_with_tokens'>encode_with_tokens</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>unbelievable</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='comment'># =&gt; {&quot;ids&quot; =&gt; [101, 4895, 6499, 102], 
+</span><span class='comment'>#     &quot;tokens&quot; =&gt; [&quot;[CLS]&quot;, &quot;un&quot;, &quot;##believable&quot;, &quot;[SEP]&quot;]}
+</span>
+<span class='comment'># The ## prefix indicates a continuation of the previous token
+</span><span class='id identifier rubyid_complex'>complex</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_to_tokens'>encode_to_tokens</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>preprocessing tokenization</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='comment'># =&gt; [&quot;[CLS]&quot;, &quot;prep&quot;, &quot;##ro&quot;, &quot;##ces&quot;, &quot;##sing&quot;, &quot;token&quot;, &quot;##ization&quot;, &quot;[SEP]&quot;]
+</span></code></pre>
+
+<h3 id="use-cases">Use Cases</h3>
+
+<ul>
+<li><strong>Token Analysis</strong>: Understand how your text is being processed by models</li>
+<li><strong>Debugging</strong>: See why certain inputs might cause unexpected model behavior<br></li>
+<li><strong>Custom Preprocessing</strong>: Build your own text processing pipelines</li>
+<li><strong>Educational</strong>: Teach how modern NLP models handle text</li>
+<li><strong>NER Preparation</strong>: Get aligned tokens for named entity recognition tasks</li>
+</ul>
+
 <h2 id="common-runtime-errors">Common Runtime Errors</h2>
 
 <h3 id="1-weight-is-negative-too-large-or-not-a-valid-number">1. Weight is negative, too large or not a valid number</h3>
@@ -575,7 +690,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Thu Jul 17 03:17:57 2025 by
+  Generated on Thu Jul 17 12:57:29 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>

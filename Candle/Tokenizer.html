@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Candle::Tokenizer
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Candle::Tokenizer";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Candle.html" title="Candle (module)">Candle</a></span></span>
+     &raquo; 
+    <span class="title">Tokenizer</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Candle::Tokenizer
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Candle::Tokenizer</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/candle/tokenizer.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Tokenizer class for text tokenization</p>
+
+<p>This class provides methods to encode text into tokens and decode tokens back to text. It supports both single text and batch processing, with options for special tokens, padding, and truncation.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Create a tokenizer from a pretrained model</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_tokenizer'>tokenizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bert-base-uncased</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Encode and decode text</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_tokens'>tokens</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode'>encode</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_decode'>decode</span><span class='lparen'>(</span><span class='id identifier rubyid_tokens'>tokens</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Batch encoding</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_texts'>texts</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>World</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Test</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_batch_tokens'>batch_tokens</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_batch'>encode_batch</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Configure padding and truncation</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_padded_tokenizer'>padded_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_with_padding'>with_padding</span><span class='lparen'>(</span><span class='label'>length:</span> <span class='int'>128</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_truncated_tokenizer'>truncated_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_with_truncation'>with_truncation</span><span class='lparen'>(</span><span class='int'>512</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_decode-instance_method" title="#_native_decode (instance method)">#<strong>_native_decode</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_encode-instance_method" title="#_native_encode (instance method)">#<strong>_native_encode</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The native methods accept positional arguments, but we provide keyword argument interfaces for better Ruby ergonomics.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_encode_batch-instance_method" title="#_native_encode_batch (instance method)">#<strong>_native_encode_batch</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_encode_batch_to_tokens-instance_method" title="#_native_encode_batch_to_tokens (instance method)">#<strong>_native_encode_batch_to_tokens</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_encode_to_tokens-instance_method" title="#_native_encode_to_tokens (instance method)">#<strong>_native_encode_to_tokens</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_encode_with_tokens-instance_method" title="#_native_encode_with_tokens (instance method)">#<strong>_native_encode_with_tokens</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_get_vocab-instance_method" title="#_native_get_vocab (instance method)">#<strong>_native_get_vocab</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_vocab_size-instance_method" title="#_native_vocab_size (instance method)">#<strong>_native_vocab_size</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_native_with_padding-instance_method" title="#_native_with_padding (instance method)">#<strong>_native_with_padding</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#decode-instance_method" title="#decode (instance method)">#<strong>decode</strong>(token_ids, skip_special_tokens: true)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Decode token IDs with convenient keyword arguments.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#encode-instance_method" title="#encode (instance method)">#<strong>encode</strong>(text, add_special_tokens: true)  &#x21d2; Array&lt;Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Encode text with convenient keyword arguments.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#encode_batch-instance_method" title="#encode_batch (instance method)">#<strong>encode_batch</strong>(texts, add_special_tokens: true)  &#x21d2; Array&lt;Array&lt;Integer&gt;&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Encode multiple texts with convenient keyword arguments.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#encode_batch_to_tokens-instance_method" title="#encode_batch_to_tokens (instance method)">#<strong>encode_batch_to_tokens</strong>(texts, add_special_tokens: true)  &#x21d2; Array&lt;Array&lt;String&gt;&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Encode multiple texts into token strings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#encode_to_tokens-instance_method" title="#encode_to_tokens (instance method)">#<strong>encode_to_tokens</strong>(text, add_special_tokens: true)  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Encode text into token strings (words/subwords).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#encode_with_tokens-instance_method" title="#encode_with_tokens (instance method)">#<strong>encode_with_tokens</strong>(text, add_special_tokens: true)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Encode text and return both IDs and token strings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#get_vocab-instance_method" title="#get_vocab (instance method)">#<strong>get_vocab</strong>(with_added_tokens: true)  &#x21d2; Hash&lt;String, Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get vocabulary with convenient keyword arguments.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#vocab_size-instance_method" title="#vocab_size (instance method)">#<strong>vocab_size</strong>(with_added_tokens: true)  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get vocabulary size with convenient keyword arguments.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#with_padding-instance_method" title="#with_padding (instance method)">#<strong>with_padding</strong>(**options)  &#x21d2; Tokenizer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create a new tokenizer with padding configuration.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="_native_decode-instance_method">
+  
+    #<strong>_native_decode</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+51</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 51</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_decode</span><span class='comma'>,</span> <span class='symbol'>:decode</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_encode-instance_method">
+  
+    #<strong>_native_encode</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>The native methods accept positional arguments, but we provide keyword argument interfaces for better Ruby ergonomics. We need to call the native methods with positional args.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+46</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 46</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_encode</span><span class='comma'>,</span> <span class='symbol'>:encode</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_encode_batch-instance_method">
+  
+    #<strong>_native_encode_batch</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+49</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 49</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_encode_batch</span><span class='comma'>,</span> <span class='symbol'>:encode_batch</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_encode_batch_to_tokens-instance_method">
+  
+    #<strong>_native_encode_batch_to_tokens</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+50</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 50</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_encode_batch_to_tokens</span><span class='comma'>,</span> <span class='symbol'>:encode_batch_to_tokens</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_encode_to_tokens-instance_method">
+  
+    #<strong>_native_encode_to_tokens</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+47</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 47</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_encode_to_tokens</span><span class='comma'>,</span> <span class='symbol'>:encode_to_tokens</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_encode_with_tokens-instance_method">
+  
+    #<strong>_native_encode_with_tokens</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+48</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 48</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_encode_with_tokens</span><span class='comma'>,</span> <span class='symbol'>:encode_with_tokens</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_get_vocab-instance_method">
+  
+    #<strong>_native_get_vocab</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+52</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 52</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_get_vocab</span><span class='comma'>,</span> <span class='symbol'>:get_vocab</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_vocab_size-instance_method">
+  
+    #<strong>_native_vocab_size</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+53</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 53</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_vocab_size</span><span class='comma'>,</span> <span class='symbol'>:vocab_size</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="_native_with_padding-instance_method">
+  
+    #<strong>_native_with_padding</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+54</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 54</span>
+
+<span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_native_with_padding</span><span class='comma'>,</span> <span class='symbol'>:with_padding</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="decode-instance_method">
+  
+    #<strong>decode</strong>(token_ids, skip_special_tokens: true)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Decode token IDs with convenient keyword arguments</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>token_ids</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The token IDs to decode</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>skip_special_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to skip special tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Decoded text</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+106
+107
+108</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 106</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_decode'>decode</span><span class='lparen'>(</span><span class='id identifier rubyid_token_ids'>token_ids</span><span class='comma'>,</span> <span class='label'>skip_special_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_decode'>_native_decode</span><span class='lparen'>(</span><span class='id identifier rubyid_token_ids'>token_ids</span><span class='comma'>,</span> <span class='id identifier rubyid_skip_special_tokens'>skip_special_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="encode-instance_method">
+  
+    #<strong>encode</strong>(text, add_special_tokens: true)  &#x21d2; <tt>Array&lt;Integer&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Encode text with convenient keyword arguments</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>text</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The text to encode</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>add_special_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to add special tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Token IDs</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+61
+62
+63</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 61</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_encode'>encode</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>add_special_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_encode'>_native_encode</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_add_special_tokens'>add_special_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="encode_batch-instance_method">
+  
+    #<strong>encode_batch</strong>(texts, add_special_tokens: true)  &#x21d2; <tt>Array&lt;Array&lt;Integer&gt;&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Encode multiple texts with convenient keyword arguments</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>texts</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The texts to encode</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>add_special_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to add special tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Array&lt;Integer&gt;&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Arrays of token IDs</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+88
+89
+90</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 88</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_encode_batch'>encode_batch</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='comma'>,</span> <span class='label'>add_special_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_encode_batch'>_native_encode_batch</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='comma'>,</span> <span class='id identifier rubyid_add_special_tokens'>add_special_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="encode_batch_to_tokens-instance_method">
+  
+    #<strong>encode_batch_to_tokens</strong>(texts, add_special_tokens: true)  &#x21d2; <tt>Array&lt;Array&lt;String&gt;&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Encode multiple texts into token strings</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>texts</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The texts to encode</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>add_special_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to add special tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Array&lt;String&gt;&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Arrays of token strings</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+97
+98
+99</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 97</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_encode_batch_to_tokens'>encode_batch_to_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='comma'>,</span> <span class='label'>add_special_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_encode_batch_to_tokens'>_native_encode_batch_to_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_texts'>texts</span><span class='comma'>,</span> <span class='id identifier rubyid_add_special_tokens'>add_special_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="encode_to_tokens-instance_method">
+  
+    #<strong>encode_to_tokens</strong>(text, add_special_tokens: true)  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Encode text into token strings (words/subwords)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>text</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The text to encode</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>add_special_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to add special tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Token strings</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+70
+71
+72</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 70</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_encode_to_tokens'>encode_to_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>add_special_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_encode_to_tokens'>_native_encode_to_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_add_special_tokens'>add_special_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="encode_with_tokens-instance_method">
+  
+    #<strong>encode_with_tokens</strong>(text, add_special_tokens: true)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Encode text and return both IDs and token strings</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>text</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The text to encode</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>add_special_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to add special tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Hash with :ids and :tokens arrays</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+79
+80
+81</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 79</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_encode_with_tokens'>encode_with_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>add_special_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_encode_with_tokens'>_native_encode_with_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_add_special_tokens'>add_special_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get_vocab-instance_method">
+  
+    #<strong>get_vocab</strong>(with_added_tokens: true)  &#x21d2; <tt>Hash&lt;String, Integer&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get vocabulary with convenient keyword arguments</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>with_added_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Include added tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;String, Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Token to ID mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+114
+115
+116</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 114</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_get_vocab'>get_vocab</span><span class='lparen'>(</span><span class='label'>with_added_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_get_vocab'>_native_get_vocab</span><span class='lparen'>(</span><span class='id identifier rubyid_with_added_tokens'>with_added_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="vocab_size-instance_method">
+  
+    #<strong>vocab_size</strong>(with_added_tokens: true)  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get vocabulary size with convenient keyword arguments</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>with_added_tokens</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Include added tokens (default: true)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Vocabulary size</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+122
+123
+124</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 122</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_vocab_size'>vocab_size</span><span class='lparen'>(</span><span class='label'>with_added_tokens:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_vocab_size'>_native_vocab_size</span><span class='lparen'>(</span><span class='id identifier rubyid_with_added_tokens'>with_added_tokens</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="with_padding-instance_method">
+  
+    #<strong>with_padding</strong>(**options)  &#x21d2; <tt><span class='object_link'><a href="" title="Candle::Tokenizer (class)">Tokenizer</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create a new tokenizer with padding configuration</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Padding options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    <p class="tag_title">Options Hash (<tt>**options</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:length</span>
+          <span class="type">(<tt>Integer</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Fixed length padding</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:max_length</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use batch longest padding</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:direction</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Padding direction (“left” or “right”)</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:pad_id</span>
+          <span class="type">(<tt>Integer</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Padding token ID</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:pad_token</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Padding token string</p>
+</div>
+          
+        </li>
+      
+    </ul>
+  
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="Candle::Tokenizer (class)">Tokenizer</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>New tokenizer instance with padding enabled</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+135
+136
+137</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/candle/tokenizer.rb', line 135</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_with_padding'>with_padding</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid__native_with_padding'>_native_with_padding</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Jul 17 12:57:29 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.4.5).
+</div>
+
+    </div>
+  </body>
+</html>
