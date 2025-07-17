@@ -364,6 +364,125 @@ The reranker uses a BERT-based architecture that:
 
 This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.
 
+## Tokenizer
+
+Red-Candle provides direct access to tokenizers for text preprocessing and analysis. This is useful for understanding how models process text, debugging issues, and building custom NLP pipelines.
+
+### Basic Usage
+
+```ruby
+require 'candle'
+
+# Load a tokenizer from HuggingFace
+tokenizer = Candle::Tokenizer.from_pretrained("bert-base-uncased")
+
+# Encode text to token IDs
+token_ids = tokenizer.encode("Hello, world!")
+# => [101, 7592, 1010, 2088, 999, 102]
+
+# Decode token IDs back to text
+text = tokenizer.decode(token_ids)
+# => "hello, world!"
+
+# Get token strings (subwords) - useful for visualization
+tokens = tokenizer.encode_to_tokens("Hello, world!")
+# => ["[CLS]", "hello", ",", "world", "!", "[SEP]"]
+
+# Get both IDs and tokens together
+result = tokenizer.encode_with_tokens("preprocessing")
+# => {"ids" => [101, 3653, 22618, 2527, 102], 
+#     "tokens" => ["[CLS]", "prep", "##ro", "##ces", "##sing", "[SEP]"]}
+```
+
+### Batch Processing
+
+```ruby
+# Encode multiple texts at once
+texts = ["Hello world", "How are you?", "Tokenizers are cool"]
+batch_ids = tokenizer.encode_batch(texts)
+
+# Get token strings for multiple texts
+batch_tokens = tokenizer.encode_batch_to_tokens(texts)
+```
+
+### Vocabulary Access
+
+```ruby
+# Get vocabulary size
+vocab_size = tokenizer.vocab_size
+# => 30522
+
+# Get full vocabulary as a hash
+vocab = tokenizer.get_vocab
+# vocab["hello"] => 7592
+
+# Convert a specific token ID to its string
+token_str = tokenizer.id_to_token(7592)
+# => "hello"
+
+# Get special tokens
+special = tokenizer.get_special_tokens
+# => {"cls_token" => 101, "sep_token" => 102, "pad_token" => 0, ...}
+```
+
+### Configuration
+
+```ruby
+# Create a tokenizer with padding enabled
+padded_tokenizer = tokenizer.with_padding(length: 128)
+
+# Create a tokenizer with truncation
+truncated_tokenizer = tokenizer.with_truncation(512)
+
+# Configure padding with more options
+padded_tokenizer = tokenizer.with_padding(
+  length: 128,          # Fixed length padding
+  direction: "right",   # Pad on the right (default)
+  pad_token: "[PAD]"    # Padding token
+)
+```
+
+### Model Integration
+
+All models expose their tokenizers:
+
+```ruby
+# From LLM
+llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+llm_tokenizer = llm.tokenizer
+
+# From EmbeddingModel
+embedding_model = Candle::EmbeddingModel.new
+emb_tokenizer = embedding_model.tokenizer
+
+# From Reranker
+reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+rank_tokenizer = reranker.tokenizer
+```
+
+### Understanding Subword Tokenization
+
+Modern tokenizers split unknown or rare words into subword pieces:
+
+```ruby
+# See how words are split into subwords
+result = tokenizer.encode_with_tokens("unbelievable")
+# => {"ids" => [101, 4895, 6499, 102], 
+#     "tokens" => ["[CLS]", "un", "##believable", "[SEP]"]}
+
+# The ## prefix indicates a continuation of the previous token
+complex = tokenizer.encode_to_tokens("preprocessing tokenization")
+# => ["[CLS]", "prep", "##ro", "##ces", "##sing", "token", "##ization", "[SEP]"]
+```
+
+### Use Cases
+
+- **Token Analysis**: Understand how your text is being processed by models
+- **Debugging**: See why certain inputs might cause unexpected model behavior  
+- **Custom Preprocessing**: Build your own text processing pipelines
+- **Educational**: Teach how modern NLP models handle text
+- **NER Preparation**: Get aligned tokens for named entity recognition tasks
+
 ## Common Runtime Errors
 
 ### 1. Weight is negative, too large or not a valid number
