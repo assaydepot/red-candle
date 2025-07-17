@@ -103,9 +103,6 @@ class NERTest < Minitest::Test
   end
   
   def test_ner_from_pretrained
-    puts ">" * 80
-    puts "test_ner_from_pretrained"
-    puts ">" * 80
     # Using a model that has tokenizer.json file
     ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
     assert_instance_of Candle::NER, ner
