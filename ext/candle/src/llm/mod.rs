@@ -12,6 +12,9 @@ pub use text_generation::TextGeneration;
 pub use quantized_gguf::QuantizedGGUF;
 pub use crate::tokenizer::TokenizerWrapper;
 
+#[cfg(test)]
+mod constrained_generation_test;
+
 /// Trait for text generation models
 pub trait TextGenerator: Send + Sync {
     /// Generate text from a prompt
