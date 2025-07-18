@@ -26,10 +26,13 @@ class VocabularyAdapterIntegrationTest < Minitest::Test
     # - It correctly identifies special tokens like [SEP] as EOS
     # - It handles the full BERT vocabulary size
     
-    puts "✓ Vocabulary adapter integration test passed"
-    puts "  - Vocab size: #{vocab_size}"
-    puts "  - Special tokens: #{special_tokens.size}"
-    puts "  - EOS token ([SEP]): #{vocab['[SEP]']}"
+    # Only output if verbose
+    if ENV["VERBOSE"] || ARGV.include?("--verbose")
+      puts "✓ Vocabulary adapter integration test passed"
+      puts "  - Vocab size: #{vocab_size}"
+      puts "  - Special tokens: #{special_tokens.size}"
+      puts "  - EOS token ([SEP]): #{vocab['[SEP]']}"
+    end
   end
   
   def test_vocabulary_handles_large_token_ids
@@ -46,8 +49,11 @@ class VocabularyAdapterIntegrationTest < Minitest::Test
     # Verify EOS token
     assert vocab.key?("<|endoftext|>"), "GPT-2 should have endoftext token"
     
-    puts "✓ Large vocabulary test passed"
-    puts "  - Max token ID: #{max_token_id}"
-    puts "  - EOS token (<|endoftext|>): #{vocab['<|endoftext|>']}"
+    # Only output if verbose
+    if ENV["VERBOSE"] || ARGV.include?("--verbose")
+      puts "✓ Large vocabulary test passed"
+      puts "  - Max token ID: #{max_token_id}"
+      puts "  - EOS token (<|endoftext|>): #{vocab['<|endoftext|>']}"
+    end
   end
 end

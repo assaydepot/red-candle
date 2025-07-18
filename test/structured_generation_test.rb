@@ -59,7 +59,10 @@ class StructuredGenerationTest < Minitest::Test
         special_tokens = vocab.select { |k, _| k.include?("<") || k.include?("[") }
         assert special_tokens.size > 0, "#{model_id} should have special tokens"
         
-        puts "✓ #{model_id}: vocab_size=#{vocab.size}, special_tokens=#{special_tokens.size}"
+        # Only output if verbose
+        if ENV["VERBOSE"] || ARGV.include?("--verbose")
+          puts "✓ #{model_id}: vocab_size=#{vocab.size}, special_tokens=#{special_tokens.size}"
+        end
       rescue => e
         skip "Could not load #{model_id}: #{e.message}"
       end

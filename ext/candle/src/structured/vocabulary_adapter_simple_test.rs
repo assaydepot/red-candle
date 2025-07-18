@@ -17,7 +17,7 @@ mod simple_tests {
         // Test the static methods compile
         // These would be tested with a real tokenizer in integration tests
         
-        println!("✓ VocabularyAdapter compiles correctly with real outlines-core");
+        // Test passes if this compiles - no output needed
     }
     
     #[test]
@@ -49,7 +49,7 @@ mod simple_tests {
             }
         }
         
-        println!("✓ Outlines Vocabulary API works as expected");
+        // Test passes - vocabulary API works correctly
     }
     
     #[test] 
@@ -66,8 +66,7 @@ mod simple_tests {
             ("<|startoftext|>", "GPT-style BOS token"),
         ];
         
-        for (token, description) in test_cases {
-            println!("✓ Pattern '{}' for {}", token, description);
-        }
+        // Just verify the patterns exist - no output needed
+        assert_eq!(test_cases.len(), 6, "Should have 6 special token patterns");
     }
 }
