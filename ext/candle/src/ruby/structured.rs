@@ -1,4 +1,4 @@
-use magnus::{Error, Module, RModule, TryConvert, function, class, Object};
+use magnus::{Error, Module, RModule, function, Object};
 use std::sync::Arc;
 
 use crate::structured::{SchemaProcessor, VocabularyAdapter, Index};
