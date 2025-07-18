@@ -213,6 +213,47 @@ config = Candle::GenerationConfig.new(
 - Some models may perform better than others with constraints
 - Regular expressions must be compatible with the tokenizer vocabulary
 
+## Reliability and Error Handling
+
+Structured generation reliability depends heavily on model size and schema complexity:
+
+### Success Rates (Approximate)
+- **Large models (7B+)**: 90-95% success with most schemas
+- **Small models (1-3B)**: 60-80% success with simple schemas, lower with complex ones
+- **Complex nested schemas**: Lower success rates across all model sizes
+
+### Common Failure Modes
+1. **Incomplete JSON**: Model reaches max_length before closing all brackets
+2. **Invalid tokens**: Model cannot find valid tokens that satisfy constraints
+3. **Schema misunderstanding**: Small models may not follow complex schemas correctly
+
+### Recommended Practices
+
+```ruby
+# 1. Use generate_structured with error handling
+begin
+  result = llm.generate_structured(prompt, schema: schema)
+rescue JSON::ParserError => e
+  # Handle parsing failure
+  # Consider retry, simplification, or fallback
+end
+
+# 2. Set appropriate max_length
+result = llm.generate_structured(
+  prompt, 
+  schema: schema,
+  max_length: 200  # Ensure enough tokens for complete output
+)
+
+# 3. Use simpler schemas when possible
+# Instead of deeply nested objects, consider flatter structures
+
+# 4. Test with your specific model
+# Different models have different strengths with structured generation
+```
+
+For production applications, implement appropriate error handling and consider fallback strategies based on your specific requirements.
+
 ## Implementation Details
 
 Structured generation uses the [Outlines](https://github.com/outlines-dev/outlines) library's core functionality:

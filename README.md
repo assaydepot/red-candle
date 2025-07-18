@@ -272,6 +272,8 @@ phone = llm.generate("Generate a phone number:", config: config)
 
 See [STRUCTURED_GENERATION.md](docs/STRUCTURED_GENERATION.md) for detailed documentation.
 
+**Note on Reliability**: Structured generation constrains the model's output tokens, but success rates vary by model size and schema complexity. Smaller models (< 7B parameters) may occasionally produce incomplete or invalid JSON, especially with complex schemas. Consider implementing retry logic or fallback strategies in production applications. Larger models generally perform much better with structured generation.
+
 ## ⚠️ Model Format Requirements
 
 ### EmbeddingModels and Rerankers: Safetensors Only
