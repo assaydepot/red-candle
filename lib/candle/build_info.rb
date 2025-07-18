@@ -7,6 +7,7 @@ module Candle
       return unless ENV['CANDLE_VERBOSE'] || ENV['CANDLE_DEBUG'] || $DEBUG
       
       if info["cuda_available"] == false
+        # :nocov:
         # Check if CUDA could be available on the system
         cuda_potentially_available = ENV['CUDA_ROOT'] || ENV['CUDA_PATH'] || 
                                    File.exist?('/usr/local/cuda') || File.exist?('/opt/cuda')
@@ -18,6 +19,7 @@ module Candle
           warn "  CANDLE_ENABLE_CUDA=1 gem install red-candle"
           warn "=" * 80
         end
+        # :nocov:
       end
     end
     

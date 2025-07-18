@@ -7,6 +7,7 @@ module Candle
         # Try Metal first (for Mac users)
         Device.metal
       rescue
+        # :nocov:
         begin
           # Try CUDA next (for NVIDIA GPU users)
           Device.cuda
@@ -14,6 +15,7 @@ module Candle
           # Fall back to CPU
           Device.cpu
         end
+        # :nocov:
       end
     end
   end
