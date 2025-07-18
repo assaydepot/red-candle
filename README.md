@@ -244,6 +244,35 @@ This is particularly useful for:
 - Troubleshooting generation problems
 - Analyzing model behavior
 
+## Structured Generation
+
+Red Candle supports structured generation to constrain LLM outputs to follow specific patterns like JSON schemas or regular expressions:
+
+```ruby
+# Define a JSON schema
+schema = {
+  type: "object",
+  properties: {
+    answer: { type: "string", enum: ["yes", "no"] },
+    confidence: { type: "number", minimum: 0, maximum: 1 }
+  },
+  required: ["answer"]
+}
+
+# Create constraint from schema
+constraint = llm.constraint_from_schema(schema)
+
+# Generate with constraint
+config = Candle::GenerationConfig.balanced(constraint: constraint)
+result = llm.generate("Is Ruby easy to learn?", config: config)
+# Output: {"answer": "yes", "confidence": 0.9}
+
+# Or use regex patterns
+phone_constraint = llm.constraint_from_regex('\d{3}-\d{3}-\d{4}')
+```
+
+See [STRUCTURED_GENERATION.md](docs/STRUCTURED_GENERATION.md) for detailed documentation.
+
 ## ⚠️ Model Format Requirements
 
 ### EmbeddingModels and Rerankers: Safetensors Only
