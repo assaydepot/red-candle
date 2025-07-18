@@ -184,6 +184,31 @@ class StructuredGenerationTest < Minitest::Test
     assert_equal 10, new_config.max_length
   end
   
+  def test_generate_structured
+    llm = Candle::LLM.from_pretrained(@model_id, device: @device)
+    
+    # Simple schema
+    schema = {
+      type: "object",
+      properties: {
+        result: { type: "string", enum: ["success", "failure"] }
+      },
+      required: ["result"]
+    }
+    
+    # Use generate_structured - should return parsed JSON
+    result = llm.generate_structured(
+      "Did the operation succeed?", 
+      schema: schema,
+      max_length: 30,
+      temperature: 0.1
+    )
+    
+    # Result should be a parsed Ruby object
+    assert result.is_a?(Hash), "Result should be a parsed Hash, got: #{result.class}"
+    assert %w[success failure].include?(result["result"]), "Result should be success or failure"
+  end
+  
   def test_constraint_classes_available
     # Basic availability test that doesn't require model loading
     assert defined?(Candle::StructuredConstraint), "StructuredConstraint should be defined"
@@ -193,6 +218,8 @@ class StructuredGenerationTest < Minitest::Test
            "LLM should have constraint_from_schema method"
     assert Candle::LLM.instance_methods.include?(:constraint_from_regex), 
            "LLM should have constraint_from_regex method"
+    assert Candle::LLM.instance_methods.include?(:generate_structured), 
+           "LLM should have generate_structured method"
   end
   
   def test_generation_config_accepts_constraint

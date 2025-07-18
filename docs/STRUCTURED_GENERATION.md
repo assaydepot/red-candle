@@ -14,7 +14,7 @@ require 'candle'
 # Load a model
 llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 
-# Create a constraint from a JSON schema
+# Method 1: generate_structured (returns parsed JSON)
 schema = {
   type: "object",
   properties: {
@@ -24,16 +24,14 @@ schema = {
   required: ["answer"]
 }
 
+result = llm.generate_structured("Is Ruby a programming language?", schema: schema)
+# Returns: {"answer" => "yes", "confidence" => 0.95}  # Already parsed!
+
+# Method 2: Manual constraint (returns string)
 constraint = llm.constraint_from_schema(schema)
-
-# Generate with the constraint
-config = Candle::GenerationConfig.balanced(
-  constraint: constraint,
-  max_length: 50
-)
-
+config = Candle::GenerationConfig.balanced(constraint: constraint)
 result = llm.generate("Is Ruby a programming language?", config: config)
-# Output: {"answer": "yes", "confidence": 0.95}
+# Returns: '{"answer": "yes", "confidence": 0.95}'  # Need to parse
 ```
 
 ## Creating Constraints
@@ -107,11 +105,13 @@ schema = {
   required: ["choice"]
 }
 
-constraint = llm.constraint_from_schema(schema)
-config = Candle::GenerationConfig.balanced(constraint: constraint)
-
-result = llm.generate("What is 2+2? A) 3 B) 4 C) 5 D) 6", config: config)
-# Output: {"choice": "B", "reasoning": "2+2 equals 4"}
+# Using generate_structured (recommended)
+result = llm.generate_structured(
+  "What is 2+2? A) 3 B) 4 C) 5 D) 6", 
+  schema: schema
+)
+puts result["choice"]  # "B"
+puts result["reasoning"]  # "2+2 equals 4"
 ```
 
 ### 2. Entity Extraction

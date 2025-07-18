@@ -259,16 +259,15 @@ schema = {
   required: ["answer"]
 }
 
-# Create constraint from schema
-constraint = llm.constraint_from_schema(schema)
+# Generate and parse in one step
+result = llm.generate_structured("Is Ruby easy to learn?", schema: schema)
+puts result["answer"]      # "yes"
+puts result["confidence"]  # 0.9
 
-# Generate with constraint
-config = Candle::GenerationConfig.balanced(constraint: constraint)
-result = llm.generate("Is Ruby easy to learn?", config: config)
-# Output: {"answer": "yes", "confidence": 0.9}
-
-# Or use regex patterns
+# Or use regex patterns for non-JSON outputs
 phone_constraint = llm.constraint_from_regex('\d{3}-\d{3}-\d{4}')
+config = Candle::GenerationConfig.balanced(constraint: phone_constraint)
+phone = llm.generate("Generate a phone number:", config: config)
 ```
 
 See [STRUCTURED_GENERATION.md](docs/STRUCTURED_GENERATION.md) for detailed documentation.
