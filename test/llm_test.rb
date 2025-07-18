@@ -334,4 +334,46 @@ class TestLLM < Minitest::Test
     tokenizer = Candle::LLM.guess_tokenizer("user/my-custom-model-gguf")
     assert_equal "my-org/custom-tokenizer", tokenizer
   end
+  
+  def test_format_messages_legacy
+    skip unless @@llm
+    
+    # Test the legacy format_messages method (private method)
+    messages = [
+      { role: "system", content: "You are a helpful assistant." },
+      { role: "user", content: "Hello there!" },
+      { role: "assistant", content: "Hi! How can I help?" },
+      { role: "user", content: "What's the weather?" }
+    ]
+    
+    # Use send to call private method
+    formatted = @@llm.send(:format_messages, messages)
+    
+    assert_instance_of String, formatted
+    assert formatted.include?("System: You are a helpful assistant.")
+    assert formatted.include?("User: Hello there!")
+    assert formatted.include?("Assistant: Hi! How can I help?")
+    assert formatted.include?("User: What's the weather?")
+    assert formatted.end_with?("\n\nAssistant:")
+    
+    # Test with unknown role
+    messages_with_unknown = [
+      { role: "narrator", content: "Once upon a time" }
+    ]
+    
+    formatted_unknown = @@llm.send(:format_messages, messages_with_unknown)
+    assert formatted_unknown.include?("Once upon a time")
+    refute formatted_unknown.include?("narrator:")
+  end
+  
+  def test_register_tokenizer_invalid_pattern
+    # Test that invalid pattern types raise ArgumentError
+    assert_raises(ArgumentError) do
+      Candle::LLM.register_tokenizer(123, "some/tokenizer")
+    end
+    
+    assert_raises(ArgumentError) do
+      Candle::LLM.register_tokenizer([:array], "some/tokenizer")
+    end
+  end
 end
