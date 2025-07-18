@@ -2,7 +2,6 @@ require_relative "test_helper"
 
 class EmbeddingModelPoolingTest < Minitest::Test
   def setup
-    puts "SETUP"
     @model = Candle::EmbeddingModel.new
     @string = "The quick brown fox jumps over the lazy dog."
     @embeddings = @model.embeddings(@string)
