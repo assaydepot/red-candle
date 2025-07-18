@@ -13,6 +13,24 @@ module Candle
       pattern_str = pattern.is_a?(Regexp) ? pattern.source : pattern.to_s
       StructuredConstraint.from_regex(pattern_str, tokenizer)
     end
+    
+    # Generate and parse structured output from a JSON schema
+    def generate_structured(prompt, schema:, **options)
+      constraint = constraint_from_schema(schema)
+      config_opts = options.merge(constraint: constraint)
+      config = options[:config] || GenerationConfig.balanced(**config_opts)
+      
+      result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
+      
+      # Try to parse as JSON
+      begin
+        JSON.parse(result)
+      rescue JSON::ParserError => e
+        # Return the raw string if parsing fails
+        warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
+        result
+      end
+    end
     # Tokenizer registry for automatic detection
     TOKENIZER_REGISTRY = {
       # Exact model matches
