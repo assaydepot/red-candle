@@ -1,13 +1,17 @@
 use candle_core::{Result as CandleResult, Tensor};
 use candle_transformers::generation::LogitsProcessor;
+use std::sync::Arc;
 
 use super::GenerationConfig;
+use crate::structured::Index;
 
 /// Helper struct for text generation process
 pub struct TextGeneration {
     logits_processor: LogitsProcessor,
     tokens: Vec<u32>,
     eos_token_id: Option<u32>,
+    constraint: Option<Arc<Index>>,
+    constraint_state: Option<u32>,
 }
 
 impl TextGeneration {
@@ -25,18 +29,27 @@ impl TextGeneration {
             logits_processor,
             tokens: Vec::new(),
             eos_token_id: None,
+            constraint: None,
+            constraint_state: None,
         }
     }
 
     pub fn from_config(config: &GenerationConfig) -> Self {
-        Self::new(
+        let mut text_gen = Self::new(
             config.seed,
             Some(config.temperature),
             config.top_p,
             config.top_k,
             config.repetition_penalty,
             config.repetition_penalty_last_n,
-        )
+        );
+        
+        // Set constraint if provided
+        if let Some(ref constraint) = config.constraint {
+            text_gen.set_constraint(Arc::clone(constraint));
+        }
+        
+        text_gen
     }
 
     pub fn set_eos_token_id(&mut self, eos_token_id: u32) {
@@ -53,6 +66,36 @@ impl TextGeneration {
 
     pub fn push_token(&mut self, token: u32) {
         self.tokens.push(token);
+    }
+
+    pub fn set_constraint(&mut self, constraint: Arc<Index>) {
+        // Initialize with the first state
+        self.constraint_state = Some(constraint.initial_state());
+        self.constraint = Some(constraint);
+    }
+
+    /// Apply constraints to logits by masking disallowed tokens
+    fn apply_constraints(&self, logits: &mut Tensor) -> CandleResult<()> {
+        if let (Some(ref constraint_index), Some(state)) = (&self.constraint, self.constraint_state) {
+            let device = logits.device();
+            let vocab_size = logits.dims1()?;
+            
+            // Get allowed tokens from the constraint index for current state
+            if let Some(allowed_tokens) = constraint_index.allowed_tokens(&state) {
+                // Create a mask where allowed tokens have value 0 and others have -inf
+                let mut mask = vec![f32::NEG_INFINITY; vocab_size];
+                for &token_id in &allowed_tokens {
+                    if (token_id as usize) < vocab_size {
+                        mask[token_id as usize] = 0.0;
+                    }
+                }
+                
+                // Apply mask to logits
+                let mask_tensor = Tensor::from_vec(mask, vocab_size, device)?;
+                *logits = logits.add(&mask_tensor)?;
+            }
+        }
+        Ok(())
     }
 
     /// Apply repetition penalty to logits
@@ -103,9 +146,17 @@ impl TextGeneration {
             self.apply_repetition_penalty(&mut logits, penalty, last_n)?;
         }
         
+        // Apply constraints if active
+        self.apply_constraints(&mut logits)?;
+        
         // Sample token
         let next_token = self.logits_processor.sample(&logits)?;
         self.tokens.push(next_token);
+        
+        // Update constraint state if active
+        if let (Some(ref constraint_index), Some(current_state)) = (&self.constraint, self.constraint_state) {
+            self.constraint_state = constraint_index.next_state(&current_state, &next_token);
+        }
         
         Ok(next_token)
     }
@@ -118,6 +169,19 @@ impl TextGeneration {
         
         if let Some(eos) = self.eos_token_id {
             if token == eos {
+                return true;
+            }
+        }
+        
+        // Check if we've reached a final state in constraint
+        // A state is considered final if it has no allowed tokens
+        if let (Some(ref constraint_index), Some(state)) = (&self.constraint, self.constraint_state) {
+            if let Some(allowed) = constraint_index.allowed_tokens(&state) {
+                if allowed.is_empty() {
+                    return true;
+                }
+            } else {
+                // None means no tokens allowed - we're done
                 return true;
             }
         }
