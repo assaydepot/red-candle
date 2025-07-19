@@ -7,7 +7,7 @@ Run state-of-the-art **language models directly from Ruby**. No Python, no APIs,
 
 ## Install & Chat in 30 Seconds
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/hbyFCyh8esk?si=CN9gR3UAl0yt7b8i" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![red-candle quickstart](https://img.youtube.com/vi/hbyFCyh8esk/0.jpg)](https://www.youtube.com/watch?v=hbyFCyh8esk)
 
 ```bash
 # Install the gem
