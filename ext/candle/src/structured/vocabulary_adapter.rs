@@ -82,6 +82,11 @@ impl VocabularyAdapter {
         
         // Insert all tokens into the vocabulary
         for (idx, (token, bytes)) in vocab_items.into_iter().enumerate() {
+            // Skip inserting the EOS token as it's already set in the vocabulary
+            if Some(idx as u32) == eos_token_id {
+                continue;
+            }
+            
             vocabulary.try_insert(bytes, idx as u32)
                 .map_err(|e| candle_core::Error::Msg(
                     format!("Failed to insert token '{}': {:?}", token, e)
@@ -128,7 +133,6 @@ impl VocabularyAdapter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     
     #[test]
     fn test_vocabulary_adapter_creation() {
