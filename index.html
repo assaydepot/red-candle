@@ -559,6 +559,184 @@ print(embedding)
 <li><strong>NER Preparation</strong>: Get aligned tokens for named entity recognition tasks</li>
 </ul>
 
+<h2 id="named-entity-recognition-ner">Named Entity Recognition (NER)</h2>
+
+<p>Red-Candle includes comprehensive Named Entity Recognition capabilities for extracting entities like people, organizations, locations, and custom entity types from text.</p>
+
+<h3 id="model-based-ner">Model-based NER</h3>
+
+<p>Load pre-trained NER models from HuggingFace:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
+
+<span class='comment'># Load a pre-trained NER model
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Babelscape/wikineural-multilingual-ner</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Or load a model with a specific tokenizer (for models without tokenizer.json)
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>dslim/bert-base-NER</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>tokenizer:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bert-base-cased</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Extract entities from text
+</span><span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, California.</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='id identifier rubyid_ner'>ner</span><span class='period'>.</span><span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
+
+<span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_entity'>entity</span><span class='op'>|</span>
+  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>text</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>label</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>) - confidence: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>confidence</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span>
+<span class='comment'># Output:
+</span><span class='comment'># Apple Inc. (ORG) - confidence: 0.99
+</span><span class='comment'># Steve Jobs (PER) - confidence: 0.99
+</span><span class='comment'># Steve Wozniak (PER) - confidence: 0.98
+</span><span class='comment'># Cupertino (LOC) - confidence: 0.97
+</span><span class='comment'># California (LOC) - confidence: 0.98
+</span>
+<span class='comment'># Adjust confidence threshold (default: 0.9)
+</span><span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='id identifier rubyid_ner'>ner</span><span class='period'>.</span><span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='float'>0.95</span><span class='rparen'>)</span>
+
+<span class='comment'># Get token-level predictions for detailed analysis
+</span><span class='id identifier rubyid_tokens'>tokens</span> <span class='op'>=</span> <span class='id identifier rubyid_ner'>ner</span><span class='period'>.</span><span class='id identifier rubyid_predict_tokens'>predict_tokens</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="pattern-based-recognition">Pattern-based Recognition</h3>
+
+<p>For domain-specific entities, use regex patterns:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Create pattern-based recognizers
+</span><span class='id identifier rubyid_email_recognizer'>email_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html" title="Candle::PatternEntityRecognizer (class)">PatternEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html#initialize-instance_method" title="Candle::PatternEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>EMAIL</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span>
+  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b</span><span class='regexp_end'>/</span></span>
+<span class='rbracket'>]</span><span class='rparen'>)</span>
+
+<span class='id identifier rubyid_phone_recognizer'>phone_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html" title="Candle::PatternEntityRecognizer (class)">PatternEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html#initialize-instance_method" title="Candle::PatternEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PHONE</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span>
+  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\d{3}[-.]?\d{3}[-.]?\d{4}\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>         <span class='comment'># 555-123-4567
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\(\d{3}\)\s*\d{3}[-.]?\d{4}\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>      <span class='comment'># (555) 123-4567
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\+1\s*\d{3}[-.]?\d{3}[-.]?\d{4}\b</span><span class='regexp_end'>/</span></span>   <span class='comment'># +1 555-123-4567
+</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+
+<span class='comment'># Extract entities
+</span><span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Contact us at info@example.com or call 555-123-4567</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_email_entities'>email_entities</span> <span class='op'>=</span> <span class='id identifier rubyid_email_recognizer'>email_recognizer</span><span class='period'>.</span><span class='id identifier rubyid_recognize'>recognize</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_phone_entities'>phone_entities</span> <span class='op'>=</span> <span class='id identifier rubyid_phone_recognizer'>phone_recognizer</span><span class='period'>.</span><span class='id identifier rubyid_recognize'>recognize</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="gazetteer-based-recognition">Gazetteer-based Recognition</h3>
+
+<p>Use dictionaries for known entities:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Create gazetteer recognizers
+</span><span class='id identifier rubyid_companies'>companies</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Apple</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Google</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Microsoft</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Amazon</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tesla</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_company_recognizer'>company_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html" title="Candle::GazetteerEntityRecognizer (class)">GazetteerEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html#initialize-instance_method" title="Candle::GazetteerEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>COMPANY</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_companies'>companies</span><span class='rparen'>)</span>
+
+<span class='comment'># Load from file
+</span><span class='id identifier rubyid_drug_recognizer'>drug_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html" title="Candle::GazetteerEntityRecognizer (class)">GazetteerEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html#initialize-instance_method" title="Candle::GazetteerEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>DRUG</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_drug_recognizer'>drug_recognizer</span><span class='period'>.</span><span class='id identifier rubyid_load_from_file'>load_from_file</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>drug_names.txt</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Case-sensitive matching
+</span><span class='id identifier rubyid_product_recognizer'>product_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html" title="Candle::GazetteerEntityRecognizer (class)">GazetteerEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html#initialize-instance_method" title="Candle::GazetteerEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PRODUCT</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+  <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPhone</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPad</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>MacBook</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> 
+  <span class='label'>case_sensitive:</span> <span class='kw'>true</span>
+<span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="hybrid-ner">Hybrid NER</h3>
+
+<p>Combine ML models with rule-based approaches for best results:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Create hybrid NER system
+</span><span class='id identifier rubyid_hybrid'>hybrid</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/HybridNER.html" title="Candle::HybridNER (class)">HybridNER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/HybridNER.html#initialize-instance_method" title="Candle::HybridNER#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Babelscape/wikineural-multilingual-ner</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Add pattern recognizers
+</span><span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_pattern_recognizer'>add_pattern_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>EMAIL</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b</span><span class='regexp_end'>/</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_pattern_recognizer'>add_pattern_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PHONE</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\d{3}[-.]?\d{3}[-.]?\d{4}\b</span><span class='regexp_end'>/</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+
+<span class='comment'># Add gazetteer recognizers  
+</span><span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_gazetteer_recognizer'>add_gazetteer_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>COMPANY</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Apple</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Google</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Microsoft</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_gazetteer_recognizer'>add_gazetteer_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PRODUCT</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPhone</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Android</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Windows</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+
+<span class='comment'># Extract all entities
+</span><span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>John Smith (john@apple.com) from Apple called about the new iPhone. Reach him at 555-0123.</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
+
+<span class='comment'># Results include entities from all recognizers
+</span><span class='comment'># Overlapping entities are automatically resolved (highest confidence wins)
+</span></code></pre>
+
+<h3 id="custom-entity-types">Custom Entity Types</h3>
+
+<p>Perfect for specialized domains:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Biomedical entities
+</span><span class='id identifier rubyid_gene_patterns'>gene_patterns</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z][A-Z0-9]{2,}\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>      <span class='comment'># TP53, BRCA1, EGFR
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\bCD\d+\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>                  <span class='comment'># CD4, CD8, CD34
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z]+\d[A-Z]\d*\b</span><span class='regexp_end'>/</span></span>        <span class='comment'># RAD51C, PALB2
+</span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_gene_recognizer'>gene_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html" title="Candle::PatternEntityRecognizer (class)">PatternEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html#initialize-instance_method" title="Candle::PatternEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>GENE</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_gene_patterns'>gene_patterns</span><span class='rparen'>)</span>
+
+<span class='comment'># Financial entities
+</span><span class='id identifier rubyid_ticker_patterns'>ticker_patterns</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\$[A-Z]{1,5}\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>             <span class='comment'># $AAPL, $GOOGL
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z]{1,5}\.NYSE\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>       <span class='comment'># AAPL.NYSE
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z]{1,5}\.NASDAQ\b</span><span class='regexp_end'>/</span></span>      <span class='comment'># GOOGL.NASDAQ
+</span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_ticker_recognizer'>ticker_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html" title="Candle::PatternEntityRecognizer (class)">PatternEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html#initialize-instance_method" title="Candle::PatternEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TICKER</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_ticker_patterns'>ticker_patterns</span><span class='rparen'>)</span>
+
+<span class='comment'># Legal entities
+</span><span class='id identifier rubyid_case_patterns'>case_patterns</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\d+\s+F\.\d+\s+\d+\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>     <span class='comment'># 123 F.3d 456
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\d+\s+U\.S\.\s+\d+\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>     <span class='comment'># 123 U.S. 456
+</span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\bNo\.\s+\d+-\d+\b</span><span class='regexp_end'>/</span></span>          <span class='comment'># No. 20-1234
+</span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_case_recognizer'>case_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html" title="Candle::PatternEntityRecognizer (class)">PatternEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/PatternEntityRecognizer.html#initialize-instance_method" title="Candle::PatternEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>CASE</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_case_patterns'>case_patterns</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="available-pre-trained-models">Available Pre-trained Models</h3>
+
+<p>Popular NER models on HuggingFace:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># General multilingual NER (4 entity types: PER, ORG, LOC, MISC)
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Babelscape/wikineural-multilingual-ner</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># English NER (requires separate tokenizer)
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>dslim/bert-base-NER</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>tokenizer:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bert-base-cased</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Multilingual NER  
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Davlan/bert-base-multilingual-cased-ner-hrl</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># OntoNotes 5 (18 entity types including DATE, TIME, MONEY, etc.)
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flair/ner-english-ontonotes-large</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Biomedical NER
+</span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>dmis-lab/biobert-base-cased-v1.2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>allenai/scibert_scivocab_uncased</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="performance-tips">Performance Tips</h3>
+
+<ol>
+<li><p><strong>Device Selection</strong>: Use GPU for faster inference</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Babelscape/wikineural-multilingual-ner</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span><span class='rparen'>)</span>
+</code></pre></li>
+<li><p><strong>Batch Processing</strong>: Process multiple texts together when possible</p></li>
+<li><p><strong>Confidence Threshold</strong>: Balance precision/recall with appropriate thresholds</p></li>
+<li><p><strong>Entity Resolution</strong>: The hybrid NER automatically handles overlapping entities</p></li>
+</ol>
+
+<h3 id="output-format">Output Format</h3>
+
+<p>All NER methods return entities in a consistent format:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>text</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Apple Inc.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>          <span class='comment'># The entity text
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>label</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ORG</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>               <span class='comment'># Entity type
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>start</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>0</span><span class='comma'>,</span>                   <span class='comment'># Character start position
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>end</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>10</span><span class='comma'>,</span>                    <span class='comment'># Character end position  
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>confidence</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='float'>0.99</span><span class='comma'>,</span>           <span class='comment'># Confidence score (0-1)
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>token_start</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>0</span><span class='comma'>,</span>             <span class='comment'># Token start index (model-based only)
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>token_end</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>2</span><span class='comma'>,</span>               <span class='comment'># Token end index (model-based only)
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>source</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>model</span><span class='tstring_end'>&quot;</span></span>             <span class='comment'># Source: &quot;model&quot;, &quot;pattern&quot;, or &quot;gazetteer&quot;
+</span><span class='rbrace'>}</span>
+</code></pre>
+
 <h2 id="common-runtime-errors">Common Runtime Errors</h2>
 
 <h3 id="1-weight-is-negative-too-large-or-not-a-valid-number">1. Weight is negative, too large or not a valid number</h3>
@@ -690,7 +868,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Thu Jul 17 12:57:29 2025 by
+  Generated on Sat Jul 19 03:11:13 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
