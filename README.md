@@ -780,6 +780,14 @@ Implemented with [Magnus](https://github.com/matsadler/magnus), with reference t
 
 Pull requests are welcome.
 
+## Release
+
+1. Update version number in `lib/candle/version.rb` and commit.
+2. `bundle exec rake build`
+3. `git tag VERSION_NUMBER`
+4. `git push --follow-tags`
+5. `gem push pkg/red-candle-1.0.0.gem`
+
 ### See Also
 
 - [Numo::NArray](https://github.com/ruby-numo/numo-narray)
