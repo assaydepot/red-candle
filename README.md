@@ -840,7 +840,7 @@ Pull requests are welcome.
 2. `bundle exec rake build`
 3. `git tag VERSION_NUMBER`
 4. `git push --follow-tags`
-5. `gem push pkg/red-candle-1.0.0.gem`
+5. `gem push pkg/red-candle-VERSION_NUMBER.gem`
 
 ## See Also
 
