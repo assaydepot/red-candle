@@ -183,6 +183,100 @@ class DeviceCompatibilityTest < Minitest::Test
     end
   end
   
+  # Test NER on each device
+  DeviceTestHelper.devices_to_test.each do |device_type|
+    define_method "test_ner_on_#{device_type}" do
+      skip_unless_device_available(device_type)
+      
+      device = create_device(device_type)
+      
+      # Load NER model on specific device
+      ner = Candle::NER.from_pretrained(
+        "Babelscape/wikineural-multilingual-ner",
+        device: device
+      )
+      
+      # Test entity extraction
+      text = "Apple Inc. was founded by Steve Jobs in Cupertino, California."
+      entities = ner.extract_entities(text, confidence_threshold: 0.7)
+      
+      assert_kind_of Array, entities
+      refute_empty entities
+      
+      # Check entity structure
+      entities.each do |entity|
+        assert_kind_of Hash, entity
+        assert entity.key?("text")
+        assert entity.key?("label")
+        assert entity.key?("start")
+        assert entity.key?("end")
+        assert entity.key?("confidence")
+        
+        assert_kind_of String, entity["text"]
+        assert_kind_of String, entity["label"]
+        assert_kind_of Integer, entity["start"]
+        assert_kind_of Integer, entity["end"]
+        assert_kind_of Float, entity["confidence"]
+        
+        # Verify confidence threshold
+        assert entity["confidence"] >= 0.7
+      end
+      
+      # Verify we found expected entities
+      entity_texts = entities.map { |e| e["text"] }
+      entity_labels = entities.map { |e| e["label"] }
+      
+      # Should find organization (Apple Inc.) and person (Steve Jobs)
+      assert entity_labels.include?("ORG") || entity_labels.include?("CORP")
+      assert entity_labels.include?("PER") || entity_labels.include?("PERSON")
+      
+      # Test token predictions
+      tokens = ner.predict_tokens("John works at Google")
+      
+      assert_kind_of Array, tokens
+      refute_empty tokens
+      
+      tokens.each do |token_info|
+        assert_kind_of Hash, token_info
+        assert token_info.key?("token")
+        assert token_info.key?("label")
+        assert token_info.key?("confidence")
+        assert token_info.key?("probabilities")
+      end
+    end
+  end
+  
+  # Test NER with different confidence thresholds on each device
+  DeviceTestHelper.devices_to_test.each do |device_type|
+    define_method "test_ner_confidence_thresholds_on_#{device_type}" do
+      skip_unless_device_available(device_type)
+      
+      device = create_device(device_type)
+      
+      ner = Candle::NER.from_pretrained(
+        "Babelscape/wikineural-multilingual-ner",
+        device: device
+      )
+      
+      text = "Microsoft Corporation is based in Redmond."
+      
+      # Test with different thresholds
+      low_threshold_entities = ner.extract_entities(text, confidence_threshold: 0.5)
+      high_threshold_entities = ner.extract_entities(text, confidence_threshold: 0.9)
+      
+      # Lower threshold should return same or more entities
+      assert low_threshold_entities.length >= high_threshold_entities.length
+      
+      # All high threshold entities should be in low threshold results
+      high_texts = high_threshold_entities.map { |e| e["text"] }
+      low_texts = low_threshold_entities.map { |e| e["text"] }
+      
+      high_texts.each do |text|
+        assert low_texts.include?(text)
+      end
+    end
+  end
+  
   # Test DeviceUtils
   def test_device_utils_best_device
     best = Candle::DeviceUtils.best_device
