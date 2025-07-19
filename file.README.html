@@ -859,6 +859,16 @@ bundle exec rake compile
 
 <p>Pull requests are welcome.</p>
 
+<h2 id="release">Release</h2>
+
+<ol>
+<li>Update version number in <code>lib/candle/version.rb</code> and commit.</li>
+<li><code>bundle exec rake build</code></li>
+<li><code>git tag VERSION_NUMBER</code></li>
+<li><code>git push --follow-tags</code></li>
+<li><code>gem push pkg/red-candle-1.0.0.gem</code></li>
+</ol>
+
 <h3 id="see-also">See Also</h3>
 
 <ul>
@@ -868,7 +878,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Sat Jul 19 03:11:28 2025 by
+  Generated on Sat Jul 19 13:44:23 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
