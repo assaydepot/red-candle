@@ -832,8 +832,6 @@ bundle
 bundle exec rake compile
 ```
 
-Implemented with [Magnus](https://github.com/matsadler/magnus), with reference to [Polars Ruby](https://github.com/ankane/polars-ruby)
-
 Pull requests are welcome.
 
 ## Release
@@ -844,7 +842,8 @@ Pull requests are welcome.
 4. `git push --follow-tags`
 5. `gem push pkg/red-candle-1.0.0.gem`
 
-### See Also
+## See Also
 
-- [Numo::NArray](https://github.com/ruby-numo/numo-narray)
-- [Cumo](https://github.com/sonots/cumo)
+- [Candle](https://github.com/huggingface/candle)
+- [Magnus](https://github.com/matsadler/magnus)
+- [Outlines-core](https://github.com/dottxt-ai/outlines-core)
