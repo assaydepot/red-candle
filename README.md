@@ -3,7 +3,7 @@
 [![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
 
-Run state-of-the-art language models directly from Ruby. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with Metal (Mac) and CUDA (NVIDIA).
+Run state-of-the-art **language models directly from Ruby**. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with **Metal (Mac)** and **CUDA (NVIDIA).**
 
 ## Install & Chat in 30 Seconds
 
@@ -32,7 +32,7 @@ puts llm.chat(messages)
 
 ## What Just Happened?
 
-You just ran a 7-billion parameter AI model inside Ruby. The model lives in your process memory, runs on your hardware (CPU/GPU), and responds instantly without network latency.
+You just ran a 1.1-billion parameter AI model inside Ruby. The model lives in your process memory, runs on your hardware (CPU/GPU), and responds instantly without network latency.
 
 ## Stream Responses Like a Pro
 
@@ -49,6 +49,14 @@ end
 - **Speed**: No network overhead, direct memory access
 - **Control**: Fine-tune generation parameters, access raw tokens
 - **Integration**: It's just Ruby objects - use it anywhere Ruby runs
+
+## Supports
+
+- **Tokenizers**: Access the tokenizer directly
+- **EmbeddingModel**: Generate embeddings for text
+- **Reranker**: Rerank documents based on relevance
+- **NER**: Named Entity Recognition directly from Ruby
+- **LLM**: Chat with Large Language Models (e.g., Llama, Mistral, Gemma)
 
 ----
 
