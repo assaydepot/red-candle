@@ -726,7 +726,7 @@ All NER methods return entities in a consistent format:
 
 ## Common Runtime Errors
 
-### 1. Weight is negative, too large or not a valid number
+### Weight is negative, too large or not a valid number
 
 **Error:**
 ```
@@ -748,7 +748,7 @@ llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF",
                                   gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
 ```
 
-### 2. Cannot find tensor model.embed_tokens.weight
+### Cannot find tensor model.embed_tokens.weight
 
 **Error:**
 ```
@@ -767,7 +767,7 @@ Failed to load quantized model: cannot find tensor model.embed_tokens.weight (Ru
    ```
 3. If the error persists, the GGUF file may use an unsupported architecture or format
 
-### 3. No GGUF file found in repository
+### No GGUF file found in repository
 
 **Error:**
 ```
@@ -784,7 +784,7 @@ llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF",
                                   gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
 ```
 
-### 4. Failed to download tokenizer
+### Failed to download tokenizer
 
 **Error:**
 ```
@@ -795,7 +795,7 @@ Failed to load quantized model: Failed to download tokenizer: request error: HTT
 
 **Solution:** The code now includes fallback tokenizer loading. If you still encounter this error, ensure you're using the latest version of red-candle.
 
-### 5. Missing metadata in GGUF file
+### Missing metadata in GGUF file
 
 **Error:**
 ```
