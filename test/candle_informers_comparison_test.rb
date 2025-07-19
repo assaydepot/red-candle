@@ -7,10 +7,6 @@ class CandleInformersComparisonTest < Minitest::Test
   # Tolerance for floating point comparison
   FLOAT_TOLERANCE = 1e-4
   
-  def setup
-    skip("Skipping comparison tests - set CANDLE_RUN_COMPARISON_TESTS=true to run") unless ENV['CANDLE_RUN_COMPARISON_TESTS'] == 'true'
-  end
-
   def test_reranker_comparison
     model_id = "cross-encoder/ms-marco-MiniLM-L-12-v2"
     query = "How many people live in London?"

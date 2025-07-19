@@ -4,6 +4,7 @@ use crate::ruby::candle_utils;
 use crate::ruby::Result;
 
 pub mod llm;
+pub mod ner;
 pub mod reranker;
 pub mod ruby;
 pub mod tokenizer;
@@ -42,6 +43,7 @@ fn init(ruby: &Ruby) -> Result<()> {
     
     ruby::init_embedding_model(rb_candle)?;
     ruby::init_llm(rb_candle)?;
+    ner::init(rb_candle)?;
     reranker::init(rb_candle)?;
     ruby::dtype::init(rb_candle)?;
     ruby::device::init(rb_candle)?;

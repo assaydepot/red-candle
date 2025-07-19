@@ -192,6 +192,7 @@ red-candle/
   - `EmbeddingModel` - Text embeddings
   - `Reranker` - Document reranking
   - `Tokenizer` - Text tokenization
+  - `NER` - Named Entity Recognition
 
 ### Ruby Style
 
@@ -530,10 +531,63 @@ rank_tokenizer = reranker.tokenizer
 - **Custom Pipelines**: Build specialized text processing
 - **Education**: Teach how modern tokenizers handle text
 
+## Named Entity Recognition (NER)
+
+Red Candle now supports Named Entity Recognition for extracting entities from text:
+
+### Model-based NER
+
+```ruby
+# Load pre-trained NER model
+ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
+
+# Extract entities
+entities = ner.extract_entities("Apple Inc. was founded by Steve Jobs.")
+# => [
+#   { "text" => "Apple Inc.", "label" => "ORG", "start" => 0, "end" => 10, "confidence" => 0.99 },
+#   { "text" => "Steve Jobs", "label" => "PER", "start" => 26, "end" => 36, "confidence" => 0.98 }
+# ]
+
+# Get token-level predictions
+tokens = ner.predict_tokens("John works at Google")
+```
+
+### Pattern & Gazetteer Recognition
+
+For specialized domains, combine patterns and dictionaries:
+
+```ruby
+# Pattern-based (e.g., for genes)
+gene_recognizer = Candle::PatternEntityRecognizer.new("GENE", [
+  /\b[A-Z][A-Z0-9]{2,}\b/,  # TP53, BRCA1
+  /\bCD\d+\b/               # CD4, CD8
+])
+
+# Dictionary-based
+drug_recognizer = Candle::GazetteerEntityRecognizer.new("DRUG", 
+  ["aspirin", "ibuprofen", "metformin"])
+
+# Hybrid approach
+hybrid = Candle::HybridNER.new("Babelscape/wikineural-multilingual-ner")
+hybrid.add_pattern_recognizer("GENE", gene_patterns)
+hybrid.add_gazetteer_recognizer("DRUG", drug_list)
+```
+
+### Custom Entity Types
+
+Perfect for specialized fields:
+- **Biomedical**: Genes, proteins, drugs, diseases
+- **Finance**: Tickers, currencies, companies
+- **Legal**: Cases, statutes, parties
+- **Technical**: Error codes, APIs, components
+
 ## Recent Updates
 
+- Implemented comprehensive Named Entity Recognition (NER) system
+- Added pattern-based and gazetteer-based entity recognizers
+- Created hybrid NER combining ML models with rule-based approaches
 - Unified tokenizer implementation across all model types
-- Exposed tokenizer API to Ruby with comprehensive functionality
+- Exposed tokenizer API to Ruby with token string functionality
 - Added tokenizer access methods to LLM, EmbeddingModel, and Reranker
 - Created standardized padding and truncation configurations
 - Improved error messages with specific solutions

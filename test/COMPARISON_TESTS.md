@@ -14,16 +14,10 @@ bundle install
 
 ### Automated Tests
 
-Run the comparison test suite:
+Run the suite with verbose output:
 
 ```bash
-CANDLE_RUN_COMPARISON_TESTS=true bundle exec ruby test/candle_informers_comparison_test.rb
-```
-
-With verbose output:
-
-```bash
-CANDLE_RUN_COMPARISON_TESTS=true CANDLE_TEST_VERBOSE=true bundle exec ruby test/candle_informers_comparison_test.rb
+CANDLE_TEST_VERBOSE=true bundle exec ruby test/candle_informers_comparison_test.rb
 ```
 
 ### Manual Debugging
