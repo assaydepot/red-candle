@@ -1,9 +1,66 @@
-# red-candle
+# `red-candle` Native LLMs for Ruby 🚀
 
 [![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
 
- [candle](https://github.com/huggingface/candle) - Minimalist ML framework - for Ruby
+Run state-of-the-art **language models directly from Ruby**. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with **Metal (Mac)** and **CUDA (NVIDIA).**
+
+## Install & Chat in 30 Seconds
+
+[![red-candle quickstart](https://img.youtube.com/vi/hbyFCyh8esk/0.jpg)](https://www.youtube.com/watch?v=hbyFCyh8esk)
+
+```bash
+# Install the gem
+gem install red-candle
+```
+
+```ruby
+require 'candle'
+
+# Download a model (one-time, ~650MB) - Mistral, Llama3, Gemma all work!
+llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
+                                  gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
+
+# Chat with it - no API calls, running locally in your Ruby process!
+messages = [
+  { role: "user", content: "Explain Ruby in one sentence" }
+]
+
+puts llm.chat(messages)
+# => "Ruby is a dynamic, object-oriented programming language known for its 
+#     simplicity, elegance, and productivity, often used for web development 
+#     with frameworks like Rails."
+```
+
+## What Just Happened?
+
+You just ran a 1.1-billion parameter AI model inside Ruby. The model lives in your process memory, runs on your hardware (CPU/GPU), and responds instantly without network latency.
+
+## Stream Responses Like a Pro
+
+```ruby
+# Watch the AI think in real-time
+llm.chat_stream(messages) do |token|
+  print token
+end
+```
+
+## Why This Matters
+
+- **Privacy**: Your data never leaves your machine
+- **Speed**: No network overhead, direct memory access
+- **Control**: Fine-tune generation parameters, access raw tokens
+- **Integration**: It's just Ruby objects - use it anywhere Ruby runs
+
+## Supports
+
+- **Tokenizers**: Access the tokenizer directly
+- **EmbeddingModel**: Generate embeddings for text
+- **Reranker**: Rerank documents based on relevance
+- **NER**: Named Entity Recognition directly from Ruby
+- **LLM**: Chat with Large Language Models (e.g., Llama, Mistral, Gemma)
+
+----
 
 ## Usage
 
@@ -671,7 +728,7 @@ All NER methods return entities in a consistent format:
 
 ## Common Runtime Errors
 
-### 1. Weight is negative, too large or not a valid number
+### Weight is negative, too large or not a valid number
 
 **Error:**
 ```
@@ -688,13 +745,12 @@ All NER methods return entities in a consistent format:
 - Q3_K_M (3-bit) - Minimum recommended quantization
 
 ```ruby
-# Instead of Q2_K:
 llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
                                   device: device, 
                                   gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
 ```
 
-### 2. Cannot find tensor model.embed_tokens.weight
+### Cannot find tensor model.embed_tokens.weight
 
 **Error:**
 ```
@@ -713,7 +769,7 @@ Failed to load quantized model: cannot find tensor model.embed_tokens.weight (Ru
    ```
 3. If the error persists, the GGUF file may use an unsupported architecture or format
 
-### 3. No GGUF file found in repository
+### No GGUF file found in repository
 
 **Error:**
 ```
@@ -730,7 +786,7 @@ llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF",
                                   gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
 ```
 
-### 4. Failed to download tokenizer
+### Failed to download tokenizer
 
 **Error:**
 ```
@@ -741,7 +797,7 @@ Failed to load quantized model: Failed to download tokenizer: request error: HTT
 
 **Solution:** The code now includes fallback tokenizer loading. If you still encounter this error, ensure you're using the latest version of red-candle.
 
-### 5. Missing metadata in GGUF file
+### Missing metadata in GGUF file
 
 **Error:**
 ```
