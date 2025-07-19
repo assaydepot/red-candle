@@ -3,7 +3,7 @@ require_relative "lib/candle/version"
 Gem::Specification.new do |spec|
   spec.name        = "red-candle"
   spec.version     = Candle::VERSION
-  spec.summary     = "huggingface/candle for ruby"
+  spec.summary     = "huggingface/candle for Ruby"
   spec.description = "huggingface/candle for Ruby"
   spec.files = Dir[
     "lib/**/*.rb",
@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.homepage    = "https://github.com/assaydepot/red-candle"
   spec.license     = "MIT"
 
-  spec.requirements = ["Rust >= 1.61"]
+  spec.requirements = ["Rust >= 1.65"]
   spec.required_ruby_version = ">= 2.7.0"
   spec.required_rubygems_version = ">= 3.3.26"
 
