@@ -171,7 +171,9 @@
 15
 16
 17
-18</pre>
+18
+19
+20</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/candle/device_utils.rb', line 4</span>
@@ -182,14 +184,16 @@
     <span class='comment'># Try Metal first (for Mac users)
 </span>    <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span>
   <span class='kw'>rescue</span>
-    <span class='kw'>begin</span>
+    <span class='comment'># :nocov:
+</span>    <span class='kw'>begin</span>
       <span class='comment'># Try CUDA next (for NVIDIA GPU users)
 </span>      <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>
     <span class='kw'>rescue</span>
       <span class='comment'># Fall back to CPU
 </span>      <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>
     <span class='kw'>end</span>
-  <span class='kw'>end</span>
+    <span class='comment'># :nocov:
+</span>  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -201,7 +205,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jul 19 03:11:13 2025 by
+  Generated on Sat Jul 19 03:11:28 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
