@@ -1,8 +1,10 @@
 use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule, Ruby, TryConvert, Value};
 use std::cell::RefCell;
+use std::sync::Arc;
 
 use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma, QuantizedGGUF as RustQuantizedGGUF};
 use crate::ruby::{Result, Device};
+use crate::ruby::structured::StructuredConstraint;
 
 // Use an enum to handle different model types instead of trait objects
 #[derive(Debug)]
@@ -143,6 +145,13 @@ impl GenerationConfig {
         if let Some(value) = kwargs.get(magnus::Symbol::new("debug_tokens")) {
             if let Ok(v) = TryConvert::try_convert(value) {
                 config.debug_tokens = v;
+            }
+        }
+        
+        // Handle constraint parameter
+        if let Some(value) = kwargs.get(magnus::Symbol::new("constraint")) {
+            if let Ok(constraint) = <&StructuredConstraint as TryConvert>::try_convert(value) {
+                config.constraint = Some(Arc::clone(&constraint.index));
             }
         }
         
