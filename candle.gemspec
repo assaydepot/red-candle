@@ -43,4 +43,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "yard-rustdoc"
   spec.add_development_dependency "redcarpet", "~> 3.6"
   spec.add_development_dependency "informers"
+  spec.add_development_dependency "simplecov"
 end

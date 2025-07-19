@@ -14,6 +14,7 @@ module Candle
           begin
             values_f32.each { |value| yield value }
           rescue NoMethodError
+            # :nocov:
             # If values_f32 isn't available yet (not recompiled), fall back
             if device.to_s != "cpu"
               # Move to CPU to avoid Metal F32->F64 conversion issue
@@ -21,6 +22,7 @@ module Candle
             else
               values.each { |value| yield value }
             end
+            # :nocov:
           end
         else
           # For non-F32 dtypes, use regular values

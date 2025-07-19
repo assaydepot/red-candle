@@ -1,7 +1,21 @@
+# SimpleCov must be started before requiring the code to track
+require 'simplecov'
+SimpleCov.start do
+  add_filter '/test/'
+  add_filter '/vendor/'
+  add_filter '/ext/'  # Native extensions can't be tracked
+  track_files 'lib/**/*.rb'
+  
+  # Add groups for better organization
+  add_group 'Models', 'lib/candle'
+  add_group 'Core', 'lib/candle.rb'
+end
+
 require "bundler/setup"
 Bundler.require(:default)
 require "minitest/autorun"
 
+# Now require the code AFTER SimpleCov is started
 require "candle"
 
 # Suppress warnings during tests

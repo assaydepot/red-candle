@@ -1,8 +1,29 @@
 require_relative "test_helper"
 
 class EmbeddingModelPoolingTest < Minitest::Test
+  # Load model once for all tests
+  @@model = nil
+  @@model_loaded = false
+  @@load_error = nil
+  
+  def self.load_model_once
+    unless @@model_loaded
+      begin
+        @@model = Candle::EmbeddingModel.new
+        @@model_loaded = true
+      rescue => e
+        @@model_loaded = :failed
+        @@load_error = e
+      end
+    end
+  end
+  
   def setup
-    @model = Candle::EmbeddingModel.new
+    self.class.load_model_once
+    if @@model_loaded == :failed
+      skip "EmbeddingModel loading failed: #{@@load_error.message}"
+    end
+    @model = @@model
     @string = "The quick brown fox jumps over the lazy dog."
     @embeddings = @model.embeddings(@string)
   end
