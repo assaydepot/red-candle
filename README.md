@@ -826,7 +826,7 @@ Failed to load GGUF model: cannot find llama.attention.head_count in metadata (R
 FORK IT!
 
 ```
-git clone https://github.com/your_name/red-candle
+git clone https://github.com/assaydepot/red-candle
 cd red-candle
 bundle
 bundle exec rake compile
@@ -840,7 +840,7 @@ Pull requests are welcome.
 2. `bundle exec rake build`
 3. `git tag VERSION_NUMBER`
 4. `git push --follow-tags`
-5. `gem push pkg/red-candle-1.0.0.gem`
+5. `gem push pkg/red-candle-VERSION_NUMBER.gem`
 
 ## See Also
 
