@@ -15,10 +15,10 @@ else
                     (File.exist?('C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA') ||
                      File.exist?('C:\CUDA')))
   
-  cuda_enabled = ENV['CANDLE_ENABLE_CUDA']
+  cuda_disabled = ENV['CANDLE_DISABLE_CUDA']
   
-  if cuda_available && cuda_enabled
-    puts "CUDA detected and enabled via CANDLE_ENABLE_CUDA"
+  if cuda_available && !cuda_disabled
+    puts "CUDA detected, enabling CUDA support"
     features << 'cuda'
     
     # Check if CUDNN should be enabled
@@ -26,10 +26,9 @@ else
       puts "CUDNN support enabled"
       features << 'cudnn'
     end
-  elsif cuda_available && !cuda_enabled
+  elsif cuda_available && cuda_disabled
     puts "=" * 80
-    puts "CUDA detected but not enabled."
-    puts "To enable CUDA support (coming soon), set CANDLE_ENABLE_CUDA=1"
+    puts "CUDA detected but disabled via CANDLE_DISABLE_CUDA"
     puts "=" * 80
   end
 

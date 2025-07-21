@@ -2,24 +2,25 @@
 
 ## Overview
 
-Red Candle supports CUDA acceleration for NVIDIA GPUs, but it is **disabled by default** to ensure broad compatibility. CUDA support is currently experimental and will be improved in future releases.
+Red Candle supports CUDA acceleration for NVIDIA GPUs. When CUDA is detected on your system, it will be automatically enabled, similar to Metal support on macOS.
 
-## Enabling CUDA Support
+## CUDA Support
 
-To build Red Candle with CUDA support, you need to:
+### Automatic Detection
 
-1. Have CUDA installed on your system
-2. Set the `CANDLE_ENABLE_CUDA` environment variable during installation
+CUDA support is automatically enabled when:
+1. CUDA is installed on your system
+2. NVIDIA GPU is available
+3. `CANDLE_DISABLE_CUDA` is not set
 
-### Installation with CUDA
+### Installation
 
 ```bash
-# Install from RubyGems with CUDA support
-CANDLE_ENABLE_CUDA=1 gem install red-candle
+# Standard installation - CUDA will be auto-detected
+gem install red-candle
 
-# Or build from source with CUDA support
-CANDLE_ENABLE_CUDA=1 bundle install
-CANDLE_ENABLE_CUDA=1 bundle exec rake compile
+# To explicitly disable CUDA (if you want CPU-only)
+CANDLE_DISABLE_CUDA=1 gem install red-candle
 ```
 
 ### Verifying CUDA Support
@@ -41,22 +42,22 @@ puts "Available devices: #{devices}"
 
 ## Environment Variables
 
-- `CANDLE_ENABLE_CUDA`: Set to `1` to enable CUDA support during build
+- `CANDLE_DISABLE_CUDA`: Set to disable CUDA support even if detected
 - `CANDLE_FORCE_CPU`: Set to force CPU-only execution, even if accelerators are available
 - `CANDLE_VERBOSE`: Set to see detailed build configuration on gem load
 - `CUDA_ROOT` / `CUDA_PATH`: Standard CUDA installation path variables
 
 ## Troubleshooting
 
-If you see the message "CUDA detected but not enabled", it means:
-- CUDA is installed on your system
-- But Red Candle was built without CUDA support
-- Reinstall with `CANDLE_ENABLE_CUDA=1` to enable it
+If CUDA is not working:
+- Ensure CUDA toolkit is properly installed
+- Check that `nvidia-smi` command works
+- Verify your GPU is CUDA-capable
+- Make sure `CANDLE_DISABLE_CUDA` is not set
 
-## Future Improvements
+## Performance Notes
 
-CUDA support is experimental and will be enhanced in future releases with:
-- Better automatic device selection
-- Improved error messages
-- Performance optimizations
-- Multi-GPU support
+- CUDA provides significant acceleration for large models
+- First operation may be slower due to kernel compilation
+- Device selection follows priority: CUDA > Metal > CPU
+- Use `Candle::DeviceUtils.best_device` for automatic selection

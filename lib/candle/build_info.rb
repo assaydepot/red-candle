@@ -15,8 +15,8 @@ module Candle
         if cuda_potentially_available
           warn "=" * 80
           warn "Red Candle: CUDA detected on system but not enabled in build."
-          warn "To enable CUDA support (experimental), reinstall with:"
-          warn "  CANDLE_ENABLE_CUDA=1 gem install red-candle"
+          warn "This may be due to CANDLE_DISABLE_CUDA being set during installation."
+          warn "To enable CUDA support, reinstall without CANDLE_DISABLE_CUDA set."
           warn "=" * 80
         end
         # :nocov:

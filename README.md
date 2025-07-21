@@ -194,7 +194,7 @@ llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: 
 # Metal
 device = Candle::Device.metal 
 
-# CUDA support (for NVIDIA GPUs COMING SOON)
+# CUDA support (for NVIDIA GPUs)
 device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
 ```
 
