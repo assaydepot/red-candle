@@ -60,6 +60,25 @@ end
 - **NER**: Named Entity Recognition directly from Ruby
 - **LLM**: Chat with Large Language Models (e.g., Llama, Mistral, Gemma)
 
+## Model Storage
+
+Models are automatically downloaded and cached when you first use them. They are stored in:
+- **Location**: `~/.cache/huggingface/hub/`
+- **Size**: Models range from ~100MB (embeddings) to several GB (LLMs)
+- **Reuse**: Models are downloaded once and reused across sessions
+
+To check your cache or manage storage:
+```bash
+# View cache contents
+ls -la ~/.cache/huggingface/hub/
+
+# Check total cache size
+du -sh ~/.cache/huggingface/
+
+# Clear cache if needed (removes all downloaded models)
+rm -rf ~/.cache/huggingface/hub/
+```
+
 ----
 
 ## Usage
@@ -194,7 +213,7 @@ llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: 
 # Metal
 device = Candle::Device.metal 
 
-# CUDA support (for NVIDIA GPUs COMING SOON)
+# CUDA support (for NVIDIA GPUs)
 device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
 ```
 
