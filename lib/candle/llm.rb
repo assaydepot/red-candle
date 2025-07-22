@@ -1,5 +1,36 @@
+require 'json'
+
 module Candle
   class LLM
+    # Create a structured constraint from a JSON schema
+    def constraint_from_schema(schema)
+      schema_str = schema.is_a?(String) ? schema : JSON.generate(schema)
+      StructuredConstraint.from_schema(schema_str, tokenizer)
+    end
+    
+    # Create a structured constraint from a regex pattern
+    def constraint_from_regex(pattern)
+      pattern_str = pattern.is_a?(Regexp) ? pattern.source : pattern.to_s
+      StructuredConstraint.from_regex(pattern_str, tokenizer)
+    end
+    
+    # Generate and parse structured output from a JSON schema
+    def generate_structured(prompt, schema:, **options)
+      constraint = constraint_from_schema(schema)
+      config_opts = options.merge(constraint: constraint)
+      config = options[:config] || GenerationConfig.balanced(**config_opts)
+      
+      result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
+      
+      # Try to parse as JSON
+      begin
+        JSON.parse(result)
+      rescue JSON::ParserError => e
+        # Return the raw string if parsing fails
+        warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
+        result
+      end
+    end
     # Tokenizer registry for automatic detection
     TOKENIZER_REGISTRY = {
       # Exact model matches
@@ -155,7 +186,8 @@ module Candle
         repetition_penalty: repetition_penalty,
         seed: seed,
         stop_sequences: stop_sequences,
-        include_prompt: include_prompt
+        include_prompt: include_prompt,
+        constraint: defined?(@constraint) ? @constraint : nil
       }.compact
       
       self.class.new(current_config.merge(overrides))

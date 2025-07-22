@@ -50,6 +50,7 @@ fn init(ruby: &Ruby) -> Result<()> {
     ruby::device::init(rb_candle)?;
     ruby::tensor::init(rb_candle)?;
     ruby::tokenizer::init(rb_candle)?;
+    ruby::structured::init_structured(rb_candle)?;
     candle_utils(rb_candle)?;
 
     Ok(())
