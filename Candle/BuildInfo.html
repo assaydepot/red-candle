@@ -473,8 +473,8 @@
     <span class='kw'>if</span> <span class='id identifier rubyid_cuda_potentially_available'>cuda_potentially_available</span>
       <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>=</span><span class='tstring_end'>&quot;</span></span> <span class='op'>*</span> <span class='int'>80</span>
       <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Red Candle: CUDA detected on system but not enabled in build.</span><span class='tstring_end'>&quot;</span></span>
-      <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>To enable CUDA support (experimental), reinstall with:</span><span class='tstring_end'>&quot;</span></span>
-      <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>  CANDLE_ENABLE_CUDA=1 gem install red-candle</span><span class='tstring_end'>&quot;</span></span>
+      <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This may be due to CANDLE_DISABLE_CUDA being set during installation.</span><span class='tstring_end'>&quot;</span></span>
+      <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>To enable CUDA support, reinstall without CANDLE_DISABLE_CUDA set.</span><span class='tstring_end'>&quot;</span></span>
       <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>=</span><span class='tstring_end'>&quot;</span></span> <span class='op'>*</span> <span class='int'>80</span>
     <span class='kw'>end</span>
     <span class='comment'># :nocov:
@@ -654,7 +654,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jul 19 23:07:37 2025 by
+  Generated on Tue Jul 22 01:44:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>

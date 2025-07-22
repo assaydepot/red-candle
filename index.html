@@ -120,6 +120,28 @@ gem install red-candle
 <li><strong>LLM</strong>: Chat with Large Language Models (e.g., Llama, Mistral, Gemma)</li>
 </ul>
 
+<h2 id="model-storage">Model Storage</h2>
+
+<p>Models are automatically downloaded and cached when you first use them. They are stored in:</p>
+
+<ul>
+<li><strong>Location</strong>: <code>~/.cache/huggingface/hub/</code></li>
+<li><strong>Size</strong>: Models range from ~100MB (embeddings) to several GB (LLMs)</li>
+<li><strong>Reuse</strong>: Models are downloaded once and reused across sessions</li>
+</ul>
+
+<p>To check your cache or manage storage:</p>
+
+<pre class="code bash"><code class="bash"># View cache contents
+ls -la ~/.cache/huggingface/hub/
+
+# Check total cache size
+du -sh ~/.cache/huggingface/
+
+# Clear cache if needed (removes all downloaded models)
+rm -rf ~/.cache/huggingface/hub/
+</code></pre>
+
 <hr>
 
 <h2 id="usage">Usage</h2>
@@ -264,7 +286,7 @@ gem install red-candle
 <span class='comment'># Metal
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span> 
 
-<span class='comment'># CUDA support (for NVIDIA GPUs COMING SOON)
+<span class='comment'># CUDA support (for NVIDIA GPUs)
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>   <span class='comment'># Linux/Windows with NVIDIA GPU
 </span></code></pre>
 
@@ -934,7 +956,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Sat Jul 19 23:07:37 2025 by
+  Generated on Tue Jul 22 01:44:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
