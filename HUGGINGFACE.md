@@ -2,6 +2,14 @@
 
 Many models from [🤗 Huggingface](https://huggingface.co) are freely availble. For instance our default reranker model (`cross-encoder/ms-marco-MiniLM-L-12-v2`) and our default embedding models (`jinaai/jina-embeddings-v2-base-en` and `sentence-transformers/all-MiniLM-L6-v2`) are freely available without authentication. However, certain models, transformers from [MistralAI](https://huggingface.co/mistralai) such as `mistralai/Mistral-7B-Instruct-v0.1`, require you consent to the author's terms of service, and that requires authentication.
 
+## Model Storage Location
+
+All models downloaded from Hugging Face are automatically cached in:
+- **Location**: `~/.cache/huggingface/hub/`
+- **Token file**: `~/.cache/huggingface/token` (if authenticated)
+
+This cache is shared across all applications using Hugging Face models, so models downloaded by Red Candle can be reused by other tools and vice versa.
+
 ## If you are unauthenticated
 
 If you are unauthenticated and try to access a model that requires authentication, you will see an error like this:
