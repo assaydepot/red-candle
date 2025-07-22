@@ -1,4 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::Arc;
+use crate::structured::Index;
 
 /// Configuration for text generation
 #[derive(Debug, Clone)]
@@ -23,6 +25,8 @@ pub struct GenerationConfig {
     pub include_prompt: bool,
     /// Whether to show raw tokens during generation (for debugging)
     pub debug_tokens: bool,
+    /// Optional constraint index for structured generation
+    pub constraint: Option<Arc<Index>>,
 }
 
 /// Generate a random seed based on current time
@@ -46,6 +50,7 @@ impl Default for GenerationConfig {
             stop_sequences: vec![],
             include_prompt: false,
             debug_tokens: false,
+            constraint: None,
         }
     }
 }
