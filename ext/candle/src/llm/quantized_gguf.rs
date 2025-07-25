@@ -98,44 +98,29 @@ impl QuantizedGGUF {
                 ModelType::Llama(model)
             }
             "qwen" | "qwen2" | "qwen3" => {
-                // Debug: print available metadata keys
-                eprintln!("Debugging Qwen GGUF metadata keys:");
-                for (key, _value) in &content.metadata {
-                    if key.contains("attention") || key.contains("head_count") || key.contains("qwen") {
-                        eprintln!("  Found metadata key: {}", key);
-                    }
-                }
-                
                 // Try different loaders based on what metadata is available
                 if content.metadata.contains_key("llama.attention.head_count") {
-                    eprintln!("Using Llama loader for Qwen (llama metadata found)");
                     let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
                     ModelType::Llama(model)
                 } else if content.metadata.contains_key("qwen2.attention.head_count") {
-                    eprintln!("Using Qwen2 loader");
                     let model = QuantizedQwenModel::from_gguf(content, &mut file, &device)?;
                     ModelType::Qwen(model)
                 } else if content.metadata.contains_key("qwen3.attention.head_count") {
-                    // Qwen3 uses a different metadata format
-                    // For now, we'll return an error with a helpful message
+                    // Qwen3 GGUF files use a different metadata format
+                    // The quantized_qwen3 module is not yet in the released version of candle-transformers
                     return Err(candle_core::Error::Msg(format!(
-                        "This Qwen3 GGUF file uses 'qwen3.*' metadata keys which are not yet supported by Candle.\n\n\
-                        Alternative options:\n\
-                        1. Use Qwen2 or Qwen2.5 GGUF models which are llama.cpp compatible:\n\
-                           - Qwen/Qwen2-7B-Instruct-GGUF\n\
-                           - Qwen/Qwen2.5-7B-Instruct-GGUF\n\
-                        2. Try community GGUF models that use llama.cpp format\n\
-                        3. Use the non-quantized Qwen model with safetensors\n\
-                        4. Check if a newer version of this GGUF file exists with llama.cpp compatibility"
+                        "Qwen3 GGUF format detected but not yet fully supported.\n\n\
+                        The file contains qwen3.* metadata keys which require candle-transformers > 0.9.1.\n\n\
+                        Current alternatives:\n\
+                        1. Use Qwen2.5 GGUF models which work well:\n\
+                           - Qwen/Qwen2.5-7B-Instruct-GGUF (recommended)\n\
+                           - Qwen/Qwen2.5-32B-Instruct-GGUF\n\
+                        2. Use non-quantized Qwen models with safetensors\n\
+                        3. Wait for candle-transformers update with quantized_qwen3 support\n\n\
+                        Note: Qwen2.5 models have similar capabilities to Qwen3."
                     )));
                 } else {
                     // Last resort: try llama loader anyway, as it's the most common
-                    eprintln!("Warning: No recognized metadata format, attempting Llama loader");
-                    eprintln!("Available keys with 'attention': {:?}", 
-                        content.metadata.keys()
-                            .filter(|k| k.contains("attention"))
-                            .collect::<Vec<_>>()
-                    );
                     let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
                     ModelType::Llama(model)
                 }

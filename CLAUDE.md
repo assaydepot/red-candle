@@ -385,9 +385,11 @@ llm = Candle::LLM.from_pretrained("TheBloke/Model-GGUF",
 ### Architecture Detection
 
 The unified GGUF loader automatically detects:
-- Model architecture from GGUF metadata (supports Llama, Mistral, Gemma, Qwen)
+- Model architecture from GGUF metadata (supports Llama, Mistral, Gemma, Qwen2/2.5)
 - Appropriate tokenizer based on model patterns
 - Correct chat template for the model type
+
+Note: Qwen3 GGUF support requires candle-transformers > 0.9.1 (not yet released). Use Qwen2.5 models as an alternative.
 
 ## Chat Interface
 
