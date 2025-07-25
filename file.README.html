@@ -62,7 +62,7 @@
 <p><a href="https://github.com/assaydepot/red-candle/actions/workflows/build.yml"><img src="https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg" alt="build"></a>
 <a href="https://badge.fury.io/rb/red-candle"><img src="https://badge.fury.io/rb/red-candle.svg" alt="Gem Version"></a></p>
 
-<p>Run state-of-the-art <strong>language models directly from Ruby</strong>. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with <strong>Metal (Mac)</strong> and <strong>CUDA (NVIDIA).</strong></p>
+<p>Run state-of-the-art <strong>language models directly from Ruby</strong>. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with <strong>Metal (Mac)</strong> and <strong>CUDA (NVIDIA).</strong> Red candle leverages the Rust ecosystem, notably <a href="https://github.com/huggingface/candle">Candle</a> and <a href="https://github.com/matsadler/magnus">Magnus</a>, to provide a fast and efficient way to run LLMs in Ruby. See <a href="#dependencies">Dependencies</a> for more.</p>
 
 <h2 id="install-chat-in-30-seconds">Install &amp; Chat in 30 Seconds</h2>
 
@@ -946,7 +946,7 @@ bundle exec rake compile
 <li><code>gem push pkg/red-candle-VERSION_NUMBER.gem</code></li>
 </ol>
 
-<h2 id="see-also">See Also</h2>
+<h2 id="dependencies">Dependencies</h2>
 
 <ul>
 <li><a href="https://github.com/huggingface/candle">Candle</a></li>
@@ -956,7 +956,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Tue Jul 22 01:44:58 2025 by
+  Generated on Fri Jul 25 16:11:15 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
