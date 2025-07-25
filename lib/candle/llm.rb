@@ -39,6 +39,13 @@ module Candle
       "TheBloke/Llama-2-7B-Chat-GGUF" => "meta-llama/Llama-2-7b-chat-hf",
       "TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF" => "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
       
+      # Qwen official GGUF models
+      "Qwen/Qwen3-8B-GGUF" => "Qwen/Qwen3-8B",
+      "Qwen/Qwen3-4B-GGUF" => "Qwen/Qwen3-4B",
+      "Qwen/Qwen3-14B-GGUF" => "Qwen/Qwen3-14B",
+      "Qwen/Qwen3-32B-GGUF" => "Qwen/Qwen3-32B",
+      "Qwen/Qwen3-72B-GGUF" => "Qwen/Qwen3-72B",
+      
       # Pattern-based fallbacks (evaluated in order)
       :patterns => [
         # Mistral models
@@ -58,7 +65,19 @@ module Candle
         [/gemma.*?2.*?9b/i, "google/gemma-2-9b"],
         [/gemma.*?2.*?2b/i, "google/gemma-2-2b"],
         [/gemma.*?7b/i, "google/gemma-7b"],
-        [/gemma.*?2b/i, "google/gemma-2b"]
+        [/gemma.*?2b/i, "google/gemma-2b"],
+        
+        # Qwen models
+        [/qwen.*?3.*?72b/i, "Qwen/Qwen3-72B"],
+        [/qwen.*?3.*?32b/i, "Qwen/Qwen3-32B"],
+        [/qwen.*?3.*?14b/i, "Qwen/Qwen3-14B"],
+        [/qwen.*?3.*?8b/i, "Qwen/Qwen3-8B"],
+        [/qwen.*?3.*?4b/i, "Qwen/Qwen3-4B"],
+        [/qwen.*?3.*?1\.8b/i, "Qwen/Qwen3-1.8B"],
+        [/qwen.*?3.*?0\.5b/i, "Qwen/Qwen3-0.5B"],
+        [/qwen.*?2\.5/i, "Qwen/Qwen2.5-0.5B"],
+        [/qwen.*?2/i, "Qwen/Qwen2-1.5B"],
+        [/qwen/i, "Qwen/Qwen-1_8B"]
       ]
     }
     

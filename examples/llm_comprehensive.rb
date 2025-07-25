@@ -40,13 +40,14 @@ models = [
     options: [
       { gguf_file: "gemma-3-4b-it-q4_0.gguf", tokenizer: "google/gemma-3-4b-it" }
     ]
-  }#,
-  # {
-  #   model: "Qwen/Qwen3-0.6B-GGUF",
-  #   options: [
-  #     { gguf_file: "Qwen3-0.6B-Q8_0.gguf", tokenizer: "Qwen/Qwen2.5-0.5B" }
-  #   ]
-  # }
+  },
+  {
+    model: "Qwen/Qwen3-4B-GGUF",
+    options: [
+      { gguf_file: "qwen3-4b-q4_k_m.gguf" },
+      { gguf_file: "qwen3-4b-q5_k_m.gguf" }
+    ]
+  }
 ]
 puts "QUANTIZED MODELS"
 models.each do |entry|

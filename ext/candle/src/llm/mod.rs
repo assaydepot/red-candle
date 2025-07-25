@@ -3,6 +3,7 @@ use candle_core::{Device, Result as CandleResult};
 pub mod mistral;
 pub mod llama;
 pub mod gemma;
+pub mod qwen;
 pub mod generation_config;
 pub mod text_generation;
 pub mod quantized_gguf;
