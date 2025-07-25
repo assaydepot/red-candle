@@ -126,6 +126,8 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 - **Gemma**: Google's Gemma models (e.g., `google/gemma-2b`, `google/gemma-7b`, `google/gemma-2b-it`)
 - **Llama**: Llama 2 and Llama 3 models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, `meta-llama/Llama-2-7b-hf`, `NousResearch/Llama-2-7b-hf`)
 - **Mistral**: All Mistral models (e.g., `mistralai/Mistral-7B-Instruct-v0.1`)
+- **Qwen**: Qwen 2 and 2.5 models (e.g., `Qwen/Qwen2-1.5B`, `Qwen/Qwen2.5-7B-Instruct`)
+- **Phi**: Microsoft's Phi-2 and Phi-3 models (e.g., `microsoft/phi-2`, `microsoft/Phi-3-mini-4k-instruct`)
 
 ### Quantized Model Support (GGUF)
 
