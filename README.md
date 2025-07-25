@@ -3,7 +3,7 @@
 [![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
 
-Run state-of-the-art **language models directly from Ruby**. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with **Metal (Mac)** and **CUDA (NVIDIA).**
+Run state-of-the-art **language models directly from Ruby**. No Python, no APIs, no external services - just Ruby with blazing-fast Rust under the hood. Hardware accelerated with **Metal (Mac)** and **CUDA (NVIDIA).** Red candle leverages the Rust ecosystem, notably [Candle](https://github.com/huggingface/candle) and [Magnus](https://github.com/matsadler/magnus), to provide a fast and efficient way to run LLMs in Ruby. See [Dependencies](#dependencies) for more.
 
 ## Install & Chat in 30 Seconds
 
@@ -861,7 +861,7 @@ Pull requests are welcome.
 4. `git push --follow-tags`
 5. `gem push pkg/red-candle-VERSION_NUMBER.gem`
 
-## See Also
+## Dependencies
 
 - [Candle](https://github.com/huggingface/candle)
 - [Magnus](https://github.com/matsadler/magnus)
