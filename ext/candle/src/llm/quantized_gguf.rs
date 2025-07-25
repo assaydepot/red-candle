@@ -2,6 +2,7 @@ use candle_core::{DType, Device, Result as CandleResult, Tensor};
 use candle_core::quantized::gguf_file;
 use candle_transformers::models::quantized_llama::ModelWeights as QuantizedLlamaModel;
 use candle_transformers::models::quantized_gemma3::ModelWeights as QuantizedGemmaModel;
+use candle_transformers::models::quantized_qwen2::ModelWeights as QuantizedQwenModel;
 use hf_hub::api::tokio::{Api, ApiRepo};
 use tokenizers::Tokenizer;
 use std::io::Seek;
@@ -9,7 +10,6 @@ use std::io::Seek;
 use crate::llm::{GenerationConfig, TextGeneration, TextGenerator, TokenizerWrapper};
 
 /// Unified GGUF model that can load any GGUF file and detect the architecture
-#[derive(Debug)]
 pub struct QuantizedGGUF {
     model: ModelType,
     tokenizer: TokenizerWrapper,
@@ -20,10 +20,10 @@ pub struct QuantizedGGUF {
     _chat_template: Option<String>,
 }
 
-#[derive(Debug)]
 enum ModelType {
     Llama(QuantizedLlamaModel),
     Gemma(QuantizedGemmaModel),
+    Qwen(QuantizedQwenModel),
     // Mistral uses Llama loader due to tensor naming compatibility
 }
 
@@ -97,6 +97,49 @@ impl QuantizedGGUF {
                 let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
                 ModelType::Llama(model)
             }
+            "qwen" | "qwen2" | "qwen3" => {
+                // Debug: print available metadata keys
+                eprintln!("Debugging Qwen GGUF metadata keys:");
+                for (key, _value) in &content.metadata {
+                    if key.contains("attention") || key.contains("head_count") || key.contains("qwen") {
+                        eprintln!("  Found metadata key: {}", key);
+                    }
+                }
+                
+                // Try different loaders based on what metadata is available
+                if content.metadata.contains_key("llama.attention.head_count") {
+                    eprintln!("Using Llama loader for Qwen (llama metadata found)");
+                    let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
+                    ModelType::Llama(model)
+                } else if content.metadata.contains_key("qwen2.attention.head_count") {
+                    eprintln!("Using Qwen2 loader");
+                    let model = QuantizedQwenModel::from_gguf(content, &mut file, &device)?;
+                    ModelType::Qwen(model)
+                } else if content.metadata.contains_key("qwen3.attention.head_count") {
+                    // Qwen3 uses a different metadata format
+                    // For now, we'll return an error with a helpful message
+                    return Err(candle_core::Error::Msg(format!(
+                        "This Qwen3 GGUF file uses 'qwen3.*' metadata keys which are not yet supported by Candle.\n\n\
+                        Alternative options:\n\
+                        1. Use Qwen2 or Qwen2.5 GGUF models which are llama.cpp compatible:\n\
+                           - Qwen/Qwen2-7B-Instruct-GGUF\n\
+                           - Qwen/Qwen2.5-7B-Instruct-GGUF\n\
+                        2. Try community GGUF models that use llama.cpp format\n\
+                        3. Use the non-quantized Qwen model with safetensors\n\
+                        4. Check if a newer version of this GGUF file exists with llama.cpp compatibility"
+                    )));
+                } else {
+                    // Last resort: try llama loader anyway, as it's the most common
+                    eprintln!("Warning: No recognized metadata format, attempting Llama loader");
+                    eprintln!("Available keys with 'attention': {:?}", 
+                        content.metadata.keys()
+                            .filter(|k| k.contains("attention"))
+                            .collect::<Vec<_>>()
+                    );
+                    let model = QuantizedLlamaModel::from_gguf(content, &mut file, &device)?;
+                    ModelType::Llama(model)
+                }
+            }
             "gemma" | "gemma2" | "gemma3" => {
                 // Try Gemma-specific loader first, fall back to Llama if it fails
                 match QuantizedGemmaModel::from_gguf(content, &mut file, &device) {
@@ -114,7 +157,7 @@ impl QuantizedGGUF {
             }
             _ => {
                 return Err(candle_core::Error::Msg(format!(
-                    "Unsupported architecture: {}. Supported: llama, mistral, gemma",
+                    "Unsupported architecture: {}. Supported: llama, mistral, gemma, qwen, qwen2, qwen3",
                     architecture
                 )));
             }
@@ -149,6 +192,8 @@ impl QuantizedGGUF {
             Ok("mistral".to_string())
         } else if model_lower.contains("gemma") {
             Ok("gemma".to_string())
+        } else if model_lower.contains("qwen") {
+            Ok("qwen".to_string())
         } else {
             Err(candle_core::Error::Msg(
                 "Could not determine model architecture from metadata or name".to_string()
@@ -235,6 +280,13 @@ impl QuantizedGGUF {
                     .copied()
                     .unwrap_or(1)
             }
+            "qwen" | "qwen2" | "qwen3" => {
+                vocab.get("<|endoftext|>")
+                    .or_else(|| vocab.get("<|im_end|>"))
+                    .or_else(|| vocab.get("</s>"))
+                    .copied()
+                    .unwrap_or(151643) // Default Qwen3 EOS token
+            }
             _ => 2, // Default
         }
     }
@@ -256,6 +308,8 @@ impl QuantizedGGUF {
         } else if model_lower.contains("gemma") {
             // Always use Gemma template for Gemma models, regardless of loader used
             self.apply_gemma_template(messages)
+        } else if model_lower.contains("qwen") {
+            self.apply_qwen_template(messages)
         } else {
             match self.architecture.as_str() {
                 "llama" => {
@@ -267,6 +321,9 @@ impl QuantizedGGUF {
                 }
                 "gemma" => {
                     self.apply_gemma_template(messages)
+                }
+                "qwen" | "qwen2" | "qwen3" => {
+                    self.apply_qwen_template(messages)
                 }
                 _ => Ok(self.apply_generic_template(messages))
             }
@@ -366,6 +423,32 @@ impl QuantizedGGUF {
         Ok(prompt)
     }
     
+    fn apply_qwen_template(&self, messages: &[serde_json::Value]) -> CandleResult<String> {
+        let mut prompt = String::new();
+        
+        for message in messages {
+            let role = message["role"].as_str().unwrap_or("");
+            let content = message["content"].as_str().unwrap_or("");
+            
+            match role {
+                "system" => {
+                    prompt.push_str(&format!("<|im_start|>system\n{}<|im_end|>\n", content));
+                }
+                "user" => {
+                    prompt.push_str(&format!("<|im_start|>user\n{}<|im_end|>\n", content));
+                }
+                "assistant" => {
+                    prompt.push_str(&format!("<|im_start|>assistant\n{}<|im_end|>\n", content));
+                }
+                _ => {}
+            }
+        }
+        
+        // Add generation prompt
+        prompt.push_str("<|im_start|>assistant\n");
+        Ok(prompt)
+    }
+    
     fn apply_generic_template(&self, messages: &[serde_json::Value]) -> String {
         let mut prompt = String::new();
         
@@ -408,6 +491,7 @@ impl QuantizedGGUF {
             let logits = match &mut self.model {
                 ModelType::Llama(model) => model.forward(&input, start_pos)?,
                 ModelType::Gemma(model) => model.forward(&input, start_pos)?,
+                ModelType::Qwen(model) => model.forward(&input, start_pos)?,
             };
             
             let logits = logits.squeeze(0)?;

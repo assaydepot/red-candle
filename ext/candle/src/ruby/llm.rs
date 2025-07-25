@@ -2,16 +2,16 @@ use magnus::{function, method, prelude::*, Error, Module, RArray, RHash, RModule
 use std::cell::RefCell;
 use std::sync::Arc;
 
-use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma, QuantizedGGUF as RustQuantizedGGUF};
+use crate::llm::{GenerationConfig as RustGenerationConfig, TextGenerator, mistral::Mistral as RustMistral, llama::Llama as RustLlama, gemma::Gemma as RustGemma, qwen::Qwen as RustQwen, QuantizedGGUF as RustQuantizedGGUF};
 use crate::ruby::{Result, Device};
 use crate::ruby::structured::StructuredConstraint;
 
 // Use an enum to handle different model types instead of trait objects
-#[derive(Debug)]
 enum ModelType {
     Mistral(RustMistral),
     Llama(RustLlama),
     Gemma(RustGemma),
+    Qwen(RustQwen),
     QuantizedGGUF(RustQuantizedGGUF),
 }
 
@@ -21,6 +21,7 @@ impl ModelType {
             ModelType::Mistral(m) => m.generate(prompt, config),
             ModelType::Llama(m) => m.generate(prompt, config),
             ModelType::Gemma(m) => m.generate(prompt, config),
+            ModelType::Qwen(m) => m.generate(prompt, config),
             ModelType::QuantizedGGUF(m) => m.generate(prompt, config),
         }
     }
@@ -35,6 +36,7 @@ impl ModelType {
             ModelType::Mistral(m) => m.generate_stream(prompt, config, callback),
             ModelType::Llama(m) => m.generate_stream(prompt, config, callback),
             ModelType::Gemma(m) => m.generate_stream(prompt, config, callback),
+            ModelType::Qwen(m) => m.generate_stream(prompt, config, callback),
             ModelType::QuantizedGGUF(m) => m.generate_stream(prompt, config, callback),
         }
     }
@@ -44,6 +46,7 @@ impl ModelType {
             ModelType::Mistral(m) => m.clear_cache(),
             ModelType::Llama(m) => m.clear_cache(),
             ModelType::Gemma(m) => m.clear_cache(),
+            ModelType::Qwen(m) => m.clear_cache(),
             ModelType::QuantizedGGUF(m) => m.clear_cache(),
         }
     }
@@ -69,6 +72,7 @@ impl ModelType {
             },
             ModelType::Llama(m) => m.apply_chat_template(messages),
             ModelType::Gemma(m) => m.apply_chat_template(messages),
+            ModelType::Qwen(m) => m.apply_chat_template(messages),
             ModelType::QuantizedGGUF(m) => m.apply_chat_template(messages),
         }
     }
@@ -202,7 +206,7 @@ impl GenerationConfig {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[magnus::wrap(class = "Candle::LLM", mark, free_immediately)]
 pub struct LLM {
     model: std::sync::Arc<std::sync::Mutex<RefCell<ModelType>>>,
@@ -260,10 +264,16 @@ impl LLM {
                 })
                 .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
                 ModelType::Gemma(gemma)
+            } else if model_lower.contains("qwen") {
+                let qwen = rt.block_on(async {
+                    RustQwen::from_pretrained(&model_id, candle_device).await
+                })
+                .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e)))?;
+                ModelType::Qwen(qwen)
             } else {
                 return Err(Error::new(
                     magnus::exception::runtime_error(),
-                    format!("Unsupported model type: {}. Currently Mistral, Llama, and Gemma models are supported.", model_id),
+                    format!("Unsupported model type: {}. Currently Mistral, Llama, Gemma, and Qwen models are supported.", model_id),
                 ));
             }
         };
@@ -341,6 +351,7 @@ impl LLM {
             ModelType::Mistral(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
             ModelType::Llama(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
             ModelType::Gemma(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
+            ModelType::Qwen(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
             ModelType::QuantizedGGUF(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
         }
     }
