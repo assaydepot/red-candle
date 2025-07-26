@@ -1,6 +1,6 @@
-require "test_helper"
+require_relative "../test_helper"
 
-class TestLLM < Minitest::Test
+class LLMTest < Minitest::Test
   # Class variable to store the model and avoid reloading
   @@llm = nil
   @@model_loaded = false

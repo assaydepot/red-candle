@@ -1,6 +1,6 @@
-require_relative "test_helper"
+require_relative "../test_helper"
 
-class LlmQwenTest < Minitest::Test
+class QwenTest < Minitest::Test
   def setup
     @device = Candle::Device.cpu
   end
