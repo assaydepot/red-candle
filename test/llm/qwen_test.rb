@@ -42,13 +42,6 @@ class QwenTest < Minitest::Test
     skip "Skipping model download test" if ENV["CI"]
     
     # Mock test for chat template application
-    messages = [
-      { role: "system", content: "You are a helpful assistant." },
-      { role: "user", content: "Hello!" },
-      { role: "assistant", content: "Hi there! How can I help you today?" },
-      { role: "user", content: "What is Ruby?" }
-    ]
-    
     # Expected Qwen chat format
     expected_format = "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n" +
                      "<|im_start|>user\nHello!<|im_end|>\n" +

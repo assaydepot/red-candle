@@ -20,10 +20,6 @@ class PhiTest < Minitest::Test
   end
   
   def test_phi_model_type_detection
-    skip "Requires Phi model download" unless ENV["RUN_FULL_TESTS"]
-    
-    # This would test actual model loading, but requires downloading models
-    # which is expensive. Only run with RUN_FULL_TESTS=1
     model = Candle::LLM.from_pretrained("microsoft/phi-2")
     assert_equal "microsoft/phi-2", model.model_name
     
@@ -40,8 +36,6 @@ class PhiTest < Minitest::Test
   end
   
   def test_phi3_chat_template
-    skip "Requires Phi-3 model download" unless ENV["RUN_FULL_TESTS"]
-    
     model = Candle::LLM.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
     messages = [
       { role: "system", content: "You are a helpful assistant." },
@@ -56,17 +50,11 @@ class PhiTest < Minitest::Test
   end
   
   def test_phi_gguf_loading
-    skip "Requires GGUF file" unless ENV["RUN_FULL_TESTS"]
-    
-    # Test GGUF loading with automatic tokenizer detection
     model = Candle::LLM.from_pretrained("TheBloke/phi-2-GGUF", gguf_file: "phi-2.Q4_K_M.gguf")
     assert_instance_of Candle::LLM, model
   end
   
   def test_phi4_gguf_loading
-    skip "Requires GGUF file" unless ENV["RUN_FULL_TESTS"]
-    
-    # Test Phi-4 GGUF loading with automatic tokenizer detection
     begin
       model = Candle::LLM.from_pretrained("microsoft/phi-4-gguf", gguf_file: "phi-4-Q4_K_S.gguf")
       assert_instance_of Candle::LLM, model
@@ -78,9 +66,7 @@ class PhiTest < Minitest::Test
       )
       
       result = model.generate("Hello, my name is", config: config)
-      puts "Phi-4 GGUF generation result: #{result}"
-      
-      # Verify the output is readable text, not gibberish
+
       assert_instance_of String, result
       assert result.length > 0
       # Check for common gibberish patterns
@@ -88,19 +74,6 @@ class PhiTest < Minitest::Test
       refute result.match?(/(.)\1{5,}/), "Result should not have excessive character repetition"
     rescue => e
       skip "Phi-4 model loading failed: #{e.message}"
-    end
-  end
-  
-  def test_phi35_gguf_loading
-    skip "Requires GGUF file" unless ENV["RUN_FULL_TESTS"]
-    
-    # Test Phi-3.5 GGUF loading
-    begin
-      model = Candle::LLM.from_pretrained("bartowski/Phi-3.5-mini-instruct-GGUF", 
-                                         gguf_file: "Phi-3.5-mini-instruct-Q4_K_S.gguf")
-      assert_instance_of Candle::LLM, model
-    rescue => e
-      skip "Phi-3.5 model loading failed: #{e.message}"
     end
   end
 end

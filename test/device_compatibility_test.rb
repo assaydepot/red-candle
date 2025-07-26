@@ -223,7 +223,6 @@ class DeviceCompatibilityTest < Minitest::Test
       end
       
       # Verify we found expected entities
-      entity_texts = entities.map { |e| e["text"] }
       entity_labels = entities.map { |e| e["label"] }
       
       # Should find organization (Apple Inc.) and person (Steve Jobs)
