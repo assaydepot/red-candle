@@ -15,7 +15,9 @@ class QwenTest < Minitest::Test
     # This should auto-detect the tokenizer
     begin
       llm = Candle::LLM.from_pretrained(model_id, device: @device, gguf_file: gguf_file)
-      assert_equal model_id, llm.model_name
+      # When loading GGUF, the model name includes the file spec
+      assert llm.model_name.include?(model_id)
+      assert llm.model_name.include?(gguf_file)
       assert_equal @device, llm.device
     rescue => e
       skip "Model download failed: #{e.message}"

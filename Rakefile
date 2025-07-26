@@ -8,7 +8,14 @@ task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
   t.libs << "test"
-  t.test_files = FileList["test/**/*_test.rb"].exclude("test/benchmarks/**/*_test.rb")
+  t.test_files = FileList["test/**/*_test.rb"]
+    .exclude("test/benchmarks/**/*_test.rb")
+    .exclude("test/llm/llm_test.rb")
+    .exclude("test/llm/gemma_test.rb")
+    .exclude("test/llm/mistral_test.rb")
+    .exclude("test/llm/llama_test.rb")
+    .exclude("test/llm/phi_test.rb")
+    .exclude("test/llm/qwen_test.rb")
 end
 
 spec = Bundler.load_gemspec("candle.gemspec")
@@ -61,6 +68,44 @@ task "test:device:benchmark" => :compile do
   ENV['CANDLE_TEST_VERBOSE'] = 'true'
   Rake::Task["test:device"].invoke
   Rake::Task["test:benchmark"].invoke
+end
+
+desc "Run LLM tests for specific models"
+namespace :test do
+  namespace :llm do
+    desc "Run tests for Gemma models"
+    task :gemma => :compile do
+      ENV['LLM_TEST_MODEL'] = 'gemma'
+      ruby "-Itest", "test/llm/gemma_test.rb"
+    end
+    
+    desc "Run tests for Phi models"
+    task :phi => :compile do
+      ENV['LLM_TEST_MODEL'] = 'phi'
+      ruby "-Itest", "test/llm/phi_test.rb"
+    end
+    
+    desc "Run tests for Qwen models"
+    task :qwen => :compile do
+      ENV['LLM_TEST_MODEL'] = 'qwen'
+      ruby "-Itest", "test/llm/qwen_test.rb"
+    end
+    
+    desc "Run tests for Mistral models"
+    task :mistral => :compile do
+      ENV['LLM_TEST_MODEL'] = 'mistral'
+      ruby "-Itest", "test/llm/mistral_test.rb"
+    end
+    
+    desc "Run tests for Llama models"
+    task :llama => :compile do
+      ENV['LLM_TEST_MODEL'] = 'llama'
+      ruby "-Itest", "test/llm/llama_test.rb"
+    end
+    
+    desc "Run all LLM tests (WARNING: downloads large models)"
+    task :all => [:gemma, :phi, :qwen, :mistral, :llama]
+  end
 end
 
 namespace :doc do
