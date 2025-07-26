@@ -63,17 +63,45 @@ impl Phi {
         // Determine model variant based on model_id or config
         let is_phi3 = model_id.contains("phi-3") || model_id.contains("Phi-3");
         
+        // Download model weights (handle both single and sharded files)
+        let weights_filenames = if let Ok(single_file) = repo.get("model.safetensors").await {
+            vec![single_file]
+        } else {
+            // Try to find sharded model files
+            let mut sharded_files = Vec::new();
+            let mut index = 1;
+            loop {
+                // Try common shard counts
+                let mut found = false;
+                for total in [2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 30] {
+                    let filename = format!("model-{:05}-of-{:05}.safetensors", index, total);
+                    if let Ok(file) = repo.get(&filename).await {
+                        sharded_files.push(file);
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    break;
+                }
+                index += 1;
+            }
+            
+            if sharded_files.is_empty() {
+                return Err(candle_core::Error::Msg(
+                    "Could not find model weights. Tried: model.safetensors, model-*-of-*.safetensors".to_string()
+                ));
+            }
+            sharded_files
+        };
+        
         let model = if is_phi3 {
             // Load Phi3 model
             let config: Phi3Config = serde_json::from_str(&config_str)
                 .map_err(|e| candle_core::Error::Msg(format!("Failed to parse Phi3 config: {}", e)))?;
             
-            // Download model weights
-            let model_filename = repo.get("model.safetensors").await
-                .map_err(|e| candle_core::Error::Msg(format!("Failed to download model weights: {}", e)))?;
-            
             let vb = unsafe {
-                candle_nn::VarBuilder::from_mmaped_safetensors(&[model_filename], DType::F32, &device)?
+                candle_nn::VarBuilder::from_mmaped_safetensors(&weights_filenames, DType::F32, &device)?
             };
             
             let model = Phi3Model::new(&config, vb)?;
@@ -83,12 +111,8 @@ impl Phi {
             let config: Config = serde_json::from_str(&config_str)
                 .map_err(|e| candle_core::Error::Msg(format!("Failed to parse Phi config: {}", e)))?;
             
-            // Download model weights
-            let model_filename = repo.get("model.safetensors").await
-                .map_err(|e| candle_core::Error::Msg(format!("Failed to download model weights: {}", e)))?;
-            
             let vb = unsafe {
-                candle_nn::VarBuilder::from_mmaped_safetensors(&[model_filename], DType::F32, &device)?
+                candle_nn::VarBuilder::from_mmaped_safetensors(&weights_filenames, DType::F32, &device)?
             };
             
             let model = PhiModel::new(&config, vb)?;
