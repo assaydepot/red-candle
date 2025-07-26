@@ -144,7 +144,7 @@ impl QuantizedGGUF {
                     Err(e) => return Err(e),
                 }
             }
-            "phi" => {
+            "phi" | "phi2" => {
                 let model = QuantizedPhiModel::from_gguf(content, &mut file, &device)?;
                 ModelType::Phi(model)
             }
@@ -156,7 +156,7 @@ impl QuantizedGGUF {
             }
             _ => {
                 return Err(candle_core::Error::Msg(format!(
-                    "Unsupported architecture: {}. Supported: llama, mistral, gemma, qwen, qwen2, qwen3, phi, phi3",
+                    "Unsupported architecture: {}. Supported: llama, mistral, gemma, qwen, qwen2, qwen3, phi, phi2, phi3",
                     architecture
                 )));
             }
@@ -195,6 +195,8 @@ impl QuantizedGGUF {
             Ok("qwen".to_string())
         } else if model_lower.contains("phi-3") || model_lower.contains("phi3") {
             Ok("phi3".to_string())
+        } else if model_lower.contains("phi-2") || model_lower.contains("phi2") {
+            Ok("phi2".to_string())
         } else if model_lower.contains("phi") {
             Ok("phi".to_string())
         } else {
@@ -290,7 +292,7 @@ impl QuantizedGGUF {
                     .copied()
                     .unwrap_or(151643) // Default Qwen3 EOS token
             }
-            "phi" | "phi3" => {
+            "phi" | "phi2" | "phi3" => {
                 vocab.get("<|endoftext|>")
                     .or_else(|| vocab.get("<|end|>"))
                     .or_else(|| vocab.get("</s>"))
@@ -337,7 +339,7 @@ impl QuantizedGGUF {
                 "qwen" | "qwen2" | "qwen3" => {
                     self.apply_qwen_template(messages)
                 }
-                "phi" | "phi3" => {
+                "phi" | "phi2" | "phi3" => {
                     self.apply_phi_template(messages)
                 }
                 _ => Ok(self.apply_generic_template(messages))
@@ -467,7 +469,7 @@ impl QuantizedGGUF {
     fn apply_phi_template(&self, messages: &[serde_json::Value]) -> CandleResult<String> {
         let mut prompt = String::new();
         
-        // Check if it's Phi-3 (newer format) or Phi-2 (simpler format)
+        // Check if it's Phi-3 (newer format) or Phi-2/Phi (simpler format)
         let is_phi3 = self.model_id.contains("phi-3") || self.model_id.contains("Phi-3") || self.architecture == "phi3";
         
         if is_phi3 {
