@@ -75,31 +75,26 @@ namespace :test do
   namespace :llm do
     desc "Run tests for Gemma models"
     task :gemma => :compile do
-      ENV['LLM_TEST_MODEL'] = 'gemma'
       ruby "-Itest", "test/llm/gemma_test.rb"
     end
     
     desc "Run tests for Phi models"
     task :phi => :compile do
-      ENV['LLM_TEST_MODEL'] = 'phi'
       ruby "-Itest", "test/llm/phi_test.rb"
     end
     
     desc "Run tests for Qwen models"
     task :qwen => :compile do
-      ENV['LLM_TEST_MODEL'] = 'qwen'
       ruby "-Itest", "test/llm/qwen_test.rb"
     end
     
     desc "Run tests for Mistral models"
     task :mistral => :compile do
-      ENV['LLM_TEST_MODEL'] = 'mistral'
       ruby "-Itest", "test/llm/mistral_test.rb"
     end
     
     desc "Run tests for Llama models"
     task :llama => :compile do
-      ENV['LLM_TEST_MODEL'] = 'llama'
       ruby "-Itest", "test/llm/llama_test.rb"
     end
     
