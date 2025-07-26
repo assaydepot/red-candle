@@ -48,6 +48,8 @@ module Candle
       
       # Phi GGUF models
       "TheBloke/phi-2-GGUF" => "microsoft/phi-2",
+      "microsoft/phi-4-gguf" => "microsoft/phi-4",
+      "bartowski/Phi-3.5-mini-instruct-GGUF" => "microsoft/Phi-3.5-mini-instruct",
       
       # Pattern-based fallbacks (evaluated in order)
       :patterns => [
@@ -82,11 +84,14 @@ module Candle
         [/qwen.*?2/i, "Qwen/Qwen2-1.5B"],
         [/qwen/i, "Qwen/Qwen-1_8B"],
         
-        # Phi models
-        [/phi.*?3.*?mini/i, "microsoft/Phi-3-mini-4k-instruct"],
+        # Phi models (order matters - more specific patterns first)
+        [/phi.*?3\.5.*?mini/i, "microsoft/Phi-3.5-mini-instruct"],
+        [/phi.*?3.*?mini.*?4k/i, "microsoft/Phi-3-mini-4k-instruct"],
         [/phi.*?3.*?medium/i, "microsoft/Phi-3-medium-4k-instruct"],
         [/phi.*?3.*?small/i, "microsoft/Phi-3-small-8k-instruct"],
+        [/phi.*?3.*?mini/i, "microsoft/Phi-3-mini-4k-instruct"],
         [/phi.*?3/i, "microsoft/Phi-3-mini-4k-instruct"],
+        [/phi.*?4/i, "microsoft/phi-4"],
         [/phi.*?2/i, "microsoft/phi-2"],
         [/phi.*?1\.5/i, "microsoft/phi-1_5"],
         [/phi/i, "microsoft/phi-2"]

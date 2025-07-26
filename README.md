@@ -127,8 +127,8 @@ Red-Candle now supports Large Language Models (LLMs) with GPU acceleration!
 - **Llama**: Llama 2 and Llama 3 models (e.g., `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, `meta-llama/Llama-2-7b-hf`, `NousResearch/Llama-2-7b-hf`)
 - **Mistral**: All Mistral models (e.g., `mistralai/Mistral-7B-Instruct-v0.1`)
 - **Qwen**: Qwen 2 and 2.5 models (e.g., `Qwen/Qwen2-1.5B`, `Qwen/Qwen2.5-7B-Instruct`)
-- **Phi**: Microsoft's Phi-2 and Phi-3 models (e.g., `microsoft/phi-2`, `microsoft/Phi-3-mini-4k-instruct`)
-  - ⚠️ ⚠️ ⚠️ Note: Phi-3 GGUF models have a known issue with KV cache persistence between generations. The `reset_cache` parameter doesn't work for GGUF models. Recreate the model instance for each generation.
+- **Phi**: Microsoft's Phi-2, Phi-3, Phi-3.5, and Phi-4 models (e.g., `microsoft/phi-2`, `microsoft/Phi-3-mini-4k-instruct`, `microsoft/phi-4`)
+  - ⚠️ ⚠️ ⚠️ Note: Phi-3 and Phi-4 GGUF models have a known issue with KV cache persistence between generations. The `reset_cache` parameter doesn't work for GGUF models. Recreate the model instance for each generation.
   - `candle` pull request about phi-3 gguf models: https://github.com/huggingface/candle/pull/2937
 
 ### Quantized Model Support (GGUF)
