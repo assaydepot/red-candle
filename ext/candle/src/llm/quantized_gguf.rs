@@ -150,7 +150,8 @@ impl QuantizedGGUF {
             }
             "phi3" => {
                 // QuantizedPhi3Model requires an additional `approx` parameter
-                let approx = true; // Use approximation for better performance
+                // Setting to false to avoid performance issues without flash-attn
+                let approx = false;
                 let model = QuantizedPhi3Model::from_gguf(approx, content, &mut file, &device)?;
                 ModelType::Phi3(model)
             }
