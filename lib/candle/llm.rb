@@ -46,6 +46,9 @@ module Candle
       "Qwen/Qwen3-32B-GGUF" => "Qwen/Qwen3-32B",
       "Qwen/Qwen3-72B-GGUF" => "Qwen/Qwen3-72B",
       
+      # Phi GGUF models
+      "TheBloke/phi-2-GGUF" => "microsoft/phi-2",
+      
       # Pattern-based fallbacks (evaluated in order)
       :patterns => [
         # Mistral models
@@ -77,7 +80,16 @@ module Candle
         [/qwen.*?3.*?0\.5b/i, "Qwen/Qwen3-0.5B"],
         [/qwen.*?2\.5/i, "Qwen/Qwen2.5-0.5B"],
         [/qwen.*?2/i, "Qwen/Qwen2-1.5B"],
-        [/qwen/i, "Qwen/Qwen-1_8B"]
+        [/qwen/i, "Qwen/Qwen-1_8B"],
+        
+        # Phi models
+        [/phi.*?3.*?mini/i, "microsoft/Phi-3-mini-4k-instruct"],
+        [/phi.*?3.*?medium/i, "microsoft/Phi-3-medium-4k-instruct"],
+        [/phi.*?3.*?small/i, "microsoft/Phi-3-small-8k-instruct"],
+        [/phi.*?3/i, "microsoft/Phi-3-mini-4k-instruct"],
+        [/phi.*?2/i, "microsoft/phi-2"],
+        [/phi.*?1\.5/i, "microsoft/phi-1_5"],
+        [/phi/i, "microsoft/phi-2"]
       ]
     }
     
