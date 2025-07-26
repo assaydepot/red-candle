@@ -527,7 +527,9 @@ impl QuantizedGGUF {
     
     /// Clear the KV cache between generations
     pub fn clear_kv_cache(&mut self) {
-        // Quantized models manage cache internally
+        // Quantized models don't expose cache clearing methods
+        // Phi3 GGUF models have a known issue where the KV cache
+        // cannot be cleared, leading to errors on subsequent generations
     }
 
     fn generate_tokens(
