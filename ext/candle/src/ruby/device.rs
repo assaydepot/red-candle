@@ -162,6 +162,10 @@ impl Device {
     pub fn __str__(&self) -> String {
         self.__repr__()
     }
+
+    pub fn __eq__(&self, other: &Device) -> bool {
+        self == other
+    }
 }
 
 impl magnus::TryConvert for Device {
@@ -193,5 +197,6 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_device.define_singleton_method("default", function!(default_device, 0))?;
     rb_device.define_method("to_s", method!(Device::__str__, 0))?;
     rb_device.define_method("inspect", method!(Device::__repr__, 0))?;
+    rb_device.define_method("==", method!(Device::__eq__, 1))?;
     Ok(())
 }
