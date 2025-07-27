@@ -29,8 +29,8 @@ Gem::Specification.new do |spec|
   spec.homepage    = "https://github.com/assaydepot/red-candle"
   spec.license     = "MIT"
 
-  spec.requirements = ["Rust >= 1.65"]
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.requirements = ["Rust >= 1.85"]
+  spec.required_ruby_version = ">= 3.2.0"
   spec.required_rubygems_version = ">= 3.3.26"
 
   spec.add_dependency "rb_sys"
