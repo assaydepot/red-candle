@@ -3,6 +3,8 @@ use candle_core::quantized::gguf_file;
 use candle_transformers::models::quantized_llama::ModelWeights as QuantizedLlamaModel;
 use candle_transformers::models::quantized_gemma3::ModelWeights as QuantizedGemmaModel;
 use candle_transformers::models::quantized_qwen2::ModelWeights as QuantizedQwenModel;
+use candle_transformers::models::quantized_phi::ModelWeights as QuantizedPhiModel;
+use candle_transformers::models::quantized_phi3::ModelWeights as QuantizedPhi3Model;
 use hf_hub::api::tokio::{Api, ApiRepo};
 use tokenizers::Tokenizer;
 use std::io::Seek;
@@ -24,6 +26,8 @@ enum ModelType {
     Llama(QuantizedLlamaModel),
     Gemma(QuantizedGemmaModel),
     Qwen(QuantizedQwenModel),
+    Phi(QuantizedPhiModel),
+    Phi3(QuantizedPhi3Model),
     // Mistral uses Llama loader due to tensor naming compatibility
 }
 
@@ -140,9 +144,20 @@ impl QuantizedGGUF {
                     Err(e) => return Err(e),
                 }
             }
+            "phi" | "phi2" => {
+                let model = QuantizedPhiModel::from_gguf(content, &mut file, &device)?;
+                ModelType::Phi(model)
+            }
+            "phi3" => {
+                // QuantizedPhi3Model requires an additional `approx` parameter
+                // Setting to false to avoid performance issues without flash-attn
+                let approx = false;
+                let model = QuantizedPhi3Model::from_gguf(approx, content, &mut file, &device)?;
+                ModelType::Phi3(model)
+            }
             _ => {
                 return Err(candle_core::Error::Msg(format!(
-                    "Unsupported architecture: {}. Supported: llama, mistral, gemma, qwen, qwen2, qwen3",
+                    "Unsupported architecture: {}. Supported: llama, mistral, gemma, qwen, qwen2, qwen3, phi, phi2, phi3",
                     architecture
                 )));
             }
@@ -179,6 +194,12 @@ impl QuantizedGGUF {
             Ok("gemma".to_string())
         } else if model_lower.contains("qwen") {
             Ok("qwen".to_string())
+        } else if model_lower.contains("phi-3") || model_lower.contains("phi3") {
+            Ok("phi3".to_string())
+        } else if model_lower.contains("phi-2") || model_lower.contains("phi2") {
+            Ok("phi2".to_string())
+        } else if model_lower.contains("phi") {
+            Ok("phi".to_string())
         } else {
             Err(candle_core::Error::Msg(
                 "Could not determine model architecture from metadata or name".to_string()
@@ -272,6 +293,13 @@ impl QuantizedGGUF {
                     .copied()
                     .unwrap_or(151643) // Default Qwen3 EOS token
             }
+            "phi" | "phi2" | "phi3" => {
+                vocab.get("<|endoftext|>")
+                    .or_else(|| vocab.get("<|end|>"))
+                    .or_else(|| vocab.get("</s>"))
+                    .copied()
+                    .unwrap_or(50256) // Default GPT-2 style EOS token
+            }
             _ => 2, // Default
         }
     }
@@ -295,6 +323,8 @@ impl QuantizedGGUF {
             self.apply_gemma_template(messages)
         } else if model_lower.contains("qwen") {
             self.apply_qwen_template(messages)
+        } else if model_lower.contains("phi") {
+            self.apply_phi_template(messages)
         } else {
             match self.architecture.as_str() {
                 "llama" => {
@@ -309,6 +339,9 @@ impl QuantizedGGUF {
                 }
                 "qwen" | "qwen2" | "qwen3" => {
                     self.apply_qwen_template(messages)
+                }
+                "phi" | "phi2" | "phi3" => {
+                    self.apply_phi_template(messages)
                 }
                 _ => Ok(self.apply_generic_template(messages))
             }
@@ -434,6 +467,51 @@ impl QuantizedGGUF {
         Ok(prompt)
     }
     
+    fn apply_phi_template(&self, messages: &[serde_json::Value]) -> CandleResult<String> {
+        let mut prompt = String::new();
+        
+        // Check if it's Phi-3 (newer format) or Phi-2/Phi (simpler format)
+        let is_phi3 = self.model_id.contains("phi-3") || self.model_id.contains("Phi-3") || self.architecture == "phi3";
+        
+        if is_phi3 {
+            // Phi-3 format
+            for message in messages {
+                let role = message["role"].as_str().unwrap_or("");
+                let content = message["content"].as_str().unwrap_or("");
+                
+                match role {
+                    "system" => {
+                        prompt.push_str(&format!("<|system|>\n{}<|end|>\n", content));
+                    }
+                    "user" => {
+                        prompt.push_str(&format!("<|user|>\n{}<|end|>\n", content));
+                    }
+                    "assistant" => {
+                        prompt.push_str(&format!("<|assistant|>\n{}<|end|>\n", content));
+                    }
+                    _ => {}
+                }
+            }
+            prompt.push_str("<|assistant|>\n");
+        } else {
+            // Phi-2 format
+            for message in messages {
+                let role = message["role"].as_str().unwrap_or("");
+                let content = message["content"].as_str().unwrap_or("");
+                
+                match role {
+                    "system" => prompt.push_str(&format!("System: {}\n", content)),
+                    "user" => prompt.push_str(&format!("User: {}\n", content)),
+                    "assistant" => prompt.push_str(&format!("Assistant: {}\n", content)),
+                    _ => {}
+                }
+            }
+            prompt.push_str("Assistant: ");
+        }
+        
+        Ok(prompt)
+    }
+    
     fn apply_generic_template(&self, messages: &[serde_json::Value]) -> String {
         let mut prompt = String::new();
         
@@ -449,7 +527,9 @@ impl QuantizedGGUF {
     
     /// Clear the KV cache between generations
     pub fn clear_kv_cache(&mut self) {
-        // Quantized models manage cache internally
+        // Quantized models don't expose cache clearing methods
+        // Phi3 GGUF models have a known issue where the KV cache
+        // cannot be cleared, leading to errors on subsequent generations
     }
 
     fn generate_tokens(
@@ -477,6 +557,8 @@ impl QuantizedGGUF {
                 ModelType::Llama(model) => model.forward(&input, start_pos)?,
                 ModelType::Gemma(model) => model.forward(&input, start_pos)?,
                 ModelType::Qwen(model) => model.forward(&input, start_pos)?,
+                ModelType::Phi(model) => model.forward(&input, start_pos)?,
+                ModelType::Phi3(model) => model.forward(&input, start_pos)?,
             };
             
             let logits = logits.squeeze(0)?;

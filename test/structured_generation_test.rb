@@ -43,7 +43,7 @@ class StructuredGenerationTest < Minitest::Test
       parsed = JSON.parse(result)
       assert parsed.is_a?(Hash), "Result should be a JSON object"
       assert %w[yes no].include?(parsed["answer"]), "Answer should be yes or no"
-    rescue JSON::ParserError => e
+    rescue JSON::ParserError
       # Check if the output at least follows the expected pattern
       if result.include?('{"answer":')
         assert result.match(/"answer":\s*"(yes|no)"/), "Output should contain yes or no answer"
@@ -113,7 +113,7 @@ class StructuredGenerationTest < Minitest::Test
         assert parsed["confidence"] >= 0 && parsed["confidence"] <= 1, 
                "Confidence should be between 0 and 1"
       end
-    rescue JSON::ParserError => e
+    rescue JSON::ParserError
       # If JSON is incomplete, check if it at least started correctly
       assert result.include?('{"choice":'), "Output should start with valid JSON structure"
       assert result.match(/"choice":\s*"[ABCD]/), "Output should contain a valid choice"
@@ -151,7 +151,7 @@ class StructuredGenerationTest < Minitest::Test
       assert parsed["name"].is_a?(String), "Name should be a string"
       assert %w[person organization location].include?(parsed["type"]), 
              "Type should be person, organization, or location"
-    rescue JSON::ParserError => e
+    rescue JSON::ParserError
       # Check partial output
       assert result.include?('{"name":') || result.include?('{"type":'), 
              "Output should start with expected JSON structure"

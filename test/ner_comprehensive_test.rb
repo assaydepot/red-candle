@@ -187,7 +187,7 @@ class NERComprehensiveTest < Minitest::Test
     hybrid = Candle::HybridNER.new
     
     # Add email pattern
-    hybrid.add_pattern_recognizer("EMAIL", [/\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b/])
+    hybrid.add_pattern_recognizer("EMAIL", [/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/])
     
     # Add company gazetteer
     hybrid.add_gazetteer_recognizer("COMPANY", ["Apple", "Google", "Microsoft"])
