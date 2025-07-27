@@ -24,10 +24,11 @@ class GemmaTest < Minitest::Test
     # Use GGUF model for faster testing
     begin
       model = Candle::LLM.from_pretrained(
-        "lmstudio-community/gemma-2b-it-GGUF",
-        gguf_file: "gemma-2b-it-q4_k_m.gguf"
+        "google/gemma-3-4b-it-qat-q4_0-gguf",
+        gguf_file: "gemma-3-4b-it-q4_0.gguf",
+        tokenizer: "google/gemma-3-4b-it"
       )
-      assert model.model_name.include?("gemma-2b-it-GGUF")
+      assert model.model_name.include?("gemma-3-4b-it-qat-q4_0-gguf")
       
       # Test generation
       config = Candle::GenerationConfig.deterministic(max_length: 20, seed: 42)
@@ -44,8 +45,9 @@ class GemmaTest < Minitest::Test
     
     begin
       model = Candle::LLM.from_pretrained(
-        "lmstudio-community/gemma-2b-it-GGUF",
-        gguf_file: "gemma-2b-it-q4_k_m.gguf"
+        "google/gemma-3-4b-it-qat-q4_0-gguf",
+        gguf_file: "gemma-3-4b-it-q4_0.gguf",
+        tokenizer: "google/gemma-3-4b-it"
       )
       messages = [
         { role: "user", content: "What is Ruby?" }
@@ -68,11 +70,12 @@ class GemmaTest < Minitest::Test
     # Test that Gemma GGUF models can be loaded with explicit tokenizer
     model_id = "google/gemma-3-4b-it-qat-q4_0-gguf"
     gguf_file = "gemma-3-4b-it-q4_0.gguf"
+    tokenizer = "google/gemma-3-4b-it"
     
     begin
       llm = Candle::LLM.from_pretrained(model_id, 
                                        gguf_file: gguf_file,
-                                       tokenizer: "google/gemma-3-4b-it")
+                                       tokenizer: tokenizer)
       # When loading with explicit parameters, the model name includes the full spec
       assert llm.model_name.include?(model_id)
       assert llm.model_name.include?(gguf_file)
