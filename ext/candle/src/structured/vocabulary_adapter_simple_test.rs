@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod simple_tests {
     use super::super::*;
-    use crate::tokenizer::TokenizerWrapper;
     
     #[test]
     fn test_vocabulary_adapter_basic() {
@@ -54,7 +53,6 @@ mod simple_tests {
     
     #[test] 
     fn test_special_token_patterns() {
-        use std::collections::HashMap;
         
         // Test that our special token patterns are correct
         let test_cases = vec![
