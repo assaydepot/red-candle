@@ -73,7 +73,9 @@ module Candle
       
       # Try to parse as JSON
       begin
-        JSON.parse(result)
+        # First, try to extract JSON if there's content after stop tokens
+        json_content = extract_json_content(result)
+        JSON.parse(json_content)
       rescue JSON::ParserError => e
         # Return the raw string if parsing fails
         warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
@@ -238,6 +240,88 @@ module Candle
     end
 
     private
+
+    # Extract JSON content from generated text, handling stop tokens and extra content
+    def extract_json_content(text)
+      # Remove any content after common stop tokens
+      cleaned = text
+      
+      # Check for EOS tokens and truncate at the first one found
+      model_eos_tokens.each do |token|
+        if idx = cleaned.index(token)
+          cleaned = cleaned[0...idx]
+        end
+      end
+      
+      # Try to find valid JSON boundaries
+      # First try a simple approach - find the first { or [ and match to its closing } or ]
+      start_idx = cleaned.index(/[\{\[]/)
+      return cleaned.strip unless start_idx
+      
+      # Extract from the start position
+      json_candidate = cleaned[start_idx..-1]
+      
+      # Try to find a valid JSON object or array
+      # This regex handles nested structures better
+      if json_candidate[0] == '{'
+        # Match a JSON object
+        bracket_count = 0
+        in_string = false
+        escape_next = false
+        
+        json_candidate.chars.each_with_index do |char, idx|
+          if !in_string
+            case char
+            when '{'
+              bracket_count += 1
+            when '}'
+              bracket_count -= 1
+              if bracket_count == 0
+                return json_candidate[0..idx]
+              end
+            when '"'
+              in_string = true unless escape_next
+            end
+          else
+            if char == '"' && !escape_next
+              in_string = false
+            end
+          end
+          
+          escape_next = (!escape_next && char == '\\')
+        end
+      elsif json_candidate[0] == '['
+        # Match a JSON array (similar logic)
+        bracket_count = 0
+        in_string = false
+        escape_next = false
+        
+        json_candidate.chars.each_with_index do |char, idx|
+          if !in_string
+            case char
+            when '['
+              bracket_count += 1
+            when ']'
+              bracket_count -= 1
+              if bracket_count == 0
+                return json_candidate[0..idx]
+              end
+            when '"'
+              in_string = true unless escape_next
+            end
+          else
+            if char == '"' && !escape_next
+              in_string = false
+            end
+          end
+          
+          escape_next = (!escape_next && char == '\\')
+        end
+      end
+      
+      # If no valid JSON structure found, return the cleaned string
+      cleaned.strip
+    end
 
     # Legacy format messages method - kept for backward compatibility
     # Use apply_chat_template for proper model-specific formatting

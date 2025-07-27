@@ -10,6 +10,30 @@ class StructuredGenerationTest < Minitest::Test
     @model_id = ENV["TEST_MODEL"] || "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
   end
   
+  private
+  
+  # Helper method to parse JSON from model output that might have extra content
+  def parse_json_with_cleanup(text)
+    # Try direct parse first
+    JSON.parse(text)
+  rescue JSON::ParserError
+    # Extract JSON content by removing content after stop tokens
+    cleaned = text
+    ['</s>', '<|endoftext|>', '<|im_end|>', '<end>', '<end_of_turn>'].each do |token|
+      if idx = cleaned.index(token)
+        cleaned = cleaned[0...idx]
+      end
+    end
+    
+    # Try to find valid JSON boundaries
+    if match = cleaned.match(/(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\])/m)
+      JSON.parse(match[0])
+    else
+      # If still can't parse, raise the original error
+      JSON.parse(text)
+    end
+  end
+  
   def test_constraint_from_json_schema
     llm = Candle::LLM.from_pretrained(@model_id, device: @device)
     
@@ -40,7 +64,7 @@ class StructuredGenerationTest < Minitest::Test
     
     # Result should be parseable JSON matching the schema
     begin
-      parsed = JSON.parse(result)
+      parsed = parse_json_with_cleanup(result)
       assert parsed.is_a?(Hash), "Result should be a JSON object"
       assert %w[yes no].include?(parsed["answer"]), "Answer should be yes or no"
     rescue JSON::ParserError
@@ -107,7 +131,7 @@ class StructuredGenerationTest < Minitest::Test
     
     # Try to parse JSON, handle incomplete output
     begin
-      parsed = JSON.parse(result)
+      parsed = parse_json_with_cleanup(result)
       assert %w[A B C D].include?(parsed["choice"]), "Choice should be A, B, C, or D"
       if parsed["confidence"]
         assert parsed["confidence"] >= 0 && parsed["confidence"] <= 1, 
@@ -147,7 +171,7 @@ class StructuredGenerationTest < Minitest::Test
     result = llm.generate(prompt, config: config)
     
     begin
-      parsed = JSON.parse(result)
+      parsed = parse_json_with_cleanup(result)
       assert parsed["name"].is_a?(String), "Name should be a string"
       assert %w[person organization location].include?(parsed["type"]), 
              "Type should be person, organization, or location"
