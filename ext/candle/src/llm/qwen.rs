@@ -180,6 +180,11 @@ impl Qwen {
                 break;
             }
             
+            // Check if constraint is satisfied (early stopping)
+            if config.stop_on_constraint_satisfaction && text_gen.is_constraint_satisfied() {
+                break;
+            }
+            
             // Check stop sequences
             let generated_text = self.tokenizer.decode(&all_tokens[start_gen..], true)?;
             if text_gen.check_stop_sequences(&generated_text, &config.stop_sequences) {

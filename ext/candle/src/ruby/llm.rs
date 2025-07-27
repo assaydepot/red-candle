@@ -157,6 +157,12 @@ impl GenerationConfig {
             }
         }
         
+        if let Some(value) = kwargs.get(magnus::Symbol::new("stop_on_constraint_satisfaction")) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                config.stop_on_constraint_satisfaction = v;
+            }
+        }
+        
         // Handle constraint parameter
         if let Some(value) = kwargs.get(magnus::Symbol::new("constraint")) {
             if let Ok(constraint) = <&StructuredConstraint as TryConvert>::try_convert(value) {
@@ -209,6 +215,11 @@ impl GenerationConfig {
     pub fn debug_tokens(&self) -> bool {
         self.inner.debug_tokens
     }
+    
+    pub fn stop_on_constraint_satisfaction(&self) -> bool {
+        self.inner.stop_on_constraint_satisfaction
+    }
+    
     pub fn constraint(&self) -> Option<StructuredConstraint> {
         self.inner.constraint.as_ref().map(|c| StructuredConstraint {
             index: Arc::clone(c),
@@ -496,6 +507,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("stop_sequences", method!(GenerationConfig::stop_sequences, 0))?;
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
     rb_generation_config.define_method("debug_tokens", method!(GenerationConfig::debug_tokens, 0))?;
+    rb_generation_config.define_method("stop_on_constraint_satisfaction", method!(GenerationConfig::stop_on_constraint_satisfaction, 0))?;
     rb_generation_config.define_method("constraint", method!(GenerationConfig::constraint, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;

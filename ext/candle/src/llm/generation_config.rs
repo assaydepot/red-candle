@@ -27,6 +27,8 @@ pub struct GenerationConfig {
     pub debug_tokens: bool,
     /// Optional constraint index for structured generation
     pub constraint: Option<Arc<Index>>,
+    /// Stop immediately when constraint is satisfied
+    pub stop_on_constraint_satisfaction: bool,
 }
 
 /// Generate a random seed based on current time
@@ -51,6 +53,7 @@ impl Default for GenerationConfig {
             include_prompt: false,
             debug_tokens: false,
             constraint: None,
+            stop_on_constraint_satisfaction: true,
         }
     }
 }

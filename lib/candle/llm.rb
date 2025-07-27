@@ -47,52 +47,33 @@ module Candle
     def generate_regex(prompt, pattern:, **options)
       constraint = constraint_from_regex(pattern)
       
-      # Add stop sequences for regex generation
-      stop_sequences = options[:stop_sequences] || []
-      unless options[:no_auto_stop]
-        # Use model-specific EOS tokens
-        stop_sequences += model_eos_tokens
-        stop_sequences << "\n"
-        stop_sequences.uniq!
-      end
-      
-      config_opts = options.merge(constraint: constraint, stop_sequences: stop_sequences)
+      # Configure generation with early stopping by default
+      config_opts = options.merge(
+        constraint: constraint,
+        stop_on_constraint_satisfaction: options.fetch(:stop_on_constraint_satisfaction, true)
+      )
       config = options[:config] || GenerationConfig.balanced(**config_opts)
       
-      result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
-      
-      # Clean up any trailing EOS tokens
-      eos_patterns = model_eos_tokens.map { |token| Regexp.escape(token) }.join('|')
-      result.gsub(/(#{eos_patterns}).*$/m, '').strip
+      generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
     end
     
     # Generate and parse structured output from a JSON schema
     def generate_structured(prompt, schema:, **options)
       constraint = constraint_from_schema(schema)
-      config_opts = options.merge(constraint: constraint)
+      
+      # Configure generation with early stopping by default
+      config_opts = options.merge(
+        constraint: constraint,
+        stop_on_constraint_satisfaction: options.fetch(:stop_on_constraint_satisfaction, true)
+      )
       config = options[:config] || GenerationConfig.balanced(**config_opts)
       
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
-      # Clean up the result - remove end-of-sequence tokens
-      # that might appear after valid JSON
-      eos_patterns = model_eos_tokens.map { |token| Regexp.escape(token) }.join('|')
-      cleaned_result = result.gsub(/(#{eos_patterns}).*$/m, '')
-      
       # Try to parse as JSON
       begin
-        JSON.parse(cleaned_result)
+        JSON.parse(result)
       rescue JSON::ParserError => e
-        # If cleaning didn't help, try to extract JSON from the result
-        # Look for the first complete JSON object/array
-        if match = cleaned_result.match(/(\{[^{}]*\}|\[[^\[\]]*\])/m)
-          begin
-            return JSON.parse(match[1])
-          rescue JSON::ParserError
-            # Fall through to warning
-          end
-        end
-        
         # Return the raw string if parsing fails
         warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
         result
@@ -208,15 +189,7 @@ module Candle
 
     def generate(prompt, config: GenerationConfig.balanced, reset_cache: true)
       begin
-        result = _generate(prompt, config)
-        
-        # If there's a constraint, clean up EOS tokens that appear after the constrained content
-        if config.constraint
-          eos_patterns = model_eos_tokens.map { |token| Regexp.escape(token) }.join('|')
-          result = result.gsub(/(#{eos_patterns}).*$/m, '').strip
-        end
-        
-        result
+        _generate(prompt, config)
       ensure
         clear_cache if reset_cache
       end

@@ -161,6 +161,33 @@ impl TextGeneration {
         Ok(next_token)
     }
 
+    /// Check if the constraint is satisfied (reached a valid completion state)
+    pub fn is_constraint_satisfied(&self) -> bool {
+        if let (Some(ref constraint_index), Some(state)) = (&self.constraint, self.constraint_state) {
+            // Check if the constraint has reached a state where it could validly end
+            // This happens when:
+            // 1. We have no more allowed tokens (constraint fully satisfied)
+            // 2. The EOS token is in the allowed tokens (optional ending)
+            if let Some(allowed) = constraint_index.allowed_tokens(&state) {
+                // If no tokens are allowed, the constraint is fully satisfied
+                if allowed.is_empty() {
+                    return true;
+                }
+                
+                // If EOS token is allowed, we've reached an optional completion point
+                if let Some(eos) = self.eos_token_id {
+                    if allowed.contains(&eos) {
+                        return true;
+                    }
+                }
+            } else {
+                // None means no tokens allowed - constraint is satisfied
+                return true;
+            }
+        }
+        false
+    }
+
     /// Check if we should stop generation
     pub fn should_stop(&self, token: u32, max_length: usize) -> bool {
         if self.tokens.len() >= max_length {
