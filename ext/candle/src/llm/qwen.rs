@@ -55,6 +55,9 @@ impl Qwen {
             .unwrap_or(151643); // Default Qwen3 EOS token
         
         // Download model weights
+        // NOTE: Qwen uses hardcoded shard counts based on model size rather than
+        // reading model.safetensors.index.json. This works for official Qwen models
+        // but may fail for custom configurations with different shard counts.
         let mut filenames = vec![];
         let num_shards = if model_id.contains("72b") || model_id.contains("72B") { 8 } 
                         else if model_id.contains("14b") || model_id.contains("14B") { 3 }

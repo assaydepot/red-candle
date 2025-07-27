@@ -52,6 +52,9 @@ impl Mistral {
             vec![consolidated_file]
         } else {
             // Try to find sharded model files
+            // NOTE: This uses a brute-force approach, trying common shard counts.
+            // A better approach would be to read model.safetensors.index.json which
+            // contains the exact file list, but this works for most models (≤8 shards).
             let mut sharded_files = Vec::new();
             let mut index = 1;
             loop {
