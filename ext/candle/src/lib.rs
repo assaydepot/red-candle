@@ -7,6 +7,7 @@ pub mod llm;
 pub mod ner;
 pub mod reranker;
 pub mod ruby;
+pub mod structured;
 pub mod tokenizer;
 
 // Configuration detection from build.rs

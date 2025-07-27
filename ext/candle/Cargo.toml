@@ -20,6 +20,7 @@ serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.45", features = ["rt", "macros"] }
 rand = "0.8"
+outlines-core = "0.2"
 
 [features]
 default = []
