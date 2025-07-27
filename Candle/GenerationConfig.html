@@ -254,17 +254,17 @@
       <pre class="lines">
 
 
-187
-188
-189
-190
-191
-192
-193
-194</pre>
+219
+220
+221
+222
+223
+224
+225
+226</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 187</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 219</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_balanced'>balanced</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_defaults'>defaults</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -305,18 +305,18 @@
       <pre class="lines">
 
 
-176
-177
-178
-179
-180
-181
-182
-183
-184</pre>
+208
+209
+210
+211
+212
+213
+214
+215
+216</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 176</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_creative'>creative</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_defaults'>defaults</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -358,18 +358,18 @@
       <pre class="lines">
 
 
-165
-166
-167
-168
-169
-170
-171
-172
-173</pre>
+197
+198
+199
+200
+201
+202
+203
+204
+205</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 197</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_deterministic'>deterministic</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_defaults'>defaults</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -417,23 +417,24 @@
       <pre class="lines">
 
 
-149
-150
-151
-152
-153
-154
-155
-156
-157
-158
-159
-160
-161
-162</pre>
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 149</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 180</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_with'>with</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_overrides'>overrides</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_config'>current_config</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -444,7 +445,8 @@
     <span class='label'>repetition_penalty:</span> <span class='id identifier rubyid_repetition_penalty'>repetition_penalty</span><span class='comma'>,</span>
     <span class='label'>seed:</span> <span class='id identifier rubyid_seed'>seed</span><span class='comma'>,</span>
     <span class='label'>stop_sequences:</span> <span class='id identifier rubyid_stop_sequences'>stop_sequences</span><span class='comma'>,</span>
-    <span class='label'>include_prompt:</span> <span class='id identifier rubyid_include_prompt'>include_prompt</span>
+    <span class='label'>include_prompt:</span> <span class='id identifier rubyid_include_prompt'>include_prompt</span><span class='comma'>,</span>
+    <span class='label'>constraint:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='ivar'>@constraint</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='ivar'>@constraint</span> <span class='op'>:</span> <span class='kw'>nil</span>
   <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span>
   
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_current_config'>current_config</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_overrides'>overrides</span><span class='rparen'>)</span><span class='rparen'>)</span>
@@ -459,7 +461,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jul 27 00:11:37 2025 by
+  Generated on Sun Jul 27 00:11:44 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
