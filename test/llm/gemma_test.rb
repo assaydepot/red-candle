@@ -94,8 +94,9 @@ class GemmaTest < Minitest::Test
     
     assert_instance_of String, result
     assert_match(/^\d{3}-\d{3}-\d{4}$/, result, "Result should be a valid phone number")
-    refute result.include?("</s>"), "Result should not contain EOS tokens"
-    refute result.include?("<end>"), "Result should not contain Gemma EOS tokens"
+    refute result.include?("<eos>"), "Result should not contain Gemma EOS token"
+    refute result.include?("<end_of_turn>"), "Result should not contain Gemma chat EOS token"
+    refute result.include?("</s>"), "Result should not contain generation boundary markers"
   end
   
   def test_structured_generation_with_schema

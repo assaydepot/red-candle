@@ -10,6 +10,27 @@ module Candle
         end
       end
     end
+    
+    # Get model-specific EOS tokens
+    def model_eos_tokens
+      @model_eos_tokens ||= begin
+        tokens = []
+        if model_eos = cached_eos_token
+          tokens << model_eos
+          # For Gemma, also include end_of_turn for chat scenarios and </s>
+          # Even though </s> is technically an HTML tag in Gemma's vocabulary,
+          # it seems to use it as a generation boundary in practice
+          if model_name.downcase.include?("gemma")
+            tokens << "<end_of_turn>"
+            tokens << "</s>"
+          end
+        else
+          # Fallback to common tokens only if model doesn't provide one
+          tokens = ["</s>", "<|endoftext|>", "<|im_end|>", "<end>"]
+        end
+        tokens.uniq
+      end
+    end
     # Create a structured constraint from a JSON schema
     def constraint_from_schema(schema)
       schema_str = schema.is_a?(String) ? schema : JSON.generate(schema)
@@ -29,13 +50,10 @@ module Candle
       # Add stop sequences for regex generation
       stop_sequences = options[:stop_sequences] || []
       unless options[:no_auto_stop]
-        # Use model-specific EOS token if available, otherwise fallback to common ones
-        model_eos = cached_eos_token
-        if model_eos
-          stop_sequences += [model_eos, "\n"]
-        else
-          stop_sequences += ["</s>", "<|endoftext|>", "<|im_end|>", "<end>", "\n"]
-        end
+        # Use model-specific EOS tokens
+        stop_sequences += model_eos_tokens
+        stop_sequences << "\n"
+        stop_sequences.uniq!
       end
       
       config_opts = options.merge(constraint: constraint, stop_sequences: stop_sequences)
@@ -44,13 +62,8 @@ module Candle
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
       # Clean up any trailing EOS tokens
-      model_eos = cached_eos_token
-      if model_eos
-        eos_pattern = Regexp.escape(model_eos)
-        result = result.gsub(/#{eos_pattern}.*$/m, '').strip
-      else
-        result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
-      end
+      eos_patterns = model_eos_tokens.map { |token| Regexp.escape(token) }.join('|')
+      result.gsub(/(#{eos_patterns}).*$/m, '').strip
     end
     
     # Generate and parse structured output from a JSON schema
@@ -63,13 +76,8 @@ module Candle
       
       # Clean up the result - remove end-of-sequence tokens
       # that might appear after valid JSON
-      model_eos = cached_eos_token
-      cleaned_result = if model_eos
-        eos_pattern = Regexp.escape(model_eos)
-        result.gsub(/#{eos_pattern}.*$/m, '')
-      else
-        result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '')
-      end
+      eos_patterns = model_eos_tokens.map { |token| Regexp.escape(token) }.join('|')
+      cleaned_result = result.gsub(/(#{eos_patterns}).*$/m, '')
       
       # Try to parse as JSON
       begin
@@ -204,13 +212,8 @@ module Candle
         
         # If there's a constraint, clean up EOS tokens that appear after the constrained content
         if config.constraint
-          model_eos = cached_eos_token
-          if model_eos
-            eos_pattern = Regexp.escape(model_eos)
-            result = result.gsub(/#{eos_pattern}.*$/m, '').strip
-          else
-            result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
-          end
+          eos_patterns = model_eos_tokens.map { |token| Regexp.escape(token) }.join('|')
+          result = result.gsub(/(#{eos_patterns}).*$/m, '').strip
         end
         
         result
