@@ -29,6 +29,8 @@ pub struct GenerationConfig {
     pub constraint: Option<Arc<Index>>,
     /// Stop immediately when constraint is satisfied
     pub stop_on_constraint_satisfaction: bool,
+    /// Whether to use greedy constraint satisfaction (stop immediately after first match)
+    pub constraint_greedy: bool,
 }
 
 /// Generate a random seed based on current time
@@ -54,6 +56,7 @@ impl Default for GenerationConfig {
             debug_tokens: false,
             constraint: None,
             stop_on_constraint_satisfaction: true,
+            constraint_greedy: true,
         }
     }
 }

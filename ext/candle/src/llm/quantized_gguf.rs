@@ -601,8 +601,15 @@ impl QuantizedGGUF {
             }
             
             // Check if constraint is satisfied (early stopping)
-            if config.stop_on_constraint_satisfaction && text_gen.is_constraint_satisfied() {
-                break;
+            if config.stop_on_constraint_satisfaction {
+                let satisfied = if config.constraint_greedy {
+                    text_gen.is_constraint_satisfied_greedy()
+                } else {
+                    text_gen.is_constraint_satisfied()
+                };
+                if satisfied {
+                    break;
+                }
             }
             
             // Check stop sequences
