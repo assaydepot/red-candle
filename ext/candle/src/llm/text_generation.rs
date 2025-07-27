@@ -243,9 +243,9 @@ impl TextGeneration {
         false
     }
     
-    /// Check if the constraint is satisfied in greedy mode
-    pub fn is_constraint_satisfied_greedy(&self) -> bool {
-        // In greedy mode, we stop as soon as the constraint is completed
+    /// Check if the constraint is satisfied when stop_on_match is true
+    pub fn is_constraint_satisfied_stop_on_match(&self) -> bool {
+        // When stop_on_match is true, we stop as soon as the constraint is completed
         if self.constraint_completed {
             return true;
         }

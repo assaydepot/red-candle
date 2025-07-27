@@ -44,14 +44,14 @@ module Candle
     end
     
     # Generate with regex constraint
-    def generate_regex(prompt, pattern:, greedy: true, **options)
+    def generate_regex(prompt, pattern:, stop_on_match: true, **options)
       constraint = constraint_from_regex(pattern)
       
       # Configure generation with early stopping by default
       config_opts = options.merge(
         constraint: constraint,
-        stop_on_constraint_satisfaction: options.fetch(:stop_on_constraint_satisfaction, greedy),
-        constraint_greedy: greedy
+        stop_on_constraint_satisfaction: options.fetch(:stop_on_constraint_satisfaction, stop_on_match),
+        stop_on_match: stop_on_match
       )
       config = options[:config] || GenerationConfig.balanced(**config_opts)
       

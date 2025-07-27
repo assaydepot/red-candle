@@ -182,8 +182,8 @@ impl Qwen {
             
             // Check if constraint is satisfied (early stopping)
             if config.stop_on_constraint_satisfaction {
-                let satisfied = if config.constraint_greedy {
-                    text_gen.is_constraint_satisfied_greedy()
+                let satisfied = if config.stop_on_match {
+                    text_gen.is_constraint_satisfied_stop_on_match()
                 } else {
                     text_gen.is_constraint_satisfied()
                 };

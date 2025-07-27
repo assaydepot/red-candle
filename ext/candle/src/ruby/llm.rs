@@ -163,9 +163,9 @@ impl GenerationConfig {
             }
         }
         
-        if let Some(value) = kwargs.get(magnus::Symbol::new("constraint_greedy")) {
+        if let Some(value) = kwargs.get(magnus::Symbol::new("stop_on_match")) {
             if let Ok(v) = TryConvert::try_convert(value) {
-                config.constraint_greedy = v;
+                config.stop_on_match = v;
             }
         }
         
@@ -226,8 +226,8 @@ impl GenerationConfig {
         self.inner.stop_on_constraint_satisfaction
     }
     
-    pub fn constraint_greedy(&self) -> bool {
-        self.inner.constraint_greedy
+    pub fn stop_on_match(&self) -> bool {
+        self.inner.stop_on_match
     }
     
     pub fn constraint(&self) -> Option<StructuredConstraint> {
@@ -518,7 +518,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
     rb_generation_config.define_method("debug_tokens", method!(GenerationConfig::debug_tokens, 0))?;
     rb_generation_config.define_method("stop_on_constraint_satisfaction", method!(GenerationConfig::stop_on_constraint_satisfaction, 0))?;
-    rb_generation_config.define_method("constraint_greedy", method!(GenerationConfig::constraint_greedy, 0))?;
+    rb_generation_config.define_method("stop_on_match", method!(GenerationConfig::stop_on_match, 0))?;
     rb_generation_config.define_method("constraint", method!(GenerationConfig::constraint, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
