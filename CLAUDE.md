@@ -4,7 +4,7 @@ This guide captures the coding conventions and patterns used in the red-candle R
 
 ## Project Overview
 
-Red Candle is a Ruby gem that uses the Magnus Rust crate to embed Rust code in Ruby, providing access to the Candle ML library from Hugging Face. It enables Ruby developers to use embedding models, rerankers, and LLMs.
+Red Candle is a Ruby gem that uses the Magnus Rust crate to embed Rust code in Ruby, providing access to the Candle ML library from Hugging Face. It enables Ruby developers to use embedding models, rerankers, and LLMs including Llama, Mistral, Gemma, and Qwen models.
 
 ## Architecture Overview
 
@@ -78,12 +78,14 @@ graph TB
         B[Mistral]
         C[Llama]
         D[Gemma]
-        E[QuantizedGGUF]
+        E[Qwen]
+        F[QuantizedGGUF]
         
         A --> B
         A --> C
         A --> D
         A --> E
+        A --> F
     end
     
     subgraph "Embedding Module"
@@ -383,9 +385,11 @@ llm = Candle::LLM.from_pretrained("TheBloke/Model-GGUF",
 ### Architecture Detection
 
 The unified GGUF loader automatically detects:
-- Model architecture from GGUF metadata
+- Model architecture from GGUF metadata (supports Llama, Mistral, Gemma, Qwen2/2.5)
 - Appropriate tokenizer based on model patterns
 - Correct chat template for the model type
+
+Note: Qwen3 GGUF support requires candle-transformers > 0.9.1 (not yet released). Use Qwen2.5 models as an alternative.
 
 ## Chat Interface
 
@@ -411,6 +415,7 @@ Model-specific templates are automatically applied:
 - Llama 3: `<|begin_of_text|><|start_header_id|>...<|end_header_id|>`
 - Mistral: `[INST] user [/INST] assistant</s>`
 - Gemma: `<start_of_turn>user...model<end_of_turn>`
+- Qwen: `<|im_start|>role\ncontent<|im_end|>`
 
 ## Generation Configuration
 
