@@ -14,6 +14,23 @@ module Candle
       StructuredConstraint.from_regex(pattern_str, tokenizer)
     end
     
+    # Generate with regex constraint
+    def generate_regex(prompt, pattern:, **options)
+      constraint = constraint_from_regex(pattern)
+      
+      # Add common EOS tokens as stop sequences for regex generation
+      stop_sequences = options[:stop_sequences] || []
+      stop_sequences += ["</s>", "<|endoftext|>", "<|im_end|>", "<end>", "\n"] unless options[:no_auto_stop]
+      
+      config_opts = options.merge(constraint: constraint, stop_sequences: stop_sequences)
+      config = options[:config] || GenerationConfig.balanced(**config_opts)
+      
+      result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
+      
+      # Clean up any trailing EOS tokens
+      result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+    end
+    
     # Generate and parse structured output from a JSON schema
     def generate_structured(prompt, schema:, **options)
       constraint = constraint_from_schema(schema)
@@ -22,10 +39,24 @@ module Candle
       
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
+      # Clean up the result - remove common end-of-sequence tokens
+      # that might appear after valid JSON
+      cleaned_result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '')
+      
       # Try to parse as JSON
       begin
-        JSON.parse(result)
+        JSON.parse(cleaned_result)
       rescue JSON::ParserError => e
+        # If cleaning didn't help, try to extract JSON from the result
+        # Look for the first complete JSON object/array
+        if match = cleaned_result.match(/(\{[^{}]*\}|\[[^\[\]]*\])/m)
+          begin
+            return JSON.parse(match[1])
+          rescue JSON::ParserError
+            # Fall through to warning
+          end
+        end
+        
         # Return the raw string if parsing fails
         warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
         result
@@ -141,7 +172,14 @@ module Candle
 
     def generate(prompt, config: GenerationConfig.balanced, reset_cache: true)
       begin
-        _generate(prompt, config)
+        result = _generate(prompt, config)
+        
+        # If there's a constraint, clean up common EOS tokens that appear after the constrained content
+        if config.constraint
+          result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+        end
+        
+        result
       ensure
         clear_cache if reset_cache
       end

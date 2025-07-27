@@ -97,7 +97,12 @@ namespace :test do
     task :llama => :compile do
       ruby "-Itest", "test/llm/llama_test.rb"
     end
-    
+
+    desc "Run tests for TinyLlama models"
+    task :tinyllama => :compile do
+      ruby "-Itest", "test/llm/tinyllama_test.rb"
+    end
+
     desc "Run all LLM tests (WARNING: downloads large models)"
     task :all => [:gemma, :phi, :qwen, :mistral, :llama]
   end
