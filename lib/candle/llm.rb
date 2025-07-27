@@ -17,10 +17,18 @@ module Candle
     # Generate with regex constraint
     def generate_regex(prompt, pattern:, **options)
       constraint = constraint_from_regex(pattern)
-      config_opts = options.merge(constraint: constraint)
+      
+      # Add common EOS tokens as stop sequences for regex generation
+      stop_sequences = options[:stop_sequences] || []
+      stop_sequences += ["</s>", "<|endoftext|>", "<|im_end|>", "<end>", "\n"] unless options[:no_auto_stop]
+      
+      config_opts = options.merge(constraint: constraint, stop_sequences: stop_sequences)
       config = options[:config] || GenerationConfig.balanced(**config_opts)
       
-      generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
+      result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
+      
+      # Clean up any trailing EOS tokens
+      result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
     end
     
     # Generate and parse structured output from a JSON schema
@@ -164,7 +172,14 @@ module Candle
 
     def generate(prompt, config: GenerationConfig.balanced, reset_cache: true)
       begin
-        _generate(prompt, config)
+        result = _generate(prompt, config)
+        
+        # If there's a constraint, clean up common EOS tokens that appear after the constrained content
+        if config.constraint
+          result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+        end
+        
+        result
       ensure
         clear_cache if reset_cache
       end
