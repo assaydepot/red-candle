@@ -83,4 +83,61 @@ class GemmaTest < Minitest::Test
       skip "Model download failed: #{e.message}"
     end
   end
+  
+  def test_phone_constraint_generation
+    skip "Skipping model download test in CI" if ENV["CI"]
+    
+    begin
+      model = Candle::LLM.from_pretrained(
+        "google/gemma-3-4b-it-qat-q4_0-gguf",
+        gguf_file: "gemma-3-4b-it-q4_0.gguf",
+        tokenizer: "google/gemma-3-4b-it"
+      )
+      
+      phone_constraint = model.constraint_from_regex('\d{3}-\d{3}-\d{4}')
+      config = Candle::GenerationConfig.balanced(constraint: phone_constraint)
+      result = model.generate("Generate a phone number:", config: config)
+      
+      assert_instance_of String, result
+      assert_match(/^\d{3}-\d{3}-\d{4}$/, result, "Result should be a valid phone number")
+      refute result.include?("</s>"), "Result should not contain EOS tokens"
+      refute result.include?("<end>"), "Result should not contain Gemma EOS tokens"
+    rescue => e
+      skip "Model download failed: #{e.message}"
+    end
+  end
+  
+  def test_structured_generation_with_schema
+    skip "Skipping model download test in CI" if ENV["CI"]
+    
+    begin
+      model = Candle::LLM.from_pretrained(
+        "google/gemma-3-4b-it-qat-q4_0-gguf",
+        gguf_file: "gemma-3-4b-it-q4_0.gguf",
+        tokenizer: "google/gemma-3-4b-it"
+      )
+      
+      schema = {
+        type: "object",
+        properties: {
+          answer: { type: "string", enum: ["yes", "no"] },
+          confidence: { type: "number", minimum: 0, maximum: 1 }
+        },
+        required: ["answer"]
+      }
+      
+      result = model.generate_structured("Is Ruby easy to learn?", schema: schema)
+      
+      assert_instance_of Hash, result
+      assert result.key?("answer"), "Result should have 'answer' key"
+      assert ["yes", "no"].include?(result["answer"]), "Answer should be 'yes' or 'no'"
+      
+      if result.key?("confidence")
+        assert_instance_of Float, result["confidence"]
+        assert result["confidence"] >= 0 && result["confidence"] <= 1, "Confidence should be between 0 and 1"
+      end
+    rescue => e
+      skip "Model download failed: #{e.message}"
+    end
+  end
 end
