@@ -21,6 +21,10 @@ enum PhiVariant {
 }
 
 impl Phi {
+    pub fn eos_token_id(&self) -> u32 {
+        self.eos_token_id
+    }
+
     /// Get the tokenizer
     pub fn tokenizer(&self) -> &TokenizerWrapper {
         &self.tokenizer

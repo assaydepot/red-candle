@@ -18,6 +18,10 @@ pub struct Llama {
 }
 
 impl Llama {
+    pub fn eos_token_id(&self) -> u32 {
+        self.eos_token_id
+    }
+
     /// Clear the KV cache between generations
     pub fn clear_kv_cache(&mut self) {
         // Since Cache doesn't expose a reset method and kvs is private,

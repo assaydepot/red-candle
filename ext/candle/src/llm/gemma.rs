@@ -16,6 +16,10 @@ pub struct Gemma {
 }
 
 impl Gemma {
+    pub fn eos_token_id(&self) -> u32 {
+        self.eos_token_id
+    }
+
     /// Clear the KV cache between generations
     pub fn clear_kv_cache(&mut self) {
         self.model.clear_kv_cache();

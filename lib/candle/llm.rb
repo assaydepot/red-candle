@@ -2,6 +2,14 @@ require 'json'
 
 module Candle
   class LLM
+    # Cache for EOS token to avoid repeated calls
+    def cached_eos_token
+      @cached_eos_token ||= begin
+        if respond_to?(:eos_token)
+          eos_token rescue nil
+        end
+      end
+    end
     # Create a structured constraint from a JSON schema
     def constraint_from_schema(schema)
       schema_str = schema.is_a?(String) ? schema : JSON.generate(schema)
@@ -18,9 +26,17 @@ module Candle
     def generate_regex(prompt, pattern:, **options)
       constraint = constraint_from_regex(pattern)
       
-      # Add common EOS tokens as stop sequences for regex generation
+      # Add stop sequences for regex generation
       stop_sequences = options[:stop_sequences] || []
-      stop_sequences += ["</s>", "<|endoftext|>", "<|im_end|>", "<end>", "\n"] unless options[:no_auto_stop]
+      unless options[:no_auto_stop]
+        # Use model-specific EOS token if available, otherwise fallback to common ones
+        model_eos = cached_eos_token
+        if model_eos
+          stop_sequences += [model_eos, "\n"]
+        else
+          stop_sequences += ["</s>", "<|endoftext|>", "<|im_end|>", "<end>", "\n"]
+        end
+      end
       
       config_opts = options.merge(constraint: constraint, stop_sequences: stop_sequences)
       config = options[:config] || GenerationConfig.balanced(**config_opts)
@@ -28,7 +44,13 @@ module Candle
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
       # Clean up any trailing EOS tokens
-      result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+      model_eos = cached_eos_token
+      if model_eos
+        eos_pattern = Regexp.escape(model_eos)
+        result = result.gsub(/#{eos_pattern}.*$/m, '').strip
+      else
+        result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+      end
     end
     
     # Generate and parse structured output from a JSON schema
@@ -39,9 +61,15 @@ module Candle
       
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
-      # Clean up the result - remove common end-of-sequence tokens
+      # Clean up the result - remove end-of-sequence tokens
       # that might appear after valid JSON
-      cleaned_result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '')
+      model_eos = cached_eos_token
+      cleaned_result = if model_eos
+        eos_pattern = Regexp.escape(model_eos)
+        result.gsub(/#{eos_pattern}.*$/m, '')
+      else
+        result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '')
+      end
       
       # Try to parse as JSON
       begin
@@ -174,9 +202,15 @@ module Candle
       begin
         result = _generate(prompt, config)
         
-        # If there's a constraint, clean up common EOS tokens that appear after the constrained content
+        # If there's a constraint, clean up EOS tokens that appear after the constrained content
         if config.constraint
-          result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+          model_eos = cached_eos_token
+          if model_eos
+            eos_pattern = Regexp.escape(model_eos)
+            result = result.gsub(/#{eos_pattern}.*$/m, '').strip
+          else
+            result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+          end
         end
         
         result
