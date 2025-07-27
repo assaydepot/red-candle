@@ -14,6 +14,15 @@ module Candle
       StructuredConstraint.from_regex(pattern_str, tokenizer)
     end
     
+    # Generate with regex constraint
+    def generate_regex(prompt, pattern:, **options)
+      constraint = constraint_from_regex(pattern)
+      config_opts = options.merge(constraint: constraint)
+      config = options[:config] || GenerationConfig.balanced(**config_opts)
+      
+      generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
+    end
+    
     # Generate and parse structured output from a JSON schema
     def generate_structured(prompt, schema:, **options)
       constraint = constraint_from_schema(schema)
@@ -22,10 +31,24 @@ module Candle
       
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
+      # Clean up the result - remove common end-of-sequence tokens
+      # that might appear after valid JSON
+      cleaned_result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '')
+      
       # Try to parse as JSON
       begin
-        JSON.parse(result)
+        JSON.parse(cleaned_result)
       rescue JSON::ParserError => e
+        # If cleaning didn't help, try to extract JSON from the result
+        # Look for the first complete JSON object/array
+        if match = cleaned_result.match(/(\{[^{}]*\}|\[[^\[\]]*\])/m)
+          begin
+            return JSON.parse(match[1])
+          rescue JSON::ParserError
+            # Fall through to warning
+          end
+        end
+        
         # Return the raw string if parsing fails
         warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
         result
