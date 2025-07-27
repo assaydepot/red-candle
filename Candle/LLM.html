@@ -136,6 +136,11 @@
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen3-32B-GGUF</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen3-32B</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen3-72B-GGUF</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen3-72B</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
   
+  <span class='comment'># Phi GGUF models
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/phi-2-GGUF</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-4-gguf</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-4</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bartowski/Phi-3.5-mini-instruct-GGUF</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3.5-mini-instruct</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  
   <span class='comment'># Pattern-based fallbacks (evaluated in order)
 </span>  <span class='symbol'>:patterns</span> <span class='op'>=&gt;</span> <span class='lbracket'>[</span>
     <span class='comment'># Mistral models
@@ -167,7 +172,19 @@
     <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>qwen.*?3.*?0\.5b</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen3-0.5B</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>qwen.*?2\.5</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen2.5-0.5B</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>qwen.*?2</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen2-1.5B</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
-    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>qwen</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen-1_8B</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>qwen</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Qwen/Qwen-1_8B</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    
+    <span class='comment'># Phi models (order matters - more specific patterns first)
+</span>    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?3\.5.*?mini</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3.5-mini-instruct</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?3.*?mini.*?4k</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3-mini-4k-instruct</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?3.*?medium</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3-medium-4k-instruct</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?3.*?small</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3-small-8k-instruct</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?3.*?mini</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3-mini-4k-instruct</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?3</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/Phi-3-mini-4k-instruct</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi-4</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-4</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?2</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-2</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi.*?1\.5</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-1_5</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>phi</span><span class='regexp_end'>/i</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>microsoft/phi-2</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
   <span class='rbracket'>]</span>
 <span class='rbrace'>}</span></pre></dd>
       
@@ -455,23 +472,6 @@
       <pre class="lines">
 
 
-141
-142
-143
-144
-145
-146
-147
-148
-149
-150
-151
-152
-153
-154
-155
-156
-157
 158
 159
 160
@@ -486,10 +486,27 @@
 169
 170
 171
-172</pre>
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 141</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 158</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='label'>device:</span> <span class='const'><span class='object_link'><a href="../Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span><span class='comma'>,</span> <span class='label'>gguf_file:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>tokenizer:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_model_str'>model_str</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_gguf_file'>gguf_file</span>
@@ -554,24 +571,24 @@
       <pre class="lines">
 
 
-97
-98
-99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111</pre>
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 97</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 114</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_guess_tokenizer'>guess_tokenizer</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='rparen'>)</span>
   <span class='comment'># Check exact matches first
@@ -619,19 +636,19 @@
       <pre class="lines">
 
 
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94</pre>
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 102</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_register_tokenizer'>register_tokenizer</span><span class='lparen'>(</span><span class='id identifier rubyid_model_pattern'>model_pattern</span><span class='comma'>,</span> <span class='id identifier rubyid_tokenizer_id'>tokenizer_id</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_model_pattern'>model_pattern</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span>
@@ -680,13 +697,13 @@
       <pre class="lines">
 
 
-114
-115
-116
-117</pre>
+131
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 114</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 131</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_chat'>chat</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_prompt'>prompt</span> <span class='op'>=</span> <span class='id identifier rubyid_apply_chat_template'>apply_chat_template</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
@@ -723,13 +740,13 @@
       <pre class="lines">
 
 
-120
-121
-122
-123</pre>
+137
+138
+139
+140</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 120</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 137</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_chat_stream'>chat_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_prompt'>prompt</span> <span class='op'>=</span> <span class='id identifier rubyid_apply_chat_template'>apply_chat_template</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
@@ -841,16 +858,16 @@
       <pre class="lines">
 
 
-125
-126
-127
-128
-129
-130
-131</pre>
+142
+143
+144
+145
+146
+147
+148</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 125</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 142</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='comma'>,</span> <span class='label'>reset_cache:</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='kw'>begin</span>
@@ -879,16 +896,16 @@
       <pre class="lines">
 
 
-133
-134
-135
-136
-137
-138
-139</pre>
+150
+151
+152
+153
+154
+155
+156</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 133</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/llm.rb', line 150</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_generate_stream'>generate_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_prompt'>prompt</span><span class='comma'>,</span> <span class='label'>config:</span> <span class='const'><span class='object_link'><a href="GenerationConfig.html" title="Candle::GenerationConfig (class)">GenerationConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_balanced'><span class='object_link'><a href="GenerationConfig.html#balanced-class_method" title="Candle::GenerationConfig.balanced (method)">balanced</a></span></span><span class='comma'>,</span> <span class='label'>reset_cache:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='kw'>begin</span>
@@ -974,7 +991,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jul 27 00:12:34 2025 by
+  Generated on Sun Jul 27 00:23:49 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>

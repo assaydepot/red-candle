@@ -188,6 +188,13 @@ rm -rf ~/.cache/huggingface/hub/
 <li><strong>Gemma</strong>: Google&#39;s Gemma models (e.g., <code>google/gemma-2b</code>, <code>google/gemma-7b</code>, <code>google/gemma-2b-it</code>)</li>
 <li><strong>Llama</strong>: Llama 2 and Llama 3 models (e.g., <code>TinyLlama/TinyLlama-1.1B-Chat-v1.0</code>, <code>meta-llama/Llama-2-7b-hf</code>, <code>NousResearch/Llama-2-7b-hf</code>)</li>
 <li><strong>Mistral</strong>: All Mistral models (e.g., <code>mistralai/Mistral-7B-Instruct-v0.1</code>)</li>
+<li><strong>Qwen</strong>: Qwen 2 and 2.5 models (e.g., <code>Qwen/Qwen2-1.5B</code>, <code>Qwen/Qwen2.5-7B-Instruct</code>)</li>
+<li><strong>Phi</strong>: Microsoft&#39;s Phi-2, Phi-3, Phi-3.5, and Phi-4 models (e.g., <code>microsoft/phi-2</code>, <code>microsoft/Phi-3-mini-4k-instruct</code>, <code>microsoft/phi-4</code>)
+
+<ul>
+<li>⚠️ ⚠️ ⚠️ Note: Phi-3 and Phi-4 GGUF models have a known issue with KV cache persistence between generations. The <code>reset_cache</code> parameter doesn&#39;t work for GGUF models. Recreate the model instance for each generation.</li>
+<li><code>candle</code> pull request about phi-3 gguf models: <a href="https://github.com/huggingface/candle/pull/2937">https://github.com/huggingface/candle/pull/2937</a></li>
+</ul></li>
 </ul>
 
 <h3 id="quantized-model-support-gguf">Quantized Model Support (GGUF)</h3>
@@ -985,7 +992,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Sun Jul 27 00:12:34 2025 by
+  Generated on Sun Jul 27 00:23:49 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
