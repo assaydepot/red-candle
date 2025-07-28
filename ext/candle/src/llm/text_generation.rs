@@ -10,6 +10,8 @@ pub struct TextGeneration {
     logits_processor: LogitsProcessor,
     tokens: Vec<u32>,
     eos_token_id: Option<u32>,
+    repetition_penalty: f32,
+    repetition_penalty_last_n: usize,
     constraint: Option<Arc<Index>>,
     constraint_state: Option<u32>,
     constraint_completed: bool,
@@ -17,36 +19,20 @@ pub struct TextGeneration {
 }
 
 impl TextGeneration {
-    pub fn new(
-        seed: u64,
-        temperature: Option<f64>,
-        top_p: Option<f64>,
-        _top_k: Option<usize>,
-        _repetition_penalty: f32,
-        _repetition_penalty_last_n: usize,
-    ) -> Self {
-        let logits_processor = LogitsProcessor::new(seed, temperature, top_p);
+    pub fn new(config: &GenerationConfig) -> Self {
+        let logits_processor = LogitsProcessor::new(config.seed, Some(config.temperature), config.top_p);
         
-        Self {
+        let mut text_gen = Self {
             logits_processor,
             tokens: Vec::new(),
             eos_token_id: None,
+            repetition_penalty: config.repetition_penalty,
+            repetition_penalty_last_n: config.repetition_penalty_last_n,
             constraint: None,
             constraint_state: None,
             constraint_completed: false,
             tokens_since_constraint_start: 0,
-        }
-    }
-
-    pub fn from_config(config: &GenerationConfig) -> Self {
-        let mut text_gen = Self::new(
-            config.seed,
-            Some(config.temperature),
-            config.top_p,
-            config.top_k,
-            config.repetition_penalty,
-            config.repetition_penalty_last_n,
-        );
+        };
         
         // Set constraint if provided
         if let Some(ref constraint) = config.constraint {
@@ -143,13 +129,12 @@ impl TextGeneration {
     pub fn sample_next_token(
         &mut self,
         logits: &Tensor,
-        repetition_penalty: Option<(f32, usize)>,
     ) -> CandleResult<u32> {
         let mut logits = logits.clone();
         
-        // Apply repetition penalty if specified
-        if let Some((penalty, last_n)) = repetition_penalty {
-            self.apply_repetition_penalty(&mut logits, penalty, last_n)?;
+        // Apply repetition penalty using stored parameters
+        if self.repetition_penalty != 1.0 {
+            self.apply_repetition_penalty(&mut logits, self.repetition_penalty, self.repetition_penalty_last_n)?;
         }
         
         // Apply constraints if active
