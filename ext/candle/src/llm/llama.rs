@@ -182,7 +182,7 @@ impl Llama {
         config: &GenerationConfig,
         mut callback: Option<impl FnMut(&str)>,
     ) -> CandleResult<Vec<u32>> {
-        let mut text_gen = TextGeneration::from_config(config);
+        let mut text_gen = TextGeneration::new(config);
         text_gen.set_eos_token_id(self.eos_token_id);
         text_gen.set_tokens(prompt_tokens.clone());
         
@@ -208,10 +208,7 @@ impl Llama {
             
             let logits = logits.to_dtype(DType::F32)?;
             
-            let next_token = text_gen.sample_next_token(
-                &logits,
-                Some((config.repetition_penalty, config.repetition_penalty_last_n)),
-            )?;
+            let next_token = text_gen.sample_next_token(&logits)?;
             
             all_tokens.push(next_token);
             
