@@ -134,3 +134,43 @@ namespace :doc do
 end
 
 task doc: "doc:default"
+
+namespace :rust do
+  desc "Run Rust tests with code coverage"
+  namespace :coverage do
+    desc "Generate HTML coverage report"
+    task :html do
+      sh "cd ext/candle && cargo llvm-cov --html"
+      puts "Coverage report generated in target/llvm-cov/html/index.html"
+    end
+
+    desc "Generate coverage report in terminal"
+    task :report do
+      sh "cd ext/candle && cargo llvm-cov"
+    end
+
+    desc "Show coverage summary"
+    task :summary do
+      sh "cd ext/candle && cargo llvm-cov --summary-only"
+    end
+
+    desc "Generate lcov format coverage report"
+    task :lcov do
+      sh "cd ext/candle && cargo llvm-cov --lcov --output-path ../../coverage/lcov.info"
+      puts "LCOV report generated in coverage/lcov.info"
+    end
+
+    desc "Clean coverage data"
+    task :clean do
+      sh "cd ext/candle && cargo llvm-cov clean"
+    end
+  end
+
+  desc "Run Rust tests"
+  task :test do
+    sh "cd ext/candle && cargo test"
+  end
+end
+
+desc "Run Rust tests with coverage (alias)"
+task "coverage:rust" => "rust:coverage:html"

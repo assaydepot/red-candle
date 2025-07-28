@@ -888,6 +888,41 @@ bundle exec rake compile
 
 Pull requests are welcome.
 
+## Testing
+
+### Run Ruby Tests
+```bash
+# Run all tests
+bundle exec rake test
+
+# Run specific test suites
+bundle exec rake test:device         # Device compatibility tests
+bundle exec rake test:benchmark      # Benchmark tests
+bundle exec rake test:llm:mistral    # Model-specific tests
+```
+
+### Rust Code Coverage
+Red Candle uses `cargo-llvm-cov` for Rust code coverage analysis.
+
+```bash
+# Generate HTML coverage report (opens in target/llvm-cov/html/index.html)
+bundle exec rake rust:coverage:html
+
+# Show coverage summary in terminal
+bundle exec rake rust:coverage:summary
+
+# Generate detailed coverage report
+bundle exec rake rust:coverage:report
+
+# Generate LCOV format for CI integration
+bundle exec rake rust:coverage:lcov
+
+# Clean coverage data
+bundle exec rake rust:coverage:clean
+```
+
+**Note**: Coverage currently shows ~17% as many Ruby wrapper methods are not directly tested from Rust. The core functionality has good test coverage.
+
 ## Release
 
 1. Update version number in `lib/candle/version.rb` and commit.

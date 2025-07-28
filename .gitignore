@@ -76,3 +76,9 @@ lib.py.rs
 /ext/*/Makefile
 /ext/*/mkmf.log
 
+# Rust code coverage
+/target/llvm-cov/
+/target/llvm-cov-target/
+*.profraw
+*.profdata
+
