@@ -4,7 +4,6 @@ use candle_core::{Device as CoreDevice, Tensor, IndexOp, DType};
 use candle_nn::{VarBuilder, Linear, Module, ops::sigmoid};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::{EncodeInput, Tokenizer};
-use std::thread;
 use crate::ruby::{Device, Result};
 use crate::tokenizer::{TokenizerWrapper, loader::TokenizerLoader};
 
@@ -24,8 +23,7 @@ impl Reranker {
     }
         
     fn new_with_core_device(model_id: String, device: CoreDevice) -> std::result::Result<Self, Error> {
-        let device_clone = device.clone();
-        let handle = thread::spawn(move || -> std::result::Result<(BertModel, TokenizerWrapper, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
+        let result = (|| -> std::result::Result<(BertModel, TokenizerWrapper, Linear, Linear), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
             let repo = api.repo(Repo::new(model_id.clone(), RepoType::Model));
             
@@ -44,7 +42,7 @@ impl Reranker {
             
             // Load model weights
             let vb = unsafe {
-                VarBuilder::from_mmaped_safetensors(&[weights_filename], DType::F32, &device_clone)?
+                VarBuilder::from_mmaped_safetensors(&[weights_filename], DType::F32, &device)?
             };
             
             // Load BERT model
@@ -57,14 +55,13 @@ impl Reranker {
             let classifier = candle_nn::linear(config.hidden_size, 1, vb.pp("classifier"))?;
             
             Ok((model, TokenizerWrapper::new(tokenizer), pooler, classifier))
-        });
+        })();
         
-        match handle.join() {
-            Ok(Ok((model, tokenizer, pooler, classifier))) => {
+        match result {
+            Ok((model, tokenizer, pooler, classifier)) => {
                 Ok(Self { model, tokenizer, pooler, classifier, device })
             }
-            Ok(Err(e)) => Err(Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e))),
-            Err(_) => Err(Error::new(magnus::exception::runtime_error(), "Thread panicked while loading model")),
+            Err(e) => Err(Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e))),
         }
     }
     

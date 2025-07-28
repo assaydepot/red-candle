@@ -39,13 +39,9 @@ impl NER {
     pub fn new(model_id: String, device: Option<Device>, tokenizer_id: Option<String>) -> Result<Self> {
         let device = device.unwrap_or(Device::Cpu).as_device()?;
         
-        // Load model in a separate thread to avoid blocking
-        let device_clone = device.clone();
-        let model_id_clone = model_id.clone();
-        
-        let handle = std::thread::spawn(move || -> std::result::Result<(BertModel, TokenizerWrapper, Linear, NERConfig), Box<dyn std::error::Error + Send + Sync>> {
+        let result = (|| -> std::result::Result<(BertModel, TokenizerWrapper, Linear, NERConfig), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
-            let repo = api.repo(Repo::new(model_id_clone.clone(), RepoType::Model));
+            let repo = api.repo(Repo::new(model_id.clone(), RepoType::Model));
             
             // Download model files
             let config_filename = repo.get("config.json")?;
@@ -92,7 +88,7 @@ impl NER {
             
             // Load model weights
             let vb = unsafe {
-                VarBuilder::from_mmaped_safetensors(&[weights_filename], DType::F32, &device_clone)?
+                VarBuilder::from_mmaped_safetensors(&[weights_filename], DType::F32, &device)?
             };
             
             // Load BERT model
@@ -106,10 +102,10 @@ impl NER {
             )?;
             
             Ok((model, TokenizerWrapper::new(tokenizer), classifier, ner_config))
-        });
+        })();
         
-        match handle.join() {
-            Ok(Ok((model, tokenizer, classifier, config))) => {
+        match result {
+            Ok((model, tokenizer, classifier, config)) => {
                 Ok(Self {
                     model,
                     tokenizer,
@@ -119,13 +115,9 @@ impl NER {
                     model_id,
                 })
             }
-            Ok(Err(e)) => Err(Error::new(
+            Err(e) => Err(Error::new(
                 magnus::exception::runtime_error(),
                 format!("Failed to load NER model: {}", e)
-            )),
-            Err(_) => Err(Error::new(
-                magnus::exception::runtime_error(),
-                "Thread panicked while loading NER model"
             )),
         }
     }
