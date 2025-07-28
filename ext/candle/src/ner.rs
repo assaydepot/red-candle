@@ -122,17 +122,13 @@ impl NER {
         }
     }
     
-    /// Extract entities from text with confidence scores
-    pub fn extract_entities(&self, text: String, confidence_threshold: Option<f64>) -> Result<RArray> {
-        let threshold = confidence_threshold.unwrap_or(0.9) as f32;
-        
+    /// Common tokenization and prediction logic
+    fn tokenize_and_predict(&self, text: &str) -> Result<(tokenizers::Encoding, Vec<Vec<f32>>)> {
         // Tokenize the text
-        let encoding = self.tokenizer.inner().encode(text.as_str(), true)
+        let encoding = self.tokenizer.inner().encode(text, true)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tokenization failed: {}", e)))?;
         
         let token_ids = encoding.get_ids();
-        let tokens = encoding.get_tokens();
-        let offsets = encoding.get_offsets();
         
         // Convert to tensors
         let input_ids = Tensor::new(token_ids, &self.device)
@@ -163,6 +159,19 @@ impl NER {
             .to_vec2()
             .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
         
+        Ok((encoding, probs_vec))
+    }
+    
+    /// Extract entities from text with confidence scores
+    pub fn extract_entities(&self, text: String, confidence_threshold: Option<f64>) -> Result<RArray> {
+        let threshold = confidence_threshold.unwrap_or(0.9) as f32;
+        
+        // Use common tokenization and prediction logic
+        let (encoding, probs_vec) = self.tokenize_and_predict(&text)?;
+        
+        let tokens = encoding.get_tokens();
+        let offsets = encoding.get_offsets();
+        
         // Extract entities with BIO decoding
         let entities = self.decode_entities(
             &text,
@@ -191,37 +200,10 @@ impl NER {
     
     /// Get token-level predictions with labels and confidence scores
     pub fn predict_tokens(&self, text: String) -> Result<RArray> {
-        // Tokenize the text
-        let encoding = self.tokenizer.inner().encode(text.as_str(), true)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Tokenization failed: {}", e)))?;
+        // Use common tokenization and prediction logic
+        let (encoding, probs_vec) = self.tokenize_and_predict(&text)?;
         
-        let token_ids = encoding.get_ids();
         let tokens = encoding.get_tokens();
-        
-        // Convert to tensors
-        let input_ids = Tensor::new(token_ids, &self.device)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?
-            .unsqueeze(0)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-        
-        let attention_mask = Tensor::ones_like(&input_ids)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-        let token_type_ids = Tensor::zeros_like(&input_ids)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-        
-        // Forward pass
-        let output = self.model.forward(&input_ids, &token_type_ids, Some(&attention_mask))
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-        let logits = self.classifier.forward(&output)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-        let probs = candle_nn::ops::softmax(&logits, 2)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-        
-        // Get predictions
-        let probs_vec: Vec<Vec<f32>> = probs.squeeze(0)
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?
-            .to_vec2()
-            .map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
         
         // Build result array
         let result = RArray::new();
