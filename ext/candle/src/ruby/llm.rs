@@ -83,6 +83,26 @@ impl ModelType {
     }
 }
 
+// Macro to extract parameters from Ruby hash to reduce boilerplate
+macro_rules! extract_param {
+    // Basic parameter extraction
+    ($kwargs:expr, $config:expr, $param:ident) => {
+        if let Some(value) = $kwargs.get(magnus::Symbol::new(stringify!($param))) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                $config.$param = v;
+            }
+        }
+    };
+    // Optional parameter extraction (wraps in Some)
+    ($kwargs:expr, $config:expr, $param:ident, optional) => {
+        if let Some(value) = $kwargs.get(magnus::Symbol::new(stringify!($param))) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                $config.$param = Some(v);
+            }
+        }
+    };
+}
+
 #[derive(Clone, Debug)]
 #[magnus::wrap(class = "Candle::GenerationConfig", mark, free_immediately)]
 pub struct GenerationConfig {
@@ -93,55 +113,20 @@ impl GenerationConfig {
     pub fn new(kwargs: RHash) -> Result<Self> {
         let mut config = RustGenerationConfig::default();
         
-        // Extract values from kwargs manually
-        if let Some(value) = kwargs.get(magnus::Symbol::new("max_length")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.max_length = v;
-            }
-        }
+        // Extract basic parameters using macro
+        extract_param!(kwargs, config, max_length);
+        extract_param!(kwargs, config, temperature);
+        extract_param!(kwargs, config, top_p, optional);
+        extract_param!(kwargs, config, top_k, optional);
+        extract_param!(kwargs, config, repetition_penalty);
+        extract_param!(kwargs, config, repetition_penalty_last_n);
+        extract_param!(kwargs, config, seed);
+        extract_param!(kwargs, config, include_prompt);
+        extract_param!(kwargs, config, debug_tokens);
+        extract_param!(kwargs, config, stop_on_constraint_satisfaction);
+        extract_param!(kwargs, config, stop_on_match);
         
-        if let Some(value) = kwargs.get(magnus::Symbol::new("temperature")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.temperature = v;
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("top_p")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.top_p = Some(v);
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("top_k")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.top_k = Some(v);
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("repetition_penalty")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.repetition_penalty = v;
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("repetition_penalty_last_n")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.repetition_penalty_last_n = v;
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("seed")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.seed = v;
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("include_prompt")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.include_prompt = v;
-            }
-        }
-        
+        // Handle special cases that need custom logic
         if let Some(value) = kwargs.get(magnus::Symbol::new("stop_sequences")) {
             if let Ok(arr) = <RArray as TryConvert>::try_convert(value) {
                 config.stop_sequences = arr
@@ -151,25 +136,6 @@ impl GenerationConfig {
             }
         }
         
-        if let Some(value) = kwargs.get(magnus::Symbol::new("debug_tokens")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.debug_tokens = v;
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("stop_on_constraint_satisfaction")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.stop_on_constraint_satisfaction = v;
-            }
-        }
-        
-        if let Some(value) = kwargs.get(magnus::Symbol::new("stop_on_match")) {
-            if let Ok(v) = TryConvert::try_convert(value) {
-                config.stop_on_match = v;
-            }
-        }
-        
-        // Handle constraint parameter
         if let Some(value) = kwargs.get(magnus::Symbol::new("constraint")) {
             if let Ok(constraint) = <&StructuredConstraint as TryConvert>::try_convert(value) {
                 config.constraint = Some(Arc::clone(&constraint.index));
