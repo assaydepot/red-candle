@@ -21,6 +21,10 @@ enum PhiVariant {
 }
 
 impl Phi {
+    pub fn eos_token_id(&self) -> u32 {
+        self.eos_token_id
+    }
+
     /// Get the tokenizer
     pub fn tokenizer(&self) -> &TokenizerWrapper {
         &self.tokenizer
@@ -68,6 +72,9 @@ impl Phi {
             vec![single_file]
         } else {
             // Try to find sharded model files
+            // NOTE: This uses a brute-force approach, trying common shard counts.
+            // A better approach would be to read model.safetensors.index.json which
+            // contains the exact file list, but this works for most models (≤30 shards).
             let mut sharded_files = Vec::new();
             let mut index = 1;
             loop {
@@ -227,6 +234,18 @@ impl Phi {
             // Check stop conditions
             if text_gen.should_stop(next_token, config.max_length) {
                 break;
+            }
+            
+            // Check if constraint is satisfied (early stopping)
+            if config.stop_on_constraint_satisfaction {
+                let satisfied = if config.stop_on_match {
+                    text_gen.is_constraint_satisfied_stop_on_match()
+                } else {
+                    text_gen.is_constraint_satisfied()
+                };
+                if satisfied {
+                    break;
+                }
             }
             
             // Check stop sequences

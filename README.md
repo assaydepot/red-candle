@@ -58,7 +58,8 @@ end
 - **EmbeddingModel**: Generate embeddings for text
 - **Reranker**: Rerank documents based on relevance
 - **NER**: Named Entity Recognition directly from Ruby
-- **LLM**: Chat with Large Language Models (e.g., Llama, Mistral, Gemma)
+- **LLM**: Chat with Large Language Models (e.g., Llama, Mistral, Gemma, Qwen, Phi)
+- **Structured Generation**: Generate JSON from a schema or match a regular expression
 
 ## Model Storage
 

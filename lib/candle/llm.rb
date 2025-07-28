@@ -2,6 +2,35 @@ require 'json'
 
 module Candle
   class LLM
+    # Cache for EOS token to avoid repeated calls
+    def cached_eos_token
+      @cached_eos_token ||= begin
+        if respond_to?(:eos_token)
+          eos_token rescue nil
+        end
+      end
+    end
+    
+    # Get model-specific EOS tokens
+    def model_eos_tokens
+      @model_eos_tokens ||= begin
+        tokens = []
+        if model_eos = cached_eos_token
+          tokens << model_eos
+          # For Gemma, also include end_of_turn for chat scenarios and </s>
+          # Even though </s> is technically an HTML tag in Gemma's vocabulary,
+          # it seems to use it as a generation boundary in practice
+          if model_name.downcase.include?("gemma")
+            tokens << "<end_of_turn>"
+            tokens << "</s>"
+          end
+        else
+          # Fallback to common tokens only if model doesn't provide one
+          tokens = ["</s>", "<|endoftext|>", "<|im_end|>", "<end>"]
+        end
+        tokens.uniq
+      end
+    end
     # Create a structured constraint from a JSON schema
     def constraint_from_schema(schema)
       schema_str = schema.is_a?(String) ? schema : JSON.generate(schema)
@@ -15,48 +44,39 @@ module Candle
     end
     
     # Generate with regex constraint
-    def generate_regex(prompt, pattern:, **options)
+    def generate_regex(prompt, pattern:, stop_on_match: true, **options)
       constraint = constraint_from_regex(pattern)
       
-      # Add common EOS tokens as stop sequences for regex generation
-      stop_sequences = options[:stop_sequences] || []
-      stop_sequences += ["</s>", "<|endoftext|>", "<|im_end|>", "<end>", "\n"] unless options[:no_auto_stop]
-      
-      config_opts = options.merge(constraint: constraint, stop_sequences: stop_sequences)
+      # Configure generation with early stopping by default
+      config_opts = options.merge(
+        constraint: constraint,
+        stop_on_constraint_satisfaction: options.fetch(:stop_on_constraint_satisfaction, stop_on_match),
+        stop_on_match: stop_on_match
+      )
       config = options[:config] || GenerationConfig.balanced(**config_opts)
       
-      result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
-      
-      # Clean up any trailing EOS tokens
-      result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
+      generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
     end
     
     # Generate and parse structured output from a JSON schema
     def generate_structured(prompt, schema:, **options)
       constraint = constraint_from_schema(schema)
-      config_opts = options.merge(constraint: constraint)
+      
+      # Configure generation with early stopping by default
+      config_opts = options.merge(
+        constraint: constraint,
+        stop_on_constraint_satisfaction: options.fetch(:stop_on_constraint_satisfaction, true)
+      )
       config = options[:config] || GenerationConfig.balanced(**config_opts)
       
       result = generate(prompt, config: config, reset_cache: options.fetch(:reset_cache, true))
       
-      # Clean up the result - remove common end-of-sequence tokens
-      # that might appear after valid JSON
-      cleaned_result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '')
-      
       # Try to parse as JSON
       begin
-        JSON.parse(cleaned_result)
+        # First, try to extract JSON if there's content after stop tokens
+        json_content = extract_json_content(result)
+        JSON.parse(json_content)
       rescue JSON::ParserError => e
-        # If cleaning didn't help, try to extract JSON from the result
-        # Look for the first complete JSON object/array
-        if match = cleaned_result.match(/(\{[^{}]*\}|\[[^\[\]]*\])/m)
-          begin
-            return JSON.parse(match[1])
-          rescue JSON::ParserError
-            # Fall through to warning
-          end
-        end
-        
         # Return the raw string if parsing fails
         warn "Warning: Generated output is not valid JSON: #{e.message}" if options[:warn_on_parse_error]
         result
@@ -172,14 +192,7 @@ module Candle
 
     def generate(prompt, config: GenerationConfig.balanced, reset_cache: true)
       begin
-        result = _generate(prompt, config)
-        
-        # If there's a constraint, clean up common EOS tokens that appear after the constrained content
-        if config.constraint
-          result = result.gsub(/(<\/s>|<\|endoftext\|>|<\|im_end\|>|<end>).*$/m, '').strip
-        end
-        
-        result
+        _generate(prompt, config)
       ensure
         clear_cache if reset_cache
       end
@@ -227,6 +240,88 @@ module Candle
     end
 
     private
+
+    # Extract JSON content from generated text, handling stop tokens and extra content
+    def extract_json_content(text)
+      # Remove any content after common stop tokens
+      cleaned = text
+      
+      # Check for EOS tokens and truncate at the first one found
+      model_eos_tokens.each do |token|
+        if idx = cleaned.index(token)
+          cleaned = cleaned[0...idx]
+        end
+      end
+      
+      # Try to find valid JSON boundaries
+      # First try a simple approach - find the first { or [ and match to its closing } or ]
+      start_idx = cleaned.index(/[\{\[]/)
+      return cleaned.strip unless start_idx
+      
+      # Extract from the start position
+      json_candidate = cleaned[start_idx..-1]
+      
+      # Try to find a valid JSON object or array
+      # This regex handles nested structures better
+      if json_candidate[0] == '{'
+        # Match a JSON object
+        bracket_count = 0
+        in_string = false
+        escape_next = false
+        
+        json_candidate.chars.each_with_index do |char, idx|
+          if !in_string
+            case char
+            when '{'
+              bracket_count += 1
+            when '}'
+              bracket_count -= 1
+              if bracket_count == 0
+                return json_candidate[0..idx]
+              end
+            when '"'
+              in_string = true unless escape_next
+            end
+          else
+            if char == '"' && !escape_next
+              in_string = false
+            end
+          end
+          
+          escape_next = (!escape_next && char == '\\')
+        end
+      elsif json_candidate[0] == '['
+        # Match a JSON array (similar logic)
+        bracket_count = 0
+        in_string = false
+        escape_next = false
+        
+        json_candidate.chars.each_with_index do |char, idx|
+          if !in_string
+            case char
+            when '['
+              bracket_count += 1
+            when ']'
+              bracket_count -= 1
+              if bracket_count == 0
+                return json_candidate[0..idx]
+              end
+            when '"'
+              in_string = true unless escape_next
+            end
+          else
+            if char == '"' && !escape_next
+              in_string = false
+            end
+          end
+          
+          escape_next = (!escape_next && char == '\\')
+        end
+      end
+      
+      # If no valid JSON structure found, return the cleaned string
+      cleaned.strip
+    end
 
     # Legacy format messages method - kept for backward compatibility
     # Use apply_chat_template for proper model-specific formatting

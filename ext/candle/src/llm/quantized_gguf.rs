@@ -32,6 +32,10 @@ enum ModelType {
 }
 
 impl QuantizedGGUF {
+    pub fn eos_token_id(&self) -> u32 {
+        self.eos_token_id
+    }
+
     /// Get the tokenizer
     pub fn tokenizer(&self) -> &TokenizerWrapper {
         &self.tokenizer
@@ -594,6 +598,18 @@ impl QuantizedGGUF {
             // Check stop conditions
             if text_gen.should_stop(next_token, config.max_length) {
                 break;
+            }
+            
+            // Check if constraint is satisfied (early stopping)
+            if config.stop_on_constraint_satisfaction {
+                let satisfied = if config.stop_on_match {
+                    text_gen.is_constraint_satisfied_stop_on_match()
+                } else {
+                    text_gen.is_constraint_satisfied()
+                };
+                if satisfied {
+                    break;
+                }
             }
             
             // Check stop sequences

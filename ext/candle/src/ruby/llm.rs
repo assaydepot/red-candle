@@ -157,6 +157,18 @@ impl GenerationConfig {
             }
         }
         
+        if let Some(value) = kwargs.get(magnus::Symbol::new("stop_on_constraint_satisfaction")) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                config.stop_on_constraint_satisfaction = v;
+            }
+        }
+        
+        if let Some(value) = kwargs.get(magnus::Symbol::new("stop_on_match")) {
+            if let Ok(v) = TryConvert::try_convert(value) {
+                config.stop_on_match = v;
+            }
+        }
+        
         // Handle constraint parameter
         if let Some(value) = kwargs.get(magnus::Symbol::new("constraint")) {
             if let Ok(constraint) = <&StructuredConstraint as TryConvert>::try_convert(value) {
@@ -209,6 +221,15 @@ impl GenerationConfig {
     pub fn debug_tokens(&self) -> bool {
         self.inner.debug_tokens
     }
+    
+    pub fn stop_on_constraint_satisfaction(&self) -> bool {
+        self.inner.stop_on_constraint_satisfaction
+    }
+    
+    pub fn stop_on_match(&self) -> bool {
+        self.inner.stop_on_match
+    }
+    
     pub fn constraint(&self) -> Option<StructuredConstraint> {
         self.inner.constraint.as_ref().map(|c| StructuredConstraint {
             index: Arc::clone(c),
@@ -372,6 +393,42 @@ impl LLM {
             ModelType::QuantizedGGUF(m) => Ok(crate::ruby::tokenizer::Tokenizer(m.tokenizer().clone())),
         }
     }
+
+    /// Get the EOS token string for this model
+    pub fn eos_token(&self) -> Result<String> {
+        let (eos_token_id, tokenizer_clone) = {
+            let model = match self.model.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
+            let model_ref = model.borrow();
+            
+            // Get both EOS token ID and tokenizer clone in one lock scope
+            let eos_id = match &*model_ref {
+                ModelType::Mistral(m) => m.eos_token_id(),
+                ModelType::Llama(m) => m.eos_token_id(),
+                ModelType::Gemma(m) => m.eos_token_id(),
+                ModelType::Qwen(m) => m.eos_token_id(),
+                ModelType::Phi(m) => m.eos_token_id(),
+                ModelType::QuantizedGGUF(m) => m.eos_token_id(),
+            };
+            
+            let tokenizer = match &*model_ref {
+                ModelType::Mistral(m) => m.tokenizer().clone(),
+                ModelType::Llama(m) => m.tokenizer().clone(),
+                ModelType::Gemma(m) => m.tokenizer().clone(),
+                ModelType::Qwen(m) => m.tokenizer().clone(),
+                ModelType::Phi(m) => m.tokenizer().clone(),
+                ModelType::QuantizedGGUF(m) => m.tokenizer().clone(),
+            };
+            
+            (eos_id, tokenizer)
+        }; // Lock is released here
+        
+        // Convert ID to string using the tokenizer
+        let tokenizer_wrapper = crate::ruby::tokenizer::Tokenizer(tokenizer_clone);
+        tokenizer_wrapper.id_to_token(eos_token_id as i64)
+    }
     
     /// Clear the model's cache (e.g., KV cache for transformers)
     pub fn clear_cache(&self) -> Result<()> {
@@ -460,6 +517,8 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("stop_sequences", method!(GenerationConfig::stop_sequences, 0))?;
     rb_generation_config.define_method("include_prompt", method!(GenerationConfig::include_prompt, 0))?;
     rb_generation_config.define_method("debug_tokens", method!(GenerationConfig::debug_tokens, 0))?;
+    rb_generation_config.define_method("stop_on_constraint_satisfaction", method!(GenerationConfig::stop_on_constraint_satisfaction, 0))?;
+    rb_generation_config.define_method("stop_on_match", method!(GenerationConfig::stop_on_match, 0))?;
     rb_generation_config.define_method("constraint", method!(GenerationConfig::constraint, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
@@ -469,6 +528,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_llm.define_method("model_name", method!(LLM::model_name, 0))?;
     rb_llm.define_method("device", method!(LLM::device, 0))?;
     rb_llm.define_method("tokenizer", method!(LLM::tokenizer, 0))?;
+    rb_llm.define_method("eos_token", method!(LLM::eos_token, 0))?;
     rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;
     rb_llm.define_method("apply_chat_template", method!(LLM::apply_chat_template, 1))?;
     

@@ -16,6 +16,10 @@ pub struct Qwen {
 }
 
 impl Qwen {
+    pub fn eos_token_id(&self) -> u32 {
+        self.eos_token_id
+    }
+
     /// Get the tokenizer
     pub fn tokenizer(&self) -> &TokenizerWrapper {
         &self.tokenizer
@@ -55,6 +59,9 @@ impl Qwen {
             .unwrap_or(151643); // Default Qwen3 EOS token
         
         // Download model weights
+        // NOTE: Qwen uses hardcoded shard counts based on model size rather than
+        // reading model.safetensors.index.json. This works for official Qwen models
+        // but may fail for custom configurations with different shard counts.
         let mut filenames = vec![];
         let num_shards = if model_id.contains("72b") || model_id.contains("72B") { 8 } 
                         else if model_id.contains("14b") || model_id.contains("14B") { 3 }
@@ -171,6 +178,18 @@ impl Qwen {
             // Check stop conditions
             if text_gen.should_stop(next_token, config.max_length) {
                 break;
+            }
+            
+            // Check if constraint is satisfied (early stopping)
+            if config.stop_on_constraint_satisfaction {
+                let satisfied = if config.stop_on_match {
+                    text_gen.is_constraint_satisfied_stop_on_match()
+                } else {
+                    text_gen.is_constraint_satisfied()
+                };
+                if satisfied {
+                    break;
+                }
             }
             
             // Check stop sequences

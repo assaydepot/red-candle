@@ -12,6 +12,8 @@ pub struct TextGeneration {
     eos_token_id: Option<u32>,
     constraint: Option<Arc<Index>>,
     constraint_state: Option<u32>,
+    constraint_completed: bool,
+    tokens_since_constraint_start: usize,
 }
 
 impl TextGeneration {
@@ -31,6 +33,8 @@ impl TextGeneration {
             eos_token_id: None,
             constraint: None,
             constraint_state: None,
+            constraint_completed: false,
+            tokens_since_constraint_start: 0,
         }
     }
 
@@ -72,6 +76,8 @@ impl TextGeneration {
         // Initialize with the first state
         self.constraint_state = Some(constraint.initial_state());
         self.constraint = Some(constraint);
+        self.constraint_completed = false;
+        self.tokens_since_constraint_start = self.tokens.len();
     }
 
     /// Apply constraints to logits by masking disallowed tokens
@@ -155,10 +161,112 @@ impl TextGeneration {
         
         // Update constraint state if active
         if let (Some(ref constraint_index), Some(current_state)) = (&self.constraint, self.constraint_state) {
-            self.constraint_state = constraint_index.next_state(&current_state, &next_token);
+            // Get the next state
+            let next_state = constraint_index.next_state(&current_state, &next_token);
+            
+            // Check if we're transitioning to a state with no allowed tokens (completion)
+            if !self.constraint_completed && self.tokens.len() > self.tokens_since_constraint_start {
+                // Check if we've transitioned from a constrained state to an unconstrained state
+                // This happens when the pattern is complete and the FSM allows "anything"
+                
+                let current_constrained = if let Some(allowed) = constraint_index.allowed_tokens(&current_state) {
+                    // Consider it constrained if we have a limited set of allowed tokens
+                    allowed.len() < 1000  // Arbitrary threshold for "constrained"
+                } else {
+                    true  // No tokens allowed is definitely constrained
+                };
+                
+                let next_constrained = if let Some(next_state_val) = next_state {
+                    if let Some(allowed) = constraint_index.allowed_tokens(&next_state_val) {
+                        allowed.is_empty() || allowed.len() < 1000
+                    } else {
+                        true
+                    }
+                } else {
+                    true
+                };
+                
+                // If we're transitioning from constrained to unconstrained, we've completed the pattern
+                if current_constrained && !next_constrained {
+                    self.constraint_completed = true;
+                }
+                
+                // Also check if next state has no allowed tokens at all
+                if let Some(next_state_val) = next_state {
+                    if let Some(allowed) = constraint_index.allowed_tokens(&next_state_val) {
+                        if allowed.is_empty() {
+                            self.constraint_completed = true;
+                        }
+                    } else {
+                        // None means no tokens allowed - constraint is complete
+                        self.constraint_completed = true;
+                    }
+                }
+            }
+            
+            self.constraint_state = next_state;
         }
         
         Ok(next_token)
+    }
+
+    /// Check if the constraint is satisfied (reached a valid completion state)
+    pub fn is_constraint_satisfied(&self) -> bool {
+        // If we've explicitly marked the constraint as completed, return true
+        if self.constraint_completed {
+            return true;
+        }
+        
+        // Also check the current state
+        if let (Some(ref constraint_index), Some(state)) = (&self.constraint, self.constraint_state) {
+            // Check if the constraint has reached a state where it could validly end
+            // This happens when:
+            // 1. We have no more allowed tokens (constraint fully satisfied)
+            // 2. The EOS token is in the allowed tokens (optional ending)
+            if let Some(allowed) = constraint_index.allowed_tokens(&state) {
+                // If no tokens are allowed, the constraint is fully satisfied
+                if allowed.is_empty() {
+                    return true;
+                }
+                
+                // If EOS token is allowed, we've reached an optional completion point
+                if let Some(eos) = self.eos_token_id {
+                    if allowed.contains(&eos) {
+                        return true;
+                    }
+                }
+            } else {
+                // None means no tokens allowed - constraint is satisfied
+                return true;
+            }
+        }
+        false
+    }
+    
+    /// Check if the constraint is satisfied when stop_on_match is true
+    pub fn is_constraint_satisfied_stop_on_match(&self) -> bool {
+        // When stop_on_match is true, we stop as soon as the constraint is completed
+        if self.constraint_completed {
+            return true;
+        }
+        
+        // Also check if we're currently in a state that could be a valid end
+        // This is important for patterns like phone numbers where after matching
+        // the pattern, the FSM might allow any token (including more numbers)
+        if let (Some(ref constraint_index), Some(state)) = (&self.constraint, self.constraint_state) {
+            // Check if we've generated at least one token since constraint start
+            if self.tokens.len() > self.tokens_since_constraint_start {
+                if let Some(allowed) = constraint_index.allowed_tokens(&state) {
+                    // If the allowed tokens set is very large (unconstrained), 
+                    // it means the pattern has been satisfied
+                    if allowed.len() > 1000 {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        false
     }
 
     /// Check if we should stop generation
