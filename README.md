@@ -888,6 +888,69 @@ bundle exec rake compile
 
 Pull requests are welcome.
 
+## Testing
+
+Red Candle has comprehensive tests at both the Ruby and Rust levels:
+
+### Ruby Tests
+```bash
+# Run all Ruby tests
+bundle exec rake test
+
+# Run specific test suites
+bundle exec rake test:device         # Device compatibility tests
+bundle exec rake test:benchmark      # Benchmark tests
+bundle exec rake test:llm:mistral    # Model-specific tests
+```
+
+### Rust Tests
+```bash
+# Run Rust unit and integration tests
+cd ext/candle && cargo test
+
+# Or use the Rake task
+bundle exec rake rust:test
+```
+
+The Rust tests include:
+- Unit tests within source files (using `#[cfg(test)]` modules)
+- Integration tests for external dependencies (candle_core operations)
+- Tests for structured generation, tokenization, and text generation
+
+### Code Coverage
+
+#### Rust Code Coverage
+Red Candle uses `cargo-llvm-cov` for Rust code coverage analysis:
+
+```bash
+# Generate HTML coverage report (opens in target/llvm-cov/html/index.html)
+bundle exec rake rust:coverage:html
+
+# Show coverage summary in terminal
+bundle exec rake rust:coverage:summary
+
+# Generate detailed coverage report
+bundle exec rake rust:coverage:report
+
+# Generate LCOV format for CI integration
+bundle exec rake rust:coverage:lcov
+
+# Clean coverage data
+bundle exec rake rust:coverage:clean
+```
+
+**Note**: Overall Rust coverage shows ~17% because most code consists of Ruby FFI bindings that are tested through Ruby tests. The testable Rust components have high coverage:
+- Constrained generation: 99.59%
+- Schema processing: 90.99%
+- Integration tests: 97.12%
+
+#### Ruby Code Coverage
+Ruby test coverage is generated automatically when running tests:
+```bash
+bundle exec rake test
+# Coverage report generated in coverage/index.html
+```
+
 ## Release
 
 1. Update version number in `lib/candle/version.rb` and commit.

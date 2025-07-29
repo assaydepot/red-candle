@@ -200,3 +200,4 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_device.define_method("==", method!(Device::__eq__, 1))?;
     Ok(())
 }
+

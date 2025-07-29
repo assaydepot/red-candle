@@ -35,3 +35,4 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_dtype.define_method("inspect", method!(DType::__repr__, 0))?;
     Ok(())
 }
+
