@@ -11,3 +11,4 @@ pub fn wrap_candle_err(err: candle_core::Error) -> Error {
 pub fn wrap_hf_err(err: hf_hub::api::sync::ApiError) -> Error {
     Error::new(magnus::exception::runtime_error(), err.to_string())
 }
+

@@ -652,3 +652,4 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_tensor.define_method("inspect", method!(Tensor::__repr__, 0))?;
     Ok(())
 }
+
