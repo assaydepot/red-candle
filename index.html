@@ -973,6 +973,76 @@ bundle exec rake compile
 
 <p>Pull requests are welcome.</p>
 
+<h2 id="testing">Testing</h2>
+
+<p>Red Candle has comprehensive tests at both the Ruby and Rust levels:</p>
+
+<h3 id="ruby-tests">Ruby Tests</h3>
+
+<pre class="code bash"><code class="bash"># Run all Ruby tests
+bundle exec rake test
+
+# Run specific test suites
+bundle exec rake test:device         # Device compatibility tests
+bundle exec rake test:benchmark      # Benchmark tests
+bundle exec rake test:llm:mistral    # Model-specific tests
+</code></pre>
+
+<h3 id="rust-tests">Rust Tests</h3>
+
+<pre class="code bash"><code class="bash"># Run Rust unit and integration tests
+cd ext/candle &amp;&amp; cargo test
+
+# Or use the Rake task
+bundle exec rake rust:test
+</code></pre>
+
+<p>The Rust tests include:</p>
+
+<ul>
+<li>Unit tests within source files (using <code>#[cfg(test)]</code> modules)</li>
+<li>Integration tests for external dependencies (candle_core operations)</li>
+<li>Tests for structured generation, tokenization, and text generation</li>
+</ul>
+
+<h3 id="code-coverage">Code Coverage</h3>
+
+<h4 id="rust-code-coverage">Rust Code Coverage</h4>
+
+<p>Red Candle uses <code>cargo-llvm-cov</code> for Rust code coverage analysis:</p>
+
+<pre class="code bash"><code class="bash"># Generate HTML coverage report (opens in target/llvm-cov/html/index.html)
+bundle exec rake rust:coverage:html
+
+# Show coverage summary in terminal
+bundle exec rake rust:coverage:summary
+
+# Generate detailed coverage report
+bundle exec rake rust:coverage:report
+
+# Generate LCOV format for CI integration
+bundle exec rake rust:coverage:lcov
+
+# Clean coverage data
+bundle exec rake rust:coverage:clean
+</code></pre>
+
+<p><strong>Note</strong>: Overall Rust coverage shows ~17% because most code consists of Ruby FFI bindings that are tested through Ruby tests. The testable Rust components have high coverage:</p>
+
+<ul>
+<li>Constrained generation: 99.59%</li>
+<li>Schema processing: 90.99%</li>
+<li>Integration tests: 97.12%</li>
+</ul>
+
+<h4 id="ruby-code-coverage">Ruby Code Coverage</h4>
+
+<p>Ruby test coverage is generated automatically when running tests:</p>
+
+<pre class="code bash"><code class="bash">bundle exec rake test
+# Coverage report generated in coverage/index.html
+</code></pre>
+
 <h2 id="release">Release</h2>
 
 <ol>
@@ -993,7 +1063,7 @@ bundle exec rake compile
 </div></div>
 
       <div id="footer">
-  Generated on Mon Jul 28 12:46:44 2025 by
+  Generated on Sat Aug  2 16:43:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
