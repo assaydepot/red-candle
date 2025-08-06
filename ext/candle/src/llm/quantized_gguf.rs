@@ -320,7 +320,9 @@ impl QuantizedGGUF {
         // Check model name since Mistral GGUF reports as llama architecture
         let model_lower = self.model_id.to_lowercase();
         
-        if model_lower.contains("mistral") {
+        if model_lower.contains("tinyllama") {
+            self.apply_chatml_template(messages)
+        } else if model_lower.contains("mistral") {
             self.apply_mistral_template(messages)
         } else if model_lower.contains("gemma") {
             // Always use Gemma template for Gemma models, regardless of loader used
@@ -513,6 +515,20 @@ impl QuantizedGGUF {
             prompt.push_str("Assistant: ");
         }
         
+        Ok(prompt)
+    }
+    
+    fn apply_chatml_template(&self, messages: &[serde_json::Value]) -> CandleResult<String> {
+        let mut prompt = String::new();
+        
+        for message in messages {
+            let role = message["role"].as_str().unwrap_or("");
+            let content = message["content"].as_str().unwrap_or("");
+            
+            prompt.push_str(&format!("<|{}|>\n{}</s>\n", role, content));
+        }
+        
+        prompt.push_str("<|assistant|>");
         Ok(prompt)
     }
     
