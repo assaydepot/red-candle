@@ -448,6 +448,68 @@ impl LLM {
         model_ref.apply_chat_template(&json_messages)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to apply chat template: {}", e)))
     }
+    
+    /// Get the model ID
+    pub fn model_id(&self) -> String {
+        self.model_id.clone()
+    }
+    
+    /// Get model options
+    pub fn options(&self) -> Result<RHash> {
+        let ruby = Ruby::get().unwrap();
+        let hash = RHash::new();
+        
+        // Basic metadata
+        hash.aset("model_id", self.model_id.clone())?;
+        let device_str = match self.device {
+            Device::Cpu => "cpu",
+            Device::Cuda => "cuda",
+            Device::Metal => "metal",
+        };
+        hash.aset("device", device_str)?;
+        
+        // Parse model_id to extract GGUF file if present
+        if let Some(at_pos) = self.model_id.find('@') {
+            let (base_model, gguf_part) = self.model_id.split_at(at_pos);
+            let gguf_part = &gguf_part[1..]; // Skip the @ character
+            
+            // Check for tokenizer (@@)
+            if let Some(tokenizer_pos) = gguf_part.find("@@") {
+                let (gguf_file, tokenizer) = gguf_part.split_at(tokenizer_pos);
+                hash.aset("base_model", base_model)?;
+                hash.aset("gguf_file", gguf_file)?;
+                hash.aset("tokenizer_source", &tokenizer[2..])?;
+            } else {
+                hash.aset("base_model", base_model)?;
+                hash.aset("gguf_file", gguf_part)?;
+            }
+        }
+        
+        // Add model type
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let model_ref = model.borrow();
+        
+        let model_type = match &*model_ref {
+            ModelType::Mistral(_) => "Mistral",
+            ModelType::Llama(_) => "Llama",
+            ModelType::Gemma(_) => "Gemma",
+            ModelType::Qwen(_) => "Qwen",
+            ModelType::Phi(_) => "Phi",
+            ModelType::QuantizedGGUF(_) => "QuantizedGGUF",
+        };
+        hash.aset("model_type", model_type)?;
+        
+        // For GGUF models, add architecture info
+        if let ModelType::QuantizedGGUF(gguf) = &*model_ref {
+            hash.aset("architecture", gguf.architecture.clone())?;
+            hash.aset("eos_token_id", gguf.eos_token_id())?;
+        }
+        
+        Ok(hash)
+    }
 }
 
 // Define a standalone function for from_pretrained that handles variable arguments
@@ -497,6 +559,8 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_llm.define_method("eos_token", method!(LLM::eos_token, 0))?;
     rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;
     rb_llm.define_method("apply_chat_template", method!(LLM::apply_chat_template, 1))?;
+    rb_llm.define_method("model_id", method!(LLM::model_id, 0))?;
+    rb_llm.define_method("options", method!(LLM::options, 0))?;
     
     Ok(())
 }
