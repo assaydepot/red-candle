@@ -456,7 +456,6 @@ impl LLM {
     
     /// Get model options
     pub fn options(&self) -> Result<RHash> {
-        let ruby = Ruby::get().unwrap();
         let hash = RHash::new();
         
         // Basic metadata
