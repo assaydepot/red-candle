@@ -189,6 +189,45 @@ module Candle
       prompt = apply_chat_template(messages)
       generate_stream(prompt, **options, &block)
     end
+    
+    # Inspect method for debugging and exploration
+    def inspect
+      opts = options rescue {}
+      
+      # Extract key information
+      model_type = opts["model_type"] || "Unknown"
+      device = opts["device"] || self.device.to_s rescue "unknown"
+      
+      # Build the inspect string
+      parts = ["#<Candle::LLM"]
+      
+      # Add base model or model_id
+      if opts["base_model"]
+        parts << "model=#{opts["base_model"]}"
+      elsif opts["model_id"]
+        parts << "model=#{opts["model_id"]}"
+      elsif respond_to?(:model_id)
+        parts << "model=#{model_id}"
+      end
+      
+      # Add GGUF file if present
+      if opts["gguf_file"]
+        parts << "gguf=#{opts["gguf_file"]}"
+      end
+      
+      # Add device
+      parts << "device=#{device}"
+      
+      # Add model type
+      parts << "type=#{model_type}"
+      
+      # Add architecture for GGUF models
+      if opts["architecture"]
+        parts << "arch=#{opts["architecture"]}"
+      end
+      
+      parts.join(" ") + ">"
+    end
 
     def generate(prompt, config: GenerationConfig.balanced, reset_cache: true)
       begin
