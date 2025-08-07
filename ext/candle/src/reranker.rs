@@ -18,7 +18,7 @@ pub struct Reranker {
 
 impl Reranker {
     pub fn new(model_id: String, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         Self::new_with_core_device(model_id, device)
     }
         

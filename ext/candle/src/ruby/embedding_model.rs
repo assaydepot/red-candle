@@ -76,7 +76,7 @@ pub struct EmbeddingModelInner {
 
 impl EmbeddingModel {
     pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         let embedding_model_type = embedding_model_type
             .and_then(|mt| EmbeddingModelType::from_string(&mt))
             .unwrap_or(EmbeddingModelType::JinaBert);

@@ -90,6 +90,11 @@ impl Device {
     pub fn cpu() -> Self {
         Self::Cpu
     }
+    
+    /// Get the best available device
+    pub fn best() -> Self {
+        best_device()
+    }
 
     /// Create a CUDA device (GPU)
     pub fn cuda() -> Result<Self> {

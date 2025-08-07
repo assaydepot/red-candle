@@ -245,7 +245,7 @@ module Candle
       end
     end
 
-    def self.from_pretrained(model_id, device: Candle::Device.cpu, gguf_file: nil, tokenizer: nil)
+    def self.from_pretrained(model_id, device: Candle::Device.best, gguf_file: nil, tokenizer: nil)
       model_str = if gguf_file
         "#{model_id}@#{gguf_file}"
       else

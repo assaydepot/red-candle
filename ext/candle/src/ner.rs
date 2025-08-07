@@ -37,7 +37,7 @@ pub struct NER {
 
 impl NER {
     pub fn new(model_id: String, device: Option<Device>, tokenizer_id: Option<String>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         
         let result = (|| -> std::result::Result<(BertModel, TokenizerWrapper, Linear, NERConfig), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;

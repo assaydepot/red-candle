@@ -6,7 +6,7 @@ module Candle
     # Constructor for creating a new Reranker with optional parameters
     # @param model_path [String, nil] The path to the model on Hugging Face
     # @param device [Candle::Device, Candle::Device.cpu] The device to use for computation
-    def self.new(model_path: DEFAULT_MODEL_PATH, device: Candle::Device.cpu)
+    def self.new(model_path: DEFAULT_MODEL_PATH, device: Candle::Device.best)
       _create(model_path, device)
     end
 

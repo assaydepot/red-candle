@@ -17,7 +17,7 @@ module Candle
     # @param embedding_size [Integer, nil] Override for the embedding size (optional)
     def self.new(model_path: DEFAULT_MODEL_PATH,
       tokenizer_path: DEFAULT_TOKENIZER_PATH,
-      device: Candle::Device.cpu,
+      device: Candle::Device.best,
       model_type: DEFAULT_EMBEDDING_MODEL_TYPE,
       embedding_size: nil)
       _create(model_path, tokenizer_path, device, model_type, embedding_size)

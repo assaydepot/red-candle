@@ -26,18 +26,41 @@ impl Tensor {
         let dtype = dtype
             .map(|dtype| DType::from_rbobject(dtype))
             .unwrap_or(Ok(DType(CoreDType::F32)))?;
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
-        // FIXME: Do not use `to_f64` here.
-        let array = array
-            .into_iter()
-            .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64()))
-            .collect::<Result<Vec<_>>>()?;
-        Ok(Self(
-            CoreTensor::new(array.as_slice(), &device)
-                .map_err(wrap_candle_err)?
-                .to_dtype(dtype.0)
-                .map_err(wrap_candle_err)?,
-        ))
+        let device = device.unwrap_or(Device::best()).as_device()?;
+        
+        // Create tensor based on target dtype to avoid conversion issues on Metal
+        let tensor = match dtype.0 {
+            CoreDType::F32 => {
+                // Convert to f32 directly to avoid F64->F32 conversion on Metal
+                let array: Vec<f32> = array
+                    .into_iter()
+                    .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64() as f32))
+                    .collect::<Result<Vec<_>>>()?;
+                let len = array.len();
+                CoreTensor::from_vec(array, len, &device).map_err(wrap_candle_err)?
+            }
+            CoreDType::F64 => {
+                let array: Vec<f64> = array
+                    .into_iter()
+                    .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64()))
+                    .collect::<Result<Vec<_>>>()?;
+                let len = array.len();
+                CoreTensor::from_vec(array, len, &device).map_err(wrap_candle_err)?
+            }
+            _ => {
+                // For other dtypes, create as F64 first then convert
+                let array: Vec<f64> = array
+                    .into_iter()
+                    .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64()))
+                    .collect::<Result<Vec<_>>>()?;
+                CoreTensor::new(array.as_slice(), &device)
+                    .map_err(wrap_candle_err)?
+                    .to_dtype(dtype.0)
+                    .map_err(wrap_candle_err)?
+            }
+        };
+        
+        Ok(Self(tensor))
     }
 
     pub fn values(&self) -> Result<Vec<f64>> {
@@ -541,7 +564,7 @@ impl Tensor {
     /// Creates a new tensor with random values.
     /// &RETURNS&: Tensor
     pub fn rand(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         Ok(Self(
             CoreTensor::rand(0f32, 1f32, shape, &device).map_err(wrap_candle_err)?,
         ))
@@ -550,7 +573,7 @@ impl Tensor {
     /// Creates a new tensor with random values from a normal distribution.
     /// &RETURNS&: Tensor
     pub fn randn(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         Ok(Self(
             CoreTensor::randn(0f32, 1f32, shape, &device).map_err(wrap_candle_err)?,
         ))
@@ -559,7 +582,7 @@ impl Tensor {
     /// Creates a new tensor filled with ones.
     /// &RETURNS&: Tensor
     pub fn ones(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         Ok(Self(
             CoreTensor::ones(shape, CoreDType::F32, &device).map_err(wrap_candle_err)?,
         ))
@@ -567,7 +590,7 @@ impl Tensor {
     /// Creates a new tensor filled with zeros.
     /// &RETURNS&: Tensor
     pub fn zeros(shape: Vec<usize>, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+        let device = device.unwrap_or(Device::best()).as_device()?;
         Ok(Self(
             CoreTensor::zeros(shape, CoreDType::F32, &device).map_err(wrap_candle_err)?,
         ))

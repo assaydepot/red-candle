@@ -214,7 +214,7 @@ pub struct LLM {
 impl LLM {
     /// Create a new LLM from a pretrained model
     pub fn from_pretrained(model_id: String, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu);
+        let device = device.unwrap_or(Device::best());
         let candle_device = device.as_device()?;
         
         // For now, we'll use tokio runtime directly
