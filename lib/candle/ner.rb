@@ -152,7 +152,19 @@ module Candle
     #
     # @return [String] Model description
     def inspect
-      "#<Candle::NER #{model_info}>"
+      opts = options rescue {}
+      
+      parts = ["#<Candle::NER"]
+      parts << "model=#{opts["model_id"] || "unknown"}"
+      parts << "device=#{opts["device"] || "unknown"}"
+      parts << "labels=#{opts["num_labels"]}" if opts["num_labels"]
+      
+      if opts["entity_types"] && !opts["entity_types"].empty?
+        types = opts["entity_types"].sort.join(",")
+        parts << "types=#{types}"
+      end
+      
+      parts.join(" ") + ">"
     end
     
     alias to_s inspect

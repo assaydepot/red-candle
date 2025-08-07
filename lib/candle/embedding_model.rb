@@ -28,5 +28,18 @@ module Candle
     def embedding(str, pooling_method: "pooled_normalized")
       _embedding(str, pooling_method)
     end
+    
+    # Improved inspect method
+    def inspect
+      opts = options rescue {}
+      
+      parts = ["#<Candle::EmbeddingModel"]
+      parts << "model=#{opts["model_id"] || "unknown"}"
+      parts << "type=#{opts["embedding_model_type"]}" if opts["embedding_model_type"]
+      parts << "device=#{opts["device"] || "unknown"}"
+      parts << "size=#{opts["embedding_size"]}" if opts["embedding_size"]
+      
+      parts.join(" ") + ">"
+    end
   end
 end

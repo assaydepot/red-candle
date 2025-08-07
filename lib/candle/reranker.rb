@@ -20,5 +20,14 @@ module Candle
         { doc_id: doc_id, score: score, text: doc }
       }
     end
+    
+    # Improved inspect method
+    def inspect
+      opts = options rescue {}
+      parts = ["#<Candle::Reranker"]
+      parts << "model=#{opts["model_id"] || "unknown"}"
+      parts << "device=#{opts["device"] || "unknown"}"
+      parts.join(" ") + ">"
+    end
   end
 end

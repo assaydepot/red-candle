@@ -3,7 +3,7 @@ use candle_transformers::models::bert::{BertModel, Config};
 use candle_core::{Device as CoreDevice, Tensor, DType, Module as CanModule};
 use candle_nn::{VarBuilder, Linear};
 use hf_hub::{api::sync::Api, Repo, RepoType};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use crate::ruby::{Device, Result};
 use crate::tokenizer::{TokenizerWrapper, loader::TokenizerLoader};
@@ -382,6 +382,35 @@ impl NER {
     pub fn model_info(&self) -> String {
         format!("NER model: {}, labels: {}", self.model_id, self.config.id2label.len())
     }
+    
+    /// Get the model_id
+    pub fn model_id(&self) -> String {
+        self.model_id.clone()
+    }
+    
+    /// Get the device
+    pub fn device(&self) -> Device {
+        Device::from_device(&self.device)
+    }
+    
+    /// Get all options as a hash
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        hash.aset("model_id", self.model_id.clone())?;
+        hash.aset("device", self.device().__str__())?;
+        hash.aset("num_labels", self.config.id2label.len())?;
+        
+        // Add entity types as a list
+        let entity_types: Vec<String> = self.config.label2id.keys()
+            .filter(|l| *l != "O")
+            .map(|l| l.trim_start_matches("B-").trim_start_matches("I-").to_string())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        hash.aset("entity_types", entity_types)?;
+        
+        Ok(hash)
+    }
 }
 
 pub fn init(rb_candle: RModule) -> Result<()> {
@@ -392,6 +421,9 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     ner_class.define_method("labels", method!(NER::labels, 0))?;
     ner_class.define_method("tokenizer", method!(NER::tokenizer, 0))?;
     ner_class.define_method("model_info", method!(NER::model_info, 0))?;
+    ner_class.define_method("model_id", method!(NER::model_id, 0))?;
+    ner_class.define_method("device", method!(NER::device, 0))?;
+    ner_class.define_method("options", method!(NER::options, 0))?;
     
     Ok(())
 }

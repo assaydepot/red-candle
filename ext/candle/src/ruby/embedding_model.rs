@@ -13,7 +13,7 @@ use candle_transformers::models::{
     jina_bert::{BertModel as JinaBertModel, Config as JinaConfig},
     distilbert::{DistilBertModel, Config as DistilBertConfig}
 };
-use magnus::{class, function, method, prelude::*, Error, RModule};
+use magnus::{class, function, method, prelude::*, Error, RModule, RHash};
 use std::path::Path;
 use serde_json;
 
@@ -393,6 +393,49 @@ impl EmbeddingModel {
             None => Err(magnus::Error::new(magnus::exception::runtime_error(), "No tokenizer loaded for this model"))
         }
     }
+    
+    /// Get the model_id (model_path)
+    pub fn model_id(&self) -> Result<String> {
+        match &self.0.model_path {
+            Some(path) => Ok(path.clone()),
+            None => Ok("unknown".to_string())
+        }
+    }
+    
+    /// Get the device
+    pub fn device(&self) -> Device {
+        Device::from_device(&self.0.device)
+    }
+    
+    /// Get all options as a hash
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        
+        // Add model_path as model_id
+        if let Some(model_path) = &self.0.model_path {
+            hash.aset("model_id", model_path.clone())?;
+        }
+        
+        // Add tokenizer_path
+        if let Some(tokenizer_path) = &self.0.tokenizer_path {
+            hash.aset("tokenizer_path", tokenizer_path.clone())?;
+        }
+        
+        // Add device
+        hash.aset("device", self.device().__str__())?;
+        
+        // Add embedding_model_type
+        if let Some(model_type) = &self.0.embedding_model_type {
+            hash.aset("embedding_model_type", format!("{:?}", model_type))?;
+        }
+        
+        // Add embedding_size
+        if let Some(size) = self.0.embedding_size {
+            hash.aset("embedding_size", size)?;
+        }
+        
+        Ok(hash)
+    }
 }
 
 pub fn init(rb_candle: RModule) -> Result<()> {
@@ -408,5 +451,8 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_embedding_model.define_method("to_s", method!(EmbeddingModel::__str__, 0))?;
     rb_embedding_model.define_method("inspect", method!(EmbeddingModel::__repr__, 0))?;
     rb_embedding_model.define_method("tokenizer", method!(EmbeddingModel::tokenizer, 0))?;
+    rb_embedding_model.define_method("model_id", method!(EmbeddingModel::model_id, 0))?;
+    rb_embedding_model.define_method("device", method!(EmbeddingModel::device, 0))?;
+    rb_embedding_model.define_method("options", method!(EmbeddingModel::options, 0))?;
     Ok(())
 }

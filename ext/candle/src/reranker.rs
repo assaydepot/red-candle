@@ -14,6 +14,7 @@ pub struct Reranker {
     pooler: Linear,
     classifier: Linear,
     device: CoreDevice,
+    model_id: String,
 }
 
 impl Reranker {
@@ -59,7 +60,7 @@ impl Reranker {
         
         match result {
             Ok((model, tokenizer, pooler, classifier)) => {
-                Ok(Self { model, tokenizer, pooler, classifier, device })
+                Ok(Self { model, tokenizer, pooler, classifier, device, model_id })
             }
             Err(e) => Err(Error::new(magnus::exception::runtime_error(), format!("Failed to load model: {}", e))),
         }
@@ -231,6 +232,24 @@ impl Reranker {
     pub fn tokenizer(&self) -> std::result::Result<crate::ruby::tokenizer::Tokenizer, Error> {
         Ok(crate::ruby::tokenizer::Tokenizer(self.tokenizer.clone()))
     }
+    
+    /// Get the model_id
+    pub fn model_id(&self) -> String {
+        self.model_id.clone()
+    }
+    
+    /// Get the device
+    pub fn device(&self) -> Device {
+        Device::from_device(&self.device)
+    }
+    
+    /// Get all options as a hash
+    pub fn options(&self) -> std::result::Result<magnus::RHash, Error> {
+        let hash = magnus::RHash::new();
+        hash.aset("model_id", self.model_id.clone())?;
+        hash.aset("device", self.device().__str__())?;
+        Ok(hash)
+    }
 }
 
 pub fn init(rb_candle: RModule) -> std::result::Result<(), Error> {
@@ -239,5 +258,8 @@ pub fn init(rb_candle: RModule) -> std::result::Result<(), Error> {
     c_reranker.define_method("rerank_with_options", method!(Reranker::rerank_with_options, 4))?;
     c_reranker.define_method("debug_tokenization", method!(Reranker::debug_tokenization, 2))?;
     c_reranker.define_method("tokenizer", method!(Reranker::tokenizer, 0))?;
+    c_reranker.define_method("model_id", method!(Reranker::model_id, 0))?;
+    c_reranker.define_method("device", method!(Reranker::device, 0))?;
+    c_reranker.define_method("options", method!(Reranker::options, 0))?;
     Ok(())
 }
