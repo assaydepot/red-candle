@@ -6,7 +6,7 @@ use crate::ruby::{
     utils::{actual_dim, actual_index},
 };
 use crate::ruby::{DType, Device, Result};
-use ::candle_core::{DType as CoreDType, Tensor as CoreTensor};
+use ::candle_core::{DType as CoreDType, Tensor as CoreTensor, Device as CoreDevice};
 
 #[derive(Clone, Debug)]
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
@@ -47,16 +47,51 @@ impl Tensor {
                 let len = array.len();
                 CoreTensor::from_vec(array, len, &device).map_err(wrap_candle_err)?
             }
+            CoreDType::I64 => {
+                // Convert to i64 directly to avoid conversion issues on Metal
+                let array: Vec<i64> = array
+                    .into_iter()
+                    .map(|v| {
+                        // Try integer first, then float
+                        if let Ok(i) = <i64>::try_convert(v) {
+                            Ok(i)
+                        } else if let Ok(f) = magnus::Float::try_convert(v) {
+                            Ok(f.to_f64() as i64)
+                        } else {
+                            Err(magnus::Error::new(
+                                magnus::exception::type_error(),
+                                "Cannot convert to i64"
+                            ))
+                        }
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                let len = array.len();
+                CoreTensor::from_vec(array, len, &device).map_err(wrap_candle_err)?
+            }
             _ => {
-                // For other dtypes, create as F64 first then convert
+                // For other dtypes, create on CPU first if on Metal, then convert
+                let cpu_device = CoreDevice::Cpu;
+                let target_device = if matches!(device.location(), candle_core::DeviceLocation::Metal { .. }) {
+                    &cpu_device
+                } else {
+                    &device
+                };
+                
                 let array: Vec<f64> = array
                     .into_iter()
                     .map(|v| magnus::Float::try_convert(v).map(|v| v.to_f64()))
                     .collect::<Result<Vec<_>>>()?;
-                CoreTensor::new(array.as_slice(), &device)
+                let tensor = CoreTensor::new(array.as_slice(), target_device)
                     .map_err(wrap_candle_err)?
                     .to_dtype(dtype.0)
-                    .map_err(wrap_candle_err)?
+                    .map_err(wrap_candle_err)?;
+                
+                // Move to target device if needed
+                if !std::ptr::eq(target_device, &device) {
+                    tensor.to_device(&device).map_err(wrap_candle_err)?
+                } else {
+                    tensor
+                }
             }
         };
         
@@ -64,10 +99,25 @@ impl Tensor {
     }
 
     pub fn values(&self) -> Result<Vec<f64>> {
-        let values = self
-            .0
-            .to_dtype(CoreDType::F64)
-            .map_err(wrap_candle_err)?
+        // Handle dtype conversion for Metal which doesn't support many conversions
+        let tensor = match (self.0.device().location(), self.0.dtype()) {
+            (candle_core::DeviceLocation::Metal { .. }, dtype) if dtype != CoreDType::F64 => {
+                // Move to CPU first to avoid Metal conversion limitations
+                self.0
+                    .to_device(&CoreDevice::Cpu)
+                    .map_err(wrap_candle_err)?
+                    .to_dtype(CoreDType::F64)
+                    .map_err(wrap_candle_err)?
+            }
+            _ => {
+                // Direct conversion for CPU or when already F64
+                self.0
+                    .to_dtype(CoreDType::F64)
+                    .map_err(wrap_candle_err)?
+            }
+        };
+        
+        let values = tensor
             .flatten_all()
             .map_err(wrap_candle_err)?
             .to_vec1()
@@ -115,11 +165,23 @@ impl Tensor {
             }
             _ => {
                 // For other dtypes, convert to F64 first
-                let val: f64 = self.0
-                    .to_dtype(CoreDType::F64)
-                    .map_err(wrap_candle_err)?
-                    .to_vec0()
-                    .map_err(wrap_candle_err)?;
+                // Handle Metal conversion limitations
+                let tensor = match self.0.device().location() {
+                    candle_core::DeviceLocation::Metal { .. } => {
+                        // Move to CPU first to avoid Metal conversion limitations
+                        self.0
+                            .to_device(&CoreDevice::Cpu)
+                            .map_err(wrap_candle_err)?
+                            .to_dtype(CoreDType::F64)
+                            .map_err(wrap_candle_err)?
+                    }
+                    _ => {
+                        self.0
+                            .to_dtype(CoreDType::F64)
+                            .map_err(wrap_candle_err)?
+                    }
+                };
+                let val: f64 = tensor.to_vec0().map_err(wrap_candle_err)?;
                 Ok(val)
             }
         }
