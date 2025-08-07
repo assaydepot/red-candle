@@ -132,8 +132,8 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_embedding_model
-    model = Candle::EmbeddingModel.new(
-      model_path: "sentence-transformers/all-MiniLM-L6-v2",
+    model = Candle::EmbeddingModel.from_pretrained(
+      "sentence-transformers/all-MiniLM-L6-v2",
       tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
       model_type: Candle::EmbeddingModelType::MINILM
     )

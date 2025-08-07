@@ -39,7 +39,7 @@ puts "   ✓ Candle::Tensor.ones([2, 3]).to_device(device) # Works but slower"
 
 puts "\n5. Working with models and devices:"
 puts "   Models accept device parameter directly:"
-puts "   ✓ Candle::EmbeddingModel.new(model_path: 'path', device: device)"
+puts "   ✓ Candle::EmbeddingModel.from_pretrained('path', device: device)"
 puts "   ✓ Candle::Reranker.new(device: device)"
 puts "   ✓ Candle::LLM.from_pretrained('model-id', device: device)"
 

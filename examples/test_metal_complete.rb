@@ -34,10 +34,7 @@ end
 puts "\n--- EmbeddingModel on Metal ---"
 begin
   device = Candle::Device.metal
-  model = Candle::EmbeddingModel.new(
-    model_path: "jinaai/jina-embeddings-v2-base-en",
-    device: device
-  )
+  model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
   
   texts = [
     "Ruby is a beautiful programming language.",
@@ -94,10 +91,7 @@ begin
   puts "Best available device: #{best.inspect}"
   
   # Should automatically use the best device (Metal on Mac)
-  model = Candle::EmbeddingModel.new(
-    model_path: "jinaai/jina-embeddings-v2-base-en",
-    device: best
-  )
+  model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: best)
   puts "✅ Created EmbeddingModel with best device"
   
   reranker = Candle::Reranker.new(

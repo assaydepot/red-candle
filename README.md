@@ -104,7 +104,7 @@ embedding = model.embedding("Hi there!")
 
 # Specify device (CPU, Metal, or CUDA)
 device = Candle::Device.cpu     # or Candle::Device.metal, Candle::Device.cuda
-model = Candle::EmbeddingModel.new(
+model = Candle::EmbeddingModel.from_pretrained(
   model_path: "jinaai/jina-embeddings-v2-base-en",
   device: device
 )
@@ -367,7 +367,7 @@ Red-Candle includes support for cross-encoder reranking models, which can be use
 require 'candle'
 
 # Initialize the reranker with a cross-encoder model
-reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
 
 # Define your query and candidate documents
 query = "How many people live in London?"
@@ -457,7 +457,7 @@ For faster inference on NVIDIA GPUs:
 
 ```ruby
 # Initialize with CUDA if available (falls back to CPU if not)
-reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2", cuda: true)
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2", cuda: true)
 ```
 
 ### How It Works
@@ -567,7 +567,7 @@ embedding_model = Candle::EmbeddingModel.new
 emb_tokenizer = embedding_model.tokenizer
 
 # From Reranker
-reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
 rank_tokenizer = reranker.tokenizer
 ```
 

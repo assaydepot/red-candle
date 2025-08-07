@@ -4,11 +4,7 @@ class CandleEmbeddingVerificationTest < Minitest::Test
   include DeviceTestHelper
 
   def test_embedding_normalization
-    model = Candle::EmbeddingModel.new(
-      model_path: "sentence-transformers/all-MiniLM-L6-v2",
-      tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
-      model_type: Candle::EmbeddingModelType::MINILM
-    )
+    model = Candle::EmbeddingModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2", tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2", model_type: Candle::EmbeddingModelType::MINILM)
     
     texts = [
       "The quick brown fox jumps over the lazy dog",
@@ -49,11 +45,7 @@ class CandleEmbeddingVerificationTest < Minitest::Test
   end
   
   def test_embedding_similarity
-    model = Candle::EmbeddingModel.new(
-      model_path: "sentence-transformers/all-MiniLM-L6-v2",
-      tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
-      model_type: Candle::EmbeddingModelType::MINILM
-    )
+    model = Candle::EmbeddingModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2", tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2", model_type: Candle::EmbeddingModelType::MINILM)
     
     # Similar sentences should have high cosine similarity
     similar_texts = [

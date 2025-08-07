@@ -2,7 +2,7 @@ require "test_helper"
 
 class RerankerTest < Minitest::Test
   def test_rerank
-    reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+    reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
     query = "What is the capital of France?"
     documents = [
       "The capital of France is Paris.",
@@ -20,7 +20,7 @@ class RerankerTest < Minitest::Test
   end
   
   def test_pooling_methods
-    reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+    reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
     query = "What is the capital of France?"
     documents = ["The capital of France is Paris.", "Berlin is the capital of Germany."]
     

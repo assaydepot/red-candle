@@ -59,8 +59,8 @@ class DeviceBenchmarkTest < Minitest::Test
       device = create_device(device_type)
       
       # Load model once
-      model = Candle::EmbeddingModel.new(
-        model_path: "jinaai/jina-embeddings-v2-base-en",
+      model = Candle::EmbeddingModel.from_pretrained(
+        "jinaai/jina-embeddings-v2-base-en",
         device: device
       )
       

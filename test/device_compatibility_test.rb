@@ -39,10 +39,7 @@ class DeviceCompatibilityTest < Minitest::Test
       
       device = create_device(device_type)
       
-      model = Candle::EmbeddingModel.new(
-        model_path: "jinaai/jina-embeddings-v2-base-en",
-        device: device
-      )
+      model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
       
       # Test single embedding
       text = "Hello world"

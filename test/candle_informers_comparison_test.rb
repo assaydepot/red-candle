@@ -22,7 +22,7 @@ class CandleInformersComparisonTest < Minitest::Test
     informers_scores = informers_result.map { |r| r[:score] }
     
     # Test with Candle (default device)
-    candle_reranker = Candle::Reranker.new(model_path: model_id)
+    candle_reranker = Candle::Reranker.from_pretrained(model_id)
     
     candle_result = candle_reranker.rerank(
       query, 
@@ -46,7 +46,7 @@ class CandleInformersComparisonTest < Minitest::Test
     informers_embeddings = informers_model.(sentences)
 
     # Test with Candle
-    candle_model = Candle::EmbeddingModel.new(model_path: "jinaai/jina-embeddings-v2-base-en")
+    candle_model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en")
     candle_embeddings = sentences.collect { |sentence| candle_model.embedding(sentence).values }
 
     assert_equal informers_embeddings.length, candle_embeddings.length, "Embedding arrays have different lengths"
