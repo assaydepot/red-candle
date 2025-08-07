@@ -6,7 +6,7 @@ use crate::ruby::{
     utils::{actual_dim, actual_index},
 };
 use crate::ruby::{DType, Device, Result};
-use ::candle_core::{DType as CoreDType, Tensor as CoreTensor, Device as CoreDevice};
+use ::candle_core::{DType as CoreDType, Tensor as CoreTensor, Device as CoreDevice, DeviceLocation};
 
 #[derive(Clone, Debug)]
 #[magnus::wrap(class = "Candle::Tensor", free_immediately, size)]
@@ -18,6 +18,31 @@ impl std::ops::Deref for Tensor {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+// Helper functions for tensor operations
+impl Tensor {
+    /// Check if device is Metal
+    fn is_metal_device(device: &CoreDevice) -> bool {
+        matches!(device.location(), DeviceLocation::Metal { .. })
+    }
+    
+    /// Convert tensor to target dtype, handling Metal limitations
+    fn safe_to_dtype(&self, target_dtype: CoreDType) -> Result<CoreTensor> {
+        if Self::is_metal_device(self.0.device()) && self.0.dtype() != target_dtype {
+            // Move to CPU first to avoid Metal conversion limitations
+            self.0
+                .to_device(&CoreDevice::Cpu)
+                .map_err(wrap_candle_err)?
+                .to_dtype(target_dtype)
+                .map_err(wrap_candle_err)
+        } else {
+            // Direct conversion for CPU or when dtype matches
+            self.0
+                .to_dtype(target_dtype)
+                .map_err(wrap_candle_err)
+        }
     }
 }
 
@@ -71,11 +96,8 @@ impl Tensor {
             _ => {
                 // For other dtypes, create on CPU first if on Metal, then convert
                 let cpu_device = CoreDevice::Cpu;
-                let target_device = if matches!(device.location(), candle_core::DeviceLocation::Metal { .. }) {
-                    &cpu_device
-                } else {
-                    &device
-                };
+                let use_cpu = Self::is_metal_device(&device);
+                let target_device = if use_cpu { &cpu_device } else { &device };
                 
                 let array: Vec<f64> = array
                     .into_iter()
@@ -87,7 +109,7 @@ impl Tensor {
                     .map_err(wrap_candle_err)?;
                 
                 // Move to target device if needed
-                if !std::ptr::eq(target_device, &device) {
+                if use_cpu {
                     tensor.to_device(&device).map_err(wrap_candle_err)?
                 } else {
                     tensor
@@ -99,24 +121,7 @@ impl Tensor {
     }
 
     pub fn values(&self) -> Result<Vec<f64>> {
-        // Handle dtype conversion for Metal which doesn't support many conversions
-        let tensor = match (self.0.device().location(), self.0.dtype()) {
-            (candle_core::DeviceLocation::Metal { .. }, dtype) if dtype != CoreDType::F64 => {
-                // Move to CPU first to avoid Metal conversion limitations
-                self.0
-                    .to_device(&CoreDevice::Cpu)
-                    .map_err(wrap_candle_err)?
-                    .to_dtype(CoreDType::F64)
-                    .map_err(wrap_candle_err)?
-            }
-            _ => {
-                // Direct conversion for CPU or when already F64
-                self.0
-                    .to_dtype(CoreDType::F64)
-                    .map_err(wrap_candle_err)?
-            }
-        };
-        
+        let tensor = self.safe_to_dtype(CoreDType::F64)?;
         let values = tensor
             .flatten_all()
             .map_err(wrap_candle_err)?
@@ -165,22 +170,7 @@ impl Tensor {
             }
             _ => {
                 // For other dtypes, convert to F64 first
-                // Handle Metal conversion limitations
-                let tensor = match self.0.device().location() {
-                    candle_core::DeviceLocation::Metal { .. } => {
-                        // Move to CPU first to avoid Metal conversion limitations
-                        self.0
-                            .to_device(&CoreDevice::Cpu)
-                            .map_err(wrap_candle_err)?
-                            .to_dtype(CoreDType::F64)
-                            .map_err(wrap_candle_err)?
-                    }
-                    _ => {
-                        self.0
-                            .to_dtype(CoreDType::F64)
-                            .map_err(wrap_candle_err)?
-                    }
-                };
+                let tensor = self.safe_to_dtype(CoreDType::F64)?;
                 let val: f64 = tensor.to_vec0().map_err(wrap_candle_err)?;
                 Ok(val)
             }
