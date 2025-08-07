@@ -276,9 +276,9 @@ class DeviceCompatibilityTest < Minitest::Test
     end
   end
   
-  # Test DeviceUtils
-  def test_device_utils_best_device
-    best = Candle::DeviceUtils.best_device
+  # Test Device.best
+  def test_device_best
+    best = Candle::Device.best
     assert_kind_of Candle::Device, best
     
     # Should prefer Metal > CUDA > CPU
@@ -289,5 +289,18 @@ class DeviceCompatibilityTest < Minitest::Test
     else
       assert_equal "cpu", best.to_s
     end
+  end
+  
+  # Test deprecated DeviceUtils still works
+  def test_device_utils_best_device_deprecated
+    # Test that DeviceUtils.best_device still works
+    best = Candle::DeviceUtils.best_device
+    assert_kind_of Candle::Device, best
+    # Should return same as Device.best
+    assert_equal Candle::Device.best, best
+    
+    # Note: Testing the deprecation warning is tricky because warn goes to stderr
+    # and capture_io doesn't always work reliably with it. The important thing
+    # is that the method still works and returns the correct result.
   end
 end

@@ -44,7 +44,7 @@ puts "   ✓ Candle::Reranker.new(device: device)"
 puts "   ✓ Candle::LLM.from_pretrained('model-id', device: device)"
 
 puts "\n6. Device utilities:"
-best_device = Candle::DeviceUtils.best_device
+best_device = Candle::Device.best
 puts "   Best available device: #{best_device}"
 
 puts "\nSummary:"
@@ -52,4 +52,4 @@ puts "- Tensor creation methods now accept optional device parameter"
 puts "- Direct creation on device is much faster (avoids CPU->GPU copy)"
 puts "- Backward compatible - defaults to CPU if device not specified"
 puts "- Models accept device parameter during initialization"
-puts "- DeviceUtils.best_device automatically selects the best available device"
+puts "- Device.best automatically selects the best available device"

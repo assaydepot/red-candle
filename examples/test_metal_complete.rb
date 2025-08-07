@@ -25,7 +25,7 @@ begin
     puts "CUDA: ❌ Not available"
   end
   
-  puts "\nBest device: #{Candle::DeviceUtils.best_device.inspect}"
+  puts "\nBest device: #{Candle::Device.best.inspect}"
 rescue => e
   puts "Error checking devices: #{e.message}"
 end
@@ -90,7 +90,7 @@ end
 puts "\n--- Smart Device Selection ---"
 begin
   # Get the best available device
-  best = Candle::DeviceUtils.best_device
+  best = Candle::Device.best
   puts "Best available device: #{best.inspect}"
   
   # Should automatically use the best device (Metal on Mac)
