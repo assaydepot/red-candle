@@ -279,7 +279,7 @@ impl Tokenizer {
             .map(|h| h.len())
             .unwrap_or(0);
         
-        let mut parts = vec![format!("#<Candle::Tokenizer vocab={}", vocab_size)];
+        let mut parts = vec![format!("#<Candle::Tokenizer vocab_size={}", vocab_size)];
         
         if special_tokens > 0 {
             parts.push(format!("special_tokens={}", special_tokens));
