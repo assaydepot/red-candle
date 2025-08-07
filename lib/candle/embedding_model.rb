@@ -9,7 +9,36 @@ module Candle
     # Default embedding model type
     DEFAULT_EMBEDDING_MODEL_TYPE = "jina_bert"
     
+    # Load a pre-trained embedding model from HuggingFace
+    # @param model_id [String] HuggingFace model ID (defaults to jinaai/jina-embeddings-v2-base-en)
+    # @param device [Candle::Device] The device to use for computation (defaults to best available)
+    # @param tokenizer [String, nil] The tokenizer to use (defaults to using the model's tokenizer)
+    # @param model_type [String, nil] The type of embedding model (auto-detected if nil)
+    # @param embedding_size [Integer, nil] Override for the embedding size (optional)
+    # @return [EmbeddingModel] A new EmbeddingModel instance
+    def self.from_pretrained(model_id = DEFAULT_MODEL_PATH, device: Candle::Device.best, tokenizer: nil, model_type: nil, embedding_size: nil)
+      # Auto-detect model type based on model_id if not provided
+      if model_type.nil?
+        model_type = case model_id.downcase
+        when /jina/
+          "jina_bert"
+        when /distilbert/
+          "distilbert"
+        when /minilm/
+          "minilm"
+        else
+          "standard_bert"
+        end
+      end
+      
+      # Use model_id as tokenizer if not specified
+      tokenizer_path = tokenizer || model_id
+      
+      _create(model_id, tokenizer_path, device, model_type, embedding_size)
+    end
+    
     # Constructor for creating a new EmbeddingModel with optional parameters
+    # @deprecated Use {.from_pretrained} instead
     # @param model_path [String, nil] The path to the model on Hugging Face
     # @param tokenizer_path [String, nil] The path to the tokenizer on Hugging Face
     # @param device [Candle::Device, Candle::Device.cpu] The device to use for computation
@@ -20,6 +49,7 @@ module Candle
       device: Candle::Device.best,
       model_type: DEFAULT_EMBEDDING_MODEL_TYPE,
       embedding_size: nil)
+      $stderr.puts "[DEPRECATION] `EmbeddingModel.new` is deprecated. Please use `EmbeddingModel.from_pretrained` instead."
       _create(model_path, tokenizer_path, device, model_type, embedding_size)
     end
     # Returns the embedding for a string using the specified pooling method.
