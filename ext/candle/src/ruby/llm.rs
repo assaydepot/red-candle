@@ -201,6 +201,37 @@ impl GenerationConfig {
             index: Arc::clone(c),
         })
     }
+    
+    /// Get all options as a hash
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        
+        hash.aset("max_length", self.inner.max_length)?;
+        hash.aset("temperature", self.inner.temperature)?;
+        
+        if let Some(top_p) = self.inner.top_p {
+            hash.aset("top_p", top_p)?;
+        }
+        
+        if let Some(top_k) = self.inner.top_k {
+            hash.aset("top_k", top_k)?;
+        }
+        
+        hash.aset("repetition_penalty", self.inner.repetition_penalty)?;
+        hash.aset("repetition_penalty_last_n", self.inner.repetition_penalty_last_n)?;
+        hash.aset("seed", self.inner.seed)?;
+        hash.aset("stop_sequences", self.inner.stop_sequences.clone())?;
+        hash.aset("include_prompt", self.inner.include_prompt)?;
+        hash.aset("debug_tokens", self.inner.debug_tokens)?;
+        hash.aset("stop_on_constraint_satisfaction", self.inner.stop_on_constraint_satisfaction)?;
+        hash.aset("stop_on_match", self.inner.stop_on_match)?;
+        
+        if self.inner.constraint.is_some() {
+            hash.aset("has_constraint", true)?;
+        }
+        
+        Ok(hash)
+    }
 }
 
 #[derive(Clone)]
@@ -547,6 +578,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("stop_on_constraint_satisfaction", method!(GenerationConfig::stop_on_constraint_satisfaction, 0))?;
     rb_generation_config.define_method("stop_on_match", method!(GenerationConfig::stop_on_match, 0))?;
     rb_generation_config.define_method("constraint", method!(GenerationConfig::constraint, 0))?;
+    rb_generation_config.define_method("options", method!(GenerationConfig::options, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
     rb_llm.define_singleton_method("_from_pretrained", function!(from_pretrained_wrapper, -1))?;

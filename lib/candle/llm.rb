@@ -432,5 +432,28 @@ module Candle
       }
       new(defaults.merge(opts))
     end
+    
+    # Inspect method for debugging and exploration
+    def inspect
+      opts = options rescue {}
+      
+      parts = ["#<Candle::GenerationConfig"]
+      
+      # Add key configuration parameters
+      parts << "temp=#{opts["temperature"]}" if opts["temperature"]
+      parts << "max=#{opts["max_length"]}" if opts["max_length"]
+      parts << "top_p=#{opts["top_p"]}" if opts["top_p"]
+      parts << "top_k=#{opts["top_k"]}" if opts["top_k"]
+      parts << "seed=#{opts["seed"]}" if opts["seed"]
+      
+      # Add flags
+      flags = []
+      flags << "debug" if opts["debug_tokens"]
+      flags << "constraint" if opts["has_constraint"]
+      flags << "stop_on_match" if opts["stop_on_match"]
+      parts << "flags=[#{flags.join(",")}]" if flags.any?
+      
+      parts.join(" ") + ">"
+    end
   end
 end

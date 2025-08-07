@@ -236,9 +236,65 @@ impl Tokenizer {
         Ok(hash)
     }
 
+    /// Get tokenizer options as a hash
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        
+        // Get vocab size
+        hash.aset("vocab_size", self.vocab_size(Some(true)))?;
+        hash.aset("vocab_size_base", self.vocab_size(Some(false)))?;
+        
+        // Get special tokens info
+        let special_tokens = self.get_special_tokens()?;
+        hash.aset("special_tokens", special_tokens)?;
+        
+        // Get padding/truncation info if available
+        let inner_tokenizer = self.0.inner();
+        
+        // Check if padding is enabled
+        if let Some(_padding) = inner_tokenizer.get_padding() {
+            let padding_info = RHash::new();
+            padding_info.aset("enabled", true)?;
+            // Note: We can't easily extract all padding params from the tokenizers library
+            // but we can indicate it's enabled
+            hash.aset("padding", padding_info)?;
+        }
+        
+        // Check if truncation is enabled  
+        if let Some(truncation) = inner_tokenizer.get_truncation() {
+            let truncation_info = RHash::new();
+            truncation_info.aset("enabled", true)?;
+            truncation_info.aset("max_length", truncation.max_length)?;
+            hash.aset("truncation", truncation_info)?;
+        }
+        
+        Ok(hash)
+    }
+
     /// String representation
     pub fn inspect(&self) -> String {
-        format!("#<Candle::Tokenizer vocab_size={}>", self.vocab_size(Some(true)))
+        let vocab_size = self.vocab_size(Some(true));
+        let special_tokens = self.get_special_tokens()
+            .ok()
+            .map(|h| h.len())
+            .unwrap_or(0);
+        
+        let mut parts = vec![format!("#<Candle::Tokenizer vocab={}", vocab_size)];
+        
+        if special_tokens > 0 {
+            parts.push(format!("special_tokens={}", special_tokens));
+        }
+        
+        // Check for padding/truncation
+        let inner_tokenizer = self.0.inner();
+        if inner_tokenizer.get_padding().is_some() {
+            parts.push("padding=enabled".to_string());
+        }
+        if let Some(truncation) = inner_tokenizer.get_truncation() {
+            parts.push(format!("truncation={}", truncation.max_length));
+        }
+        
+        parts.join(" ") + ">"
     }
 }
 
@@ -262,6 +318,7 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     tokenizer_class.define_method("with_padding", method!(Tokenizer::with_padding, 1))?;
     tokenizer_class.define_method("with_truncation", method!(Tokenizer::with_truncation, 1))?;
     tokenizer_class.define_method("get_special_tokens", method!(Tokenizer::get_special_tokens, 0))?;
+    tokenizer_class.define_method("options", method!(Tokenizer::options, 0))?;
     tokenizer_class.define_method("inspect", method!(Tokenizer::inspect, 0))?;
     tokenizer_class.define_method("to_s", method!(Tokenizer::inspect, 0))?;
     
