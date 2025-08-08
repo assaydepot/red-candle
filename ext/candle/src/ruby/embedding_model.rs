@@ -53,7 +53,7 @@ pub enum EmbeddingModelVariant {
 }
 
 impl EmbeddingModelVariant {
-    pub fn embedding_model_type(&self) -> EmbeddingModelType {
+    pub fn model_type(&self) -> EmbeddingModelType {
         match self {
             EmbeddingModelVariant::JinaBert(_) => EmbeddingModelType::JinaBert,
             EmbeddingModelVariant::StandardBert(_) => EmbeddingModelType::StandardBert,
@@ -68,25 +68,25 @@ pub struct EmbeddingModelInner {
     device: CoreDevice,
     tokenizer_path: Option<String>,
     model_id: Option<String>,
-    embedding_model_type: Option<EmbeddingModelType>,
+    model_type: Option<EmbeddingModelType>,
     model: Option<EmbeddingModelVariant>,
     tokenizer: Option<TokenizerWrapper>,
     embedding_size: Option<usize>,
 }
 
 impl EmbeddingModel {
-    pub fn new(model_id: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
+    pub fn new(model_id: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
         let device = device.unwrap_or(Device::best()).as_device()?;
-        let embedding_model_type = embedding_model_type
+        let model_type = model_type
             .and_then(|mt| EmbeddingModelType::from_string(&mt))
             .unwrap_or(EmbeddingModelType::JinaBert);
         Ok(EmbeddingModel(EmbeddingModelInner {
             device: device.clone(),
             model_id: model_id.clone(),
             tokenizer_path: tokenizer_path.clone(),
-            embedding_model_type: Some(embedding_model_type),
+            model_type: Some(model_type),
             model: match model_id.as_ref() {
-                Some(id) => Some(Self::build_embedding_model(id, device, embedding_model_type, embedding_size)?),
+                Some(id) => Some(Self::build_embedding_model(id, device, model_type, embedding_size)?),
                 None => None
             },
             tokenizer: match tokenizer_path {
@@ -170,11 +170,11 @@ impl EmbeddingModel {
         }
     }
 
-    fn build_embedding_model(model_id: &str, device: CoreDevice, embedding_model_type: EmbeddingModelType, embedding_size: Option<usize>) -> Result<EmbeddingModelVariant> {
+    fn build_embedding_model(model_id: &str, device: CoreDevice, model_type: EmbeddingModelType, embedding_size: Option<usize>) -> Result<EmbeddingModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let api = Api::new().map_err(wrap_hf_err)?;
         let repo = Repo::new(model_id.to_string(), RepoType::Model);
-        match embedding_model_type {
+        match model_type {
             EmbeddingModelType::JinaBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
                 if !std::path::Path::new(&model_path).exists() {
@@ -365,17 +365,17 @@ impl EmbeddingModel {
         v.broadcast_div(&v.sqr()?.sum_keepdim(1)?.sqrt()?)
     }
 
-    pub fn embedding_model_type(&self) -> String {
-        match self.0.embedding_model_type {
-            Some(model_type) => format!("{:?}", model_type),
+    pub fn model_type(&self) -> String {
+        match self.0.model_type {
+            Some(mt) => format!("{:?}", mt),
             None => "nil".to_string(),
         }
     }
 
     pub fn __repr__(&self) -> String {
         format!(
-            "#<Candle::EmbeddingModel embedding_model_type: {}, model_id: {}, tokenizer_path: {}, embedding_size: {}>",
-            self.embedding_model_type(), 
+            "#<Candle::EmbeddingModel model_type: {}, model_id: {}, tokenizer_path: {}, embedding_size: {}>",
+            self.model_type(), 
             self.0.model_id.as_deref().unwrap_or("nil"), 
             self.0.tokenizer_path.as_deref().unwrap_or("nil"),
             self.0.embedding_size.map(|x| x.to_string()).unwrap_or("nil".to_string())
@@ -424,9 +424,9 @@ impl EmbeddingModel {
         // Add device
         hash.aset("device", self.device().__str__())?;
         
-        // Add embedding_model_type
-        if let Some(model_type) = &self.0.embedding_model_type {
-            hash.aset("embedding_model_type", format!("{:?}", model_type))?;
+        // Add model_type
+        if let Some(model_type) = &self.0.model_type {
+            hash.aset("model_type", format!("{:?}", model_type))?;
         }
         
         // Add embedding_size
@@ -447,7 +447,7 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_embedding_model.define_method("pool_embedding", method!(EmbeddingModel::pool_embedding, 1))?;
     rb_embedding_model.define_method("pool_and_normalize_embedding", method!(EmbeddingModel::pool_and_normalize_embedding, 1))?;
     rb_embedding_model.define_method("pool_cls_embedding", method!(EmbeddingModel::pool_cls_embedding, 1))?;
-    rb_embedding_model.define_method("embedding_model_type", method!(EmbeddingModel::embedding_model_type, 0))?;
+    rb_embedding_model.define_method("model_type", method!(EmbeddingModel::model_type, 0))?;
     rb_embedding_model.define_method("to_s", method!(EmbeddingModel::__str__, 0))?;
     rb_embedding_model.define_method("inspect", method!(EmbeddingModel::__repr__, 0))?;
     rb_embedding_model.define_method("tokenizer", method!(EmbeddingModel::tokenizer, 0))?;

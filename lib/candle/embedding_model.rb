@@ -65,7 +65,7 @@ module Candle
       
       parts = ["#<Candle::EmbeddingModel"]
       parts << "model=#{opts["model_id"] || "unknown"}"
-      parts << "type=#{opts["embedding_model_type"]}" if opts["embedding_model_type"]
+      parts << "type=#{opts["model_type"]}" if opts["model_type"]
       parts << "device=#{opts["device"] || "unknown"}"
       parts << "size=#{opts["embedding_size"]}" if opts["embedding_size"]
       
