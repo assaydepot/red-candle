@@ -4,6 +4,14 @@ require "bundler/gem_tasks"
 require "rake/testtask"
 require "rake/extensiontask"
 
+# Load RSpec if available
+begin
+  require "rspec/core/rake_task"
+  rspec_available = true
+rescue LoadError
+  rspec_available = false
+end
+
 task default: :test
 Rake::TestTask.new do |t|
   t.deps << :compile
@@ -174,3 +182,37 @@ end
 
 desc "Run Rust tests with coverage (alias)"
 task "coverage:rust" => "rust:coverage:html"
+
+# RSpec tasks if available
+if rspec_available
+  desc "Run RSpec tests"
+  RSpec::Core::RakeTask.new(:spec) do |t|
+    t.rspec_opts = "--format documentation"
+  end
+  
+  namespace :spec do
+    desc "Run RSpec tests with all devices"
+    RSpec::Core::RakeTask.new(:device) do |t|
+      t.rspec_opts = "--format documentation --tag device"
+    end
+    
+    desc "Run RSpec tests with coverage"
+    task :coverage do
+      ENV['COVERAGE'] = 'true'
+      Rake::Task["spec"].invoke
+    end
+    
+    desc "Run RSpec tests in parallel (requires parallel_tests gem)"
+    task :parallel do
+      begin
+        require 'parallel_tests'
+        sh "parallel_rspec spec/"
+      rescue LoadError
+        puts "parallel_tests gem not installed. Run: gem install parallel_tests"
+      end
+    end
+  end
+  
+  desc "Run both Minitest and RSpec tests"
+  task "test:all_frameworks" => [:test, :spec]
+end
