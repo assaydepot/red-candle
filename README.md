@@ -99,22 +99,16 @@ x = x.reshape([3, 2])
 require 'candle'
 
 # Default model (JinaBERT) on CPU
-model = Candle::EmbeddingModel.new
+model = Candle::EmbeddingModel.from_pretrained
 embedding = model.embedding("Hi there!")
 
 # Specify device (CPU, Metal, or CUDA)
 device = Candle::Device.cpu     # or Candle::Device.metal, Candle::Device.cuda
-model = Candle::EmbeddingModel.from_pretrained(
-  model_path: "jinaai/jina-embeddings-v2-base-en",
-  device: device
-)
+model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
 embedding = model.embedding("Hi there!")
 
 # Reranker also supports device selection
-reranker = Candle::Reranker.new(
-  model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2",
-  device: device
-)
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2", device: device)
 results = reranker.rerank("query", ["doc1", "doc2", "doc3"])
 ```
 
@@ -325,9 +319,9 @@ The default model (`jinaai/jina-embeddings-v2-base-en` with the `sentence-transf
 ```ruby
 > require 'candle'
 # Ruby memory = 25.9 MB
-> model = Candle::EmbeddingModel.new
+> model = Candle::EmbeddingModel.from_pretrained
 # Ruby memory = 3.50 GB
-> model2 = Candle::EmbeddingModel.new
+> model2 = Candle::EmbeddingModel.from_pretrained
 # Ruby memory = 7.04 GB
 > model2 = nil
 > GC.start
@@ -353,7 +347,7 @@ And the following ruby:
 
 ```ruby
 require 'candle'
-model = Candle::EmbeddingModel.new
+model = Candle::EmbeddingModel.from_pretrained
 embedding = model.embedding("Hi there!")
 ```
 
@@ -563,7 +557,7 @@ llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 llm_tokenizer = llm.tokenizer
 
 # From EmbeddingModel
-embedding_model = Candle::EmbeddingModel.new
+embedding_model = Candle::EmbeddingModel.from_pretrained
 emb_tokenizer = embedding_model.tokenizer
 
 # From Reranker

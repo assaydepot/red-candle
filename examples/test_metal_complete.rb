@@ -54,7 +54,7 @@ end
 puts "\n--- Reranker on Metal ---"
 begin
   device = Candle::Device.metal
-  reranker = Candle::Reranker.new(device: device)
+  reranker = Candle::Reranker.from_pretrained(device: device)
   
   query = "What is Ruby programming?"
   documents = [
@@ -94,9 +94,7 @@ begin
   model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: best)
   puts "✅ Created EmbeddingModel with best device"
   
-  reranker = Candle::Reranker.new(
-    device: best
-  )
+  reranker = Candle::Reranker.from_pretrained(device: best)
   puts "✅ Created Reranker with best device"
 rescue => e
   puts "❌ Failed: #{e.message}"

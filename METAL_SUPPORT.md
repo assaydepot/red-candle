@@ -19,7 +19,7 @@ embedding = model.embedding("Hello world!")  # Works great!
 ### Reranker (Works on Metal!)
 ```ruby
 device = Candle::Device.metal
-reranker = Candle::Reranker.new(device: device)
+reranker = Candle::Reranker.from_pretrained(device: device)
 results = reranker.rerank("query", ["doc1", "doc2"])  # Works on Metal!
 
 # All pooling methods work

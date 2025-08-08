@@ -68,10 +68,7 @@ class DeviceCompatibilityTest < Minitest::Test
       
       device = create_device(device_type)
       
-      reranker = Candle::Reranker.new(
-        model_path: "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        device: device
-      )
+      reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-6-v2", device: device)
       
       query = "What is machine learning?"
       documents = [
@@ -109,7 +106,7 @@ class DeviceCompatibilityTest < Minitest::Test
         
         device = create_device(device_type)
         
-        reranker = Candle::Reranker.new(device: device)
+        reranker = Candle::Reranker.from_pretrained(device: device)
         
         query = "test query"
         documents = ["doc1", "doc2", "doc3"]

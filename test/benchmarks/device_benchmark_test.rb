@@ -98,10 +98,7 @@ class DeviceBenchmarkTest < Minitest::Test
       
       device = create_device(device_type)
       
-      reranker = Candle::Reranker.new(
-        model_path: "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        device: device
-      )
+      reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-6-v2", device: device)
       
       results[device_type] = {}
       

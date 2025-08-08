@@ -148,9 +148,7 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_reranker
-    reranker = Candle::Reranker.new(
-      model_path: "cross-encoder/ms-marco-MiniLM-L-6-v2"
-    )
+    reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-6-v2")
     
     tokenizer = reranker.tokenizer
     assert_instance_of Candle::Tokenizer, tokenizer

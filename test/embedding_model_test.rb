@@ -2,14 +2,14 @@ require_relative "test_helper"
 
 class EmbeddingModelTest < Minitest::Test
   def test_pooled_embeddings_shape
-    model = Candle::EmbeddingModel.new
+    model = Candle::EmbeddingModel.from_pretrained
     string = "Hi there"
     pooled = model.embedding(string, pooling_method: "pooled_normalized")
     assert_equal pooled.shape, [1, 768]
   end
 
   def test_pooled_embeddings
-    model = Candle::EmbeddingModel.new
+    model = Candle::EmbeddingModel.from_pretrained
     string = "Hi there"
     embeddings = model.embeddings(string) # shape: [1, n_tokens, hidden_size]
     pooled = model.embedding(string, pooling_method: "pooled") # shape: [1, hidden_size]
