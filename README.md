@@ -1,4 +1,4 @@
-# `red-candle` Native LLMs for Ruby 🚀
+<img src="/docs/assets/logo-title.png" alt="red-candle" height="120">
 
 [![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
