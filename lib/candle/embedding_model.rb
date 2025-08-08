@@ -13,11 +13,10 @@ module Candle
     # @param model_id [String] HuggingFace model ID (defaults to jinaai/jina-embeddings-v2-base-en)
     # @param device [Candle::Device] The device to use for computation (defaults to best available)
     # @param tokenizer [String, nil] The tokenizer to use (defaults to using the model's tokenizer)
-    # @param tokenizer_path [String, nil] Alias for tokenizer parameter (for backward compatibility)
     # @param model_type [String, nil] The type of embedding model (auto-detected if nil)
     # @param embedding_size [Integer, nil] Override for the embedding size (optional)
     # @return [EmbeddingModel] A new EmbeddingModel instance
-    def self.from_pretrained(model_id = DEFAULT_MODEL_PATH, device: Candle::Device.best, tokenizer: nil, tokenizer_path: nil, model_type: nil, embedding_size: nil)
+    def self.from_pretrained(model_id = DEFAULT_MODEL_PATH, device: Candle::Device.best, tokenizer: nil, model_type: nil, embedding_size: nil)
       # Auto-detect model type based on model_id if not provided
       if model_type.nil?
         model_type = case model_id.downcase
@@ -32,10 +31,10 @@ module Candle
         end
       end
       
-      # Support both tokenizer and tokenizer_path for backward compatibility
-      actual_tokenizer_path = tokenizer || tokenizer_path || model_id
+      # Use model_id as tokenizer if not specified (usually what you want)
+      tokenizer_id = tokenizer || model_id
       
-      _create(model_id, actual_tokenizer_path, device, model_type, embedding_size)
+      _create(model_id, tokenizer_id, device, model_type, embedding_size)
     end
     
     # Constructor for creating a new EmbeddingModel with optional parameters

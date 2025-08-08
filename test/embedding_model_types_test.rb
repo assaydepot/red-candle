@@ -7,7 +7,7 @@ class EmbeddingModelTypesTest < Minitest::Test
     embedding_size = model_option[:embedding_size]
     model = Candle::EmbeddingModel.from_pretrained(
       model_path,
-      tokenizer_path: model_path,
+      tokenizer: model_path,
       model_type: model_type,
       device: nil,
       embedding_size: embedding_size
