@@ -19,7 +19,7 @@ Bundler.require(:default)
 require 'candle'
 
 # Load support files
-Dir[File.join(__dir__, 'support', '**', '*.rb')].sort.each { |f| require f }
+Dir[File.join(__dir__, 'support', '**', '*.rb')].each { |f| require f }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -48,7 +48,7 @@ RSpec.configure do |config|
 
   # Include helpers
   config.include DeviceHelpers
-  config.include ModelHelpers
+  config.include SimpleModelCache
   
   # Suppress warnings during tests (same as Minitest setup)
   config.before(:suite) do
