@@ -30,10 +30,10 @@ module Candle
       # Load a pre-trained NER model from HuggingFace
       #
       # @param model_id [String] HuggingFace model ID (e.g., "dslim/bert-base-NER")
-      # @param device [Device, nil] Device to run on (defaults to best available)
+      # @param device [Device] Device to run on (defaults to best available)
       # @param tokenizer [String, nil] Tokenizer model ID to use (defaults to same as model_id)
       # @return [NER] NER instance
-      def from_pretrained(model_id, device: nil, tokenizer: nil)
+      def from_pretrained(model_id, device: Candle::Device.best, tokenizer: nil)
         new(model_id, device, tokenizer)
       end
       

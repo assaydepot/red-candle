@@ -66,7 +66,7 @@ impl EmbeddingModelVariant {
 
 pub struct EmbeddingModelInner {
     device: CoreDevice,
-    tokenizer_path: Option<String>,
+    tokenizer_id: Option<String>,
     model_id: Option<String>,
     model_type: Option<EmbeddingModelType>,
     model: Option<EmbeddingModelVariant>,
@@ -75,7 +75,7 @@ pub struct EmbeddingModelInner {
 }
 
 impl EmbeddingModel {
-    pub fn new(model_id: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
+    pub fn new(model_id: Option<String>, tokenizer: Option<String>, device: Option<Device>, model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
         let device = device.unwrap_or(Device::best()).as_device()?;
         let model_type = model_type
             .and_then(|mt| EmbeddingModelType::from_string(&mt))
@@ -83,14 +83,14 @@ impl EmbeddingModel {
         Ok(EmbeddingModel(EmbeddingModelInner {
             device: device.clone(),
             model_id: model_id.clone(),
-            tokenizer_path: tokenizer_path.clone(),
+            tokenizer_id: tokenizer.clone(),
             model_type: Some(model_type),
             model: match model_id.as_ref() {
                 Some(id) => Some(Self::build_embedding_model(id, device, model_type, embedding_size)?),
                 None => None
             },
-            tokenizer: match tokenizer_path {
-                Some(tp) => Some(Self::build_tokenizer(tp)?),
+            tokenizer: match tokenizer {
+                Some(tid) => Some(Self::build_tokenizer(tid)?),
                 None => None
             },
             embedding_size,
@@ -257,12 +257,12 @@ impl EmbeddingModel {
         }
     }
 
-    fn build_tokenizer(tokenizer_path: String) -> Result<TokenizerWrapper> {
+    fn build_tokenizer(tokenizer_id: String) -> Result<TokenizerWrapper> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let tokenizer_path = Api::new()
                 .map_err(wrap_hf_err)?
                 .repo(Repo::new(
-                    tokenizer_path,
+                    tokenizer_id,
                     RepoType::Model,
                 ))
                 .get("tokenizer.json")
@@ -374,10 +374,10 @@ impl EmbeddingModel {
 
     pub fn __repr__(&self) -> String {
         format!(
-            "#<Candle::EmbeddingModel model_type: {}, model_id: {}, tokenizer_path: {}, embedding_size: {}>",
+            "#<Candle::EmbeddingModel model_type: {}, model_id: {}, tokenizer: {}, embedding_size: {}>",
             self.model_type(), 
             self.0.model_id.as_deref().unwrap_or("nil"), 
-            self.0.tokenizer_path.as_deref().unwrap_or("nil"),
+            self.0.tokenizer_id.as_deref().unwrap_or("nil"),
             self.0.embedding_size.map(|x| x.to_string()).unwrap_or("nil".to_string())
         )
     }
@@ -416,9 +416,9 @@ impl EmbeddingModel {
             hash.aset("model_id", model_id.clone())?;
         }
         
-        // Add tokenizer_path
-        if let Some(tokenizer_path) = &self.0.tokenizer_path {
-            hash.aset("tokenizer_path", tokenizer_path.clone())?;
+        // Add tokenizer
+        if let Some(tokenizer_id) = &self.0.tokenizer_id {
+            hash.aset("tokenizer", tokenizer_id.clone())?;
         }
         
         // Add device
