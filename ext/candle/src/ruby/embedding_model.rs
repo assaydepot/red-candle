@@ -67,7 +67,7 @@ impl EmbeddingModelVariant {
 pub struct EmbeddingModelInner {
     device: CoreDevice,
     tokenizer_path: Option<String>,
-    model_path: Option<String>,
+    model_id: Option<String>,
     embedding_model_type: Option<EmbeddingModelType>,
     model: Option<EmbeddingModelVariant>,
     tokenizer: Option<TokenizerWrapper>,
@@ -75,18 +75,18 @@ pub struct EmbeddingModelInner {
 }
 
 impl EmbeddingModel {
-    pub fn new(model_path: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
+    pub fn new(model_id: Option<String>, tokenizer_path: Option<String>, device: Option<Device>, embedding_model_type: Option<String>, embedding_size: Option<usize>) -> Result<Self> {
         let device = device.unwrap_or(Device::best()).as_device()?;
         let embedding_model_type = embedding_model_type
             .and_then(|mt| EmbeddingModelType::from_string(&mt))
             .unwrap_or(EmbeddingModelType::JinaBert);
         Ok(EmbeddingModel(EmbeddingModelInner {
             device: device.clone(),
-            model_path: model_path.clone(),
+            model_id: model_id.clone(),
             tokenizer_path: tokenizer_path.clone(),
             embedding_model_type: Some(embedding_model_type),
-            model: match model_path {
-                Some(mp) => Some(Self::build_embedding_model(Path::new(&mp), device, embedding_model_type, embedding_size)?),
+            model: match model_id.as_ref() {
+                Some(id) => Some(Self::build_embedding_model(id, device, embedding_model_type, embedding_size)?),
                 None => None
             },
             tokenizer: match tokenizer_path {
@@ -170,10 +170,10 @@ impl EmbeddingModel {
         }
     }
 
-    fn build_embedding_model(model_path: &Path, device: CoreDevice, embedding_model_type: EmbeddingModelType, embedding_size: Option<usize>) -> Result<EmbeddingModelVariant> {
+    fn build_embedding_model(model_id: &str, device: CoreDevice, embedding_model_type: EmbeddingModelType, embedding_size: Option<usize>) -> Result<EmbeddingModelVariant> {
         use hf_hub::{api::sync::Api, Repo, RepoType};
         let api = Api::new().map_err(wrap_hf_err)?;
-        let repo = Repo::new(model_path.to_str().unwrap().to_string(), RepoType::Model);
+        let repo = Repo::new(model_id.to_string(), RepoType::Model);
         match embedding_model_type {
             EmbeddingModelType::JinaBert => {
                 let model_path = api.repo(repo).get("model.safetensors").map_err(wrap_hf_err)?;
@@ -374,9 +374,9 @@ impl EmbeddingModel {
 
     pub fn __repr__(&self) -> String {
         format!(
-            "#<Candle::EmbeddingModel embedding_model_type: {}, model_path: {}, tokenizer_path: {}, embedding_size: {}>",
+            "#<Candle::EmbeddingModel embedding_model_type: {}, model_id: {}, tokenizer_path: {}, embedding_size: {}>",
             self.embedding_model_type(), 
-            self.0.model_path.as_deref().unwrap_or("nil"), 
+            self.0.model_id.as_deref().unwrap_or("nil"), 
             self.0.tokenizer_path.as_deref().unwrap_or("nil"),
             self.0.embedding_size.map(|x| x.to_string()).unwrap_or("nil".to_string())
         )
@@ -394,10 +394,10 @@ impl EmbeddingModel {
         }
     }
     
-    /// Get the model_id (model_path)
+    /// Get the model_id
     pub fn model_id(&self) -> Result<String> {
-        match &self.0.model_path {
-            Some(path) => Ok(path.clone()),
+        match &self.0.model_id {
+            Some(id) => Ok(id.clone()),
             None => Ok("unknown".to_string())
         }
     }
@@ -411,9 +411,9 @@ impl EmbeddingModel {
     pub fn options(&self) -> Result<RHash> {
         let hash = RHash::new();
         
-        // Add model_path as model_id
-        if let Some(model_path) = &self.0.model_path {
-            hash.aset("model_id", model_path.clone())?;
+        // Add model_id
+        if let Some(model_id) = &self.0.model_id {
+            hash.aset("model_id", model_id.clone())?;
         }
         
         // Add tokenizer_path
