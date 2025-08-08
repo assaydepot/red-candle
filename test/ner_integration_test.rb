@@ -46,7 +46,7 @@ class NERIntegrationTest < Minitest::Test
       orgs = @ner.extract_entity_type(text, "ORG")
       assert_instance_of Array, orgs
       # Should find Apple
-      assert orgs.any? { |e| e["text"].downcase.include?("apple") }
+      assert orgs.any? { |e| e[:text].downcase.include?("apple") }
     end
   end
   

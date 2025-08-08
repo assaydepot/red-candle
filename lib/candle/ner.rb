@@ -112,7 +112,7 @@ module Candle
     # @return [Array<Hash>] Filtered entities of the specified type
     def extract_entity_type(text, entity_type, confidence_threshold: 0.9)
       entities = extract_entities(text, confidence_threshold: confidence_threshold)
-      entities.select { |e| e["label"] == entity_type.upcase }
+      entities.select { |e| e[:label] == entity_type.upcase }
     end
     
     # Analyze text and return both entities and token predictions
@@ -137,12 +137,12 @@ module Candle
       return text if entities.empty?
       
       # Sort by start position (reverse for easier insertion)
-      entities.sort_by! { |e| -e["start"] }
+      entities.sort_by! { |e| -e[:start] }
       
       result = text.dup
       entities.each do |entity|
-        label = "[#{entity['label']}:#{entity['confidence'].round(2)}]"
-        result.insert(entity["end"], label)
+        label = "[#{entity[:label]}:#{entity[:confidence].round(2)}]"
+        result.insert(entity[:end], label)
       end
       
       result
@@ -198,12 +198,12 @@ module Candle
           match_end = $~.offset(0)[1]
           
           entities << {
-            "text" => match_text,
-            "label" => @entity_type,
-            "start" => match_start,
-            "end" => match_end,
-            "confidence" => 1.0,
-            "source" => "pattern"
+            text: match_text,
+            label: @entity_type,
+            start: match_start,
+            end: match_end,
+            confidence: 1.0,
+            source: "pattern"
           }
         end
       end
@@ -254,12 +254,12 @@ module Candle
           
           if word_boundary?(prev_char) && word_boundary?(next_char)
             entities << {
-              "text" => text[idx, pattern.length],
-              "label" => @entity_type,
-              "start" => idx,
-              "end" => idx + pattern.length,
-              "confidence" => 1.0,
-              "source" => "gazetteer"
+              text: text[idx, pattern.length],
+              label: @entity_type,
+              start: idx,
+              end: idx + pattern.length,
+              confidence: 1.0,
+              source: "gazetteer"
             }
           end
           
@@ -339,19 +339,19 @@ module Candle
     
     def merge_entities(entities)
       # Sort by start position and confidence (descending)
-      sorted = entities.sort_by { |e| [e["start"], -e["confidence"]] }
+      sorted = entities.sort_by { |e| [e[:start], -e[:confidence]] }
       
       merged = []
       sorted.each do |entity|
         # Check if entity overlaps with any already merged
         overlaps = merged.any? do |existing|
-          entity["start"] < existing["end"] && entity["end"] > existing["start"]
+          entity[:start] < existing[:end] && entity[:end] > existing[:start]
         end
         
         merged << entity unless overlaps
       end
       
-      merged.sort_by { |e| e["start"] }
+      merged.sort_by { |e| e[:start] }
     end
   end
 end

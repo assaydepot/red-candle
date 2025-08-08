@@ -200,24 +200,24 @@ class DeviceCompatibilityTest < Minitest::Test
       # Check entity structure
       entities.each do |entity|
         assert_kind_of Hash, entity
-        assert entity.key?("text")
-        assert entity.key?("label")
-        assert entity.key?("start")
-        assert entity.key?("end")
-        assert entity.key?("confidence")
+        assert entity.key?(:text)
+        assert entity.key?(:label)
+        assert entity.key?(:start)
+        assert entity.key?(:end)
+        assert entity.key?(:confidence)
         
-        assert_kind_of String, entity["text"]
-        assert_kind_of String, entity["label"]
-        assert_kind_of Integer, entity["start"]
-        assert_kind_of Integer, entity["end"]
-        assert_kind_of Float, entity["confidence"]
+        assert_kind_of String, entity[:text]
+        assert_kind_of String, entity[:label]
+        assert_kind_of Integer, entity[:start]
+        assert_kind_of Integer, entity[:end]
+        assert_kind_of Float, entity[:confidence]
         
         # Verify confidence threshold
-        assert entity["confidence"] >= 0.7
+        assert entity[:confidence] >= 0.7
       end
       
       # Verify we found expected entities
-      entity_labels = entities.map { |e| e["label"] }
+      entity_labels = entities.map { |e| e[:label] }
       
       # Should find organization (Apple Inc.) and person (Steve Jobs)
       assert entity_labels.include?("ORG") || entity_labels.include?("CORP")
@@ -261,8 +261,8 @@ class DeviceCompatibilityTest < Minitest::Test
       assert low_threshold_entities.length >= high_threshold_entities.length
       
       # All high threshold entities should be in low threshold results
-      high_texts = high_threshold_entities.map { |e| e["text"] }
-      low_texts = low_threshold_entities.map { |e| e["text"] }
+      high_texts = high_threshold_entities.map { |e| e[:text] }
+      low_texts = low_threshold_entities.map { |e| e[:text] }
       
       high_texts.each do |text|
         assert low_texts.include?(text)

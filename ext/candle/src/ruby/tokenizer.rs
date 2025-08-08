@@ -105,8 +105,8 @@ impl Tokenizer {
         }
         
         let hash = RHash::new();
-        hash.aset("ids", RArray::from_vec(token_ids.into_iter().map(|id| id as i64).collect()))?;
-        hash.aset("tokens", RArray::from_vec(tokens))?;
+        hash.aset(magnus::Symbol::new("ids"), RArray::from_vec(token_ids.into_iter().map(|id| id as i64).collect()))?;
+        hash.aset(magnus::Symbol::new("tokens"), RArray::from_vec(tokens))?;
         
         Ok(hash)
     }

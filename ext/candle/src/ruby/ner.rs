@@ -185,13 +185,13 @@ impl NER {
         let result = RArray::new();
         for entity in entities {
             let hash = RHash::new();
-            hash.aset("text", entity.text)?;
-            hash.aset("label", entity.label)?;
-            hash.aset("start", entity.start)?;
-            hash.aset("end", entity.end)?;
-            hash.aset("confidence", entity.confidence)?;
-            hash.aset("token_start", entity.token_start)?;
-            hash.aset("token_end", entity.token_end)?;
+            hash.aset(magnus::Symbol::new("text"), entity.text)?;
+            hash.aset(magnus::Symbol::new("label"), entity.label)?;
+            hash.aset(magnus::Symbol::new("start"), entity.start)?;
+            hash.aset(magnus::Symbol::new("end"), entity.end)?;
+            hash.aset(magnus::Symbol::new("confidence"), entity.confidence)?;
+            hash.aset(magnus::Symbol::new("token_start"), entity.token_start)?;
+            hash.aset(magnus::Symbol::new("token_end"), entity.token_end)?;
             result.push(hash)?;
         }
         
