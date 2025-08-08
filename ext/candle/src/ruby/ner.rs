@@ -36,7 +36,7 @@ pub struct NER {
 }
 
 impl NER {
-    pub fn new(model_id: String, device: Option<Device>, tokenizer_id: Option<String>) -> Result<Self> {
+    pub fn new(model_id: String, device: Option<Device>, tokenizer: Option<String>) -> Result<Self> {
         let device = device.unwrap_or(Device::best()).as_device()?;
         
         let result = (|| -> std::result::Result<(BertModel, TokenizerWrapper, Linear, NERConfig), Box<dyn std::error::Error + Send + Sync>> {
@@ -46,18 +46,18 @@ impl NER {
             // Download model files
             let config_filename = repo.get("config.json")?;
             
-            // Handle tokenizer loading with optional tokenizer_id
-            let tokenizer = if let Some(tok_id) = tokenizer_id {
+            // Handle tokenizer loading with optional tokenizer
+            let tokenizer_wrapper = if let Some(tok_id) = tokenizer {
                 // Use the specified tokenizer
                 let tok_repo = api.repo(Repo::new(tok_id, RepoType::Model));
                 let tokenizer_filename = tok_repo.get("tokenizer.json")?;
                 let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
-                TokenizerLoader::with_padding(tokenizer, None)
+                TokenizerWrapper::new(TokenizerLoader::with_padding(tokenizer, None))
             } else {
                 // Try to load tokenizer from model repo
                 let tokenizer_filename = repo.get("tokenizer.json")?;
                 let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
-                TokenizerLoader::with_padding(tokenizer, None)
+                TokenizerWrapper::new(TokenizerLoader::with_padding(tokenizer, None))
             };
             let weights_filename = repo.get("pytorch_model.safetensors")
                 .or_else(|_| repo.get("model.safetensors"))?;
@@ -101,7 +101,7 @@ impl NER {
                 vb.pp("classifier")
             )?;
             
-            Ok((model, TokenizerWrapper::new(tokenizer), classifier, ner_config))
+            Ok((model, tokenizer_wrapper, classifier, ner_config))
         })();
         
         match result {
