@@ -132,9 +132,9 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_embedding_model
-    model = Candle::EmbeddingModel.new(
-      model_path: "sentence-transformers/all-MiniLM-L6-v2",
-      tokenizer_path: "sentence-transformers/all-MiniLM-L6-v2",
+    model = Candle::EmbeddingModel.from_pretrained(
+      "sentence-transformers/all-MiniLM-L6-v2",
+      tokenizer: "sentence-transformers/all-MiniLM-L6-v2",
       model_type: Candle::EmbeddingModelType::MINILM
     )
     tokenizer = model.tokenizer
@@ -148,9 +148,7 @@ class TokenizerTest < Minitest::Test
   end
 
   def test_tokenizer_from_reranker
-    reranker = Candle::Reranker.new(
-      model_path: "cross-encoder/ms-marco-MiniLM-L-6-v2"
-    )
+    reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-6-v2")
     
     tokenizer = reranker.tokenizer
     assert_instance_of Candle::Tokenizer, tokenizer

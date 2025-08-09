@@ -53,6 +53,30 @@ pub fn default_device() -> Device {
     }
 }
 
+/// Get the best available device by checking runtime availability
+pub fn best_device() -> Device {
+    // Try devices in order of preference
+    
+    #[cfg(feature = "metal")]
+    {
+        // Check if Metal is actually available at runtime
+        if CoreDevice::new_metal(0).is_ok() {
+            return Device::Metal;
+        }
+    }
+    
+    #[cfg(feature = "cuda")]
+    {
+        // Check if CUDA is actually available at runtime
+        if CoreDevice::new_cuda(0).is_ok() {
+            return Device::Cuda;
+        }
+    }
+    
+    // Always fall back to CPU
+    Device::Cpu
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[magnus::wrap(class = "Candle::Device")]
 pub enum Device {
@@ -65,6 +89,11 @@ impl Device {
     /// Create a CPU device
     pub fn cpu() -> Self {
         Self::Cpu
+    }
+    
+    /// Get the best available device
+    pub fn best() -> Self {
+        best_device()
     }
 
     /// Create a CUDA device (GPU)
@@ -195,6 +224,7 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     rb_device.define_singleton_method("metal", function!(Device::metal, 0))?;
     rb_device.define_singleton_method("available_devices", function!(available_devices, 0))?;
     rb_device.define_singleton_method("default", function!(default_device, 0))?;
+    rb_device.define_singleton_method("best", function!(best_device, 0))?;
     rb_device.define_method("to_s", method!(Device::__str__, 0))?;
     rb_device.define_method("inspect", method!(Device::__repr__, 0))?;
     rb_device.define_method("==", method!(Device::__eq__, 1))?;

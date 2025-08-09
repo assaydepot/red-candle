@@ -59,8 +59,8 @@ class DeviceBenchmarkTest < Minitest::Test
       device = create_device(device_type)
       
       # Load model once
-      model = Candle::EmbeddingModel.new(
-        model_path: "jinaai/jina-embeddings-v2-base-en",
+      model = Candle::EmbeddingModel.from_pretrained(
+        "jinaai/jina-embeddings-v2-base-en",
         device: device
       )
       
@@ -98,10 +98,7 @@ class DeviceBenchmarkTest < Minitest::Test
       
       device = create_device(device_type)
       
-      reranker = Candle::Reranker.new(
-        model_path: "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        device: device
-      )
+      reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-6-v2", device: device)
       
       results[device_type] = {}
       

@@ -1,22 +1,10 @@
 module Candle
   module DeviceUtils
+    # @deprecated Use {Device.best} instead
     # Get the best available device (Metal > CUDA > CPU)
     def self.best_device
-      # Try devices in order of preference
-      begin
-        # Try Metal first (for Mac users)
-        Device.metal
-      rescue
-        # :nocov:
-        begin
-          # Try CUDA next (for NVIDIA GPU users)
-          Device.cuda
-        rescue
-          # Fall back to CPU
-          Device.cpu
-        end
-        # :nocov:
-      end
+      warn "[DEPRECATION] `DeviceUtils.best_device` is deprecated. Please use `Device.best` instead."
+      Device.best
     end
   end
 end

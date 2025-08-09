@@ -8,6 +8,8 @@ pub mod utils;
 pub mod llm;
 pub mod tokenizer;
 pub mod structured;
+pub mod reranker;
+pub mod ner;
 
 pub use embedding_model::{EmbeddingModel, EmbeddingModelInner};
 pub use tensor::Tensor;

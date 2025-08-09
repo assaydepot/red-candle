@@ -9,17 +9,14 @@ Metal (Apple GPU) support in red-candle is now complete! All models (EmbeddingMo
 ### EmbeddingModel (Works on Metal!)
 ```ruby
 device = Candle::Device.metal
-model = Candle::EmbeddingModel.new(
-  model_path: "jinaai/jina-embeddings-v2-base-en",
-  device: device
-)
+model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
 embedding = model.embedding("Hello world!")  # Works great!
 ```
 
 ### Reranker (Works on Metal!)
 ```ruby
 device = Candle::Device.metal
-reranker = Candle::Reranker.new(device: device)
+reranker = Candle::Reranker.from_pretrained(device: device)
 results = reranker.rerank("query", ["doc1", "doc2"])  # Works on Metal!
 
 # All pooling methods work

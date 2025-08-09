@@ -39,10 +39,7 @@ class DeviceCompatibilityTest < Minitest::Test
       
       device = create_device(device_type)
       
-      model = Candle::EmbeddingModel.new(
-        model_path: "jinaai/jina-embeddings-v2-base-en",
-        device: device
-      )
+      model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
       
       # Test single embedding
       text = "Hello world"
@@ -71,10 +68,7 @@ class DeviceCompatibilityTest < Minitest::Test
       
       device = create_device(device_type)
       
-      reranker = Candle::Reranker.new(
-        model_path: "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        device: device
-      )
+      reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-6-v2", device: device)
       
       query = "What is machine learning?"
       documents = [
@@ -112,7 +106,7 @@ class DeviceCompatibilityTest < Minitest::Test
         
         device = create_device(device_type)
         
-        reranker = Candle::Reranker.new(device: device)
+        reranker = Candle::Reranker.from_pretrained(device: device)
         
         query = "test query"
         documents = ["doc1", "doc2", "doc3"]
@@ -206,24 +200,24 @@ class DeviceCompatibilityTest < Minitest::Test
       # Check entity structure
       entities.each do |entity|
         assert_kind_of Hash, entity
-        assert entity.key?("text")
-        assert entity.key?("label")
-        assert entity.key?("start")
-        assert entity.key?("end")
-        assert entity.key?("confidence")
+        assert entity.key?(:text)
+        assert entity.key?(:label)
+        assert entity.key?(:start)
+        assert entity.key?(:end)
+        assert entity.key?(:confidence)
         
-        assert_kind_of String, entity["text"]
-        assert_kind_of String, entity["label"]
-        assert_kind_of Integer, entity["start"]
-        assert_kind_of Integer, entity["end"]
-        assert_kind_of Float, entity["confidence"]
+        assert_kind_of String, entity[:text]
+        assert_kind_of String, entity[:label]
+        assert_kind_of Integer, entity[:start]
+        assert_kind_of Integer, entity[:end]
+        assert_kind_of Float, entity[:confidence]
         
         # Verify confidence threshold
-        assert entity["confidence"] >= 0.7
+        assert entity[:confidence] >= 0.7
       end
       
       # Verify we found expected entities
-      entity_labels = entities.map { |e| e["label"] }
+      entity_labels = entities.map { |e| e[:label] }
       
       # Should find organization (Apple Inc.) and person (Steve Jobs)
       assert entity_labels.include?("ORG") || entity_labels.include?("CORP")
@@ -267,8 +261,8 @@ class DeviceCompatibilityTest < Minitest::Test
       assert low_threshold_entities.length >= high_threshold_entities.length
       
       # All high threshold entities should be in low threshold results
-      high_texts = high_threshold_entities.map { |e| e["text"] }
-      low_texts = low_threshold_entities.map { |e| e["text"] }
+      high_texts = high_threshold_entities.map { |e| e[:text] }
+      low_texts = low_threshold_entities.map { |e| e[:text] }
       
       high_texts.each do |text|
         assert low_texts.include?(text)
@@ -276,9 +270,9 @@ class DeviceCompatibilityTest < Minitest::Test
     end
   end
   
-  # Test DeviceUtils
-  def test_device_utils_best_device
-    best = Candle::DeviceUtils.best_device
+  # Test Device.best
+  def test_device_best
+    best = Candle::Device.best
     assert_kind_of Candle::Device, best
     
     # Should prefer Metal > CUDA > CPU
@@ -289,5 +283,18 @@ class DeviceCompatibilityTest < Minitest::Test
     else
       assert_equal "cpu", best.to_s
     end
+  end
+  
+  # Test deprecated DeviceUtils still works
+  def test_device_utils_best_device_deprecated
+    # Test that DeviceUtils.best_device still works
+    best = Candle::DeviceUtils.best_device
+    assert_kind_of Candle::Device, best
+    # Should return same as Device.best
+    assert_equal Candle::Device.best, best
+    
+    # Note: Testing the deprecation warning is tricky because warn goes to stderr
+    # and capture_io doesn't always work reliably with it. The important thing
+    # is that the method still works and returns the correct result.
   end
 end

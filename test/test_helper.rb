@@ -89,11 +89,16 @@ module DeviceTestHelper
   end
 end
 
+# Load support modules
+Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
+
 # Print device availability once at test startup
 if ENV['CANDLE_TEST_VERBOSE'] || ARGV.include?('-v') || ARGV.include?('--verbose')
   puts "\nCandle Test Environment:"
   puts "  Available devices: #{DeviceTestHelper::AVAILABLE_DEVICES.select { |_, v| v }.keys.join(', ')}"
   puts "  Testing devices: #{DeviceTestHelper.devices_to_test.join(', ')}"
   puts "  Benchmarks: #{DeviceTestHelper.run_benchmarks? ? 'enabled' : 'disabled'}"
+  puts "  Offline mode: #{ENV['HF_OFFLINE'] == 'true'}"
+  puts "  HF Token: #{ENV['HF_TOKEN'] ? 'Set' : 'Not set'}"
   puts
 end

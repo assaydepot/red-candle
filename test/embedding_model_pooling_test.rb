@@ -9,7 +9,7 @@ class EmbeddingModelPoolingTest < Minitest::Test
   def self.load_model_once
     unless @@model_loaded
       begin
-        @@model = Candle::EmbeddingModel.new
+        @@model = Candle::EmbeddingModel.from_pretrained
         @@model_loaded = true
       rescue => e
         @@model_loaded = :failed

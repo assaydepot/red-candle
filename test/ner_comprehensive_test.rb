@@ -73,17 +73,17 @@ class NERComprehensiveTest < Minitest::Test
     # Test extracting only ORG entities
     orgs = @@ner.extract_entity_type(@sample_text, "ORG", confidence_threshold: 0.5)
     assert_instance_of Array, orgs
-    assert orgs.all? { |e| e["label"] == "ORG" }
+    assert orgs.all? { |e| e[:label] == "ORG" }
     
     # Test extracting only PER entities
     people = @@ner.extract_entity_type(@sample_text, "PER", confidence_threshold: 0.5)
     assert_instance_of Array, people
-    assert people.all? { |e| e["label"] == "PER" }
+    assert people.all? { |e| e[:label] == "PER" }
     
     # Test with lowercase entity type (should be uppercased)
     locs = @@ner.extract_entity_type(@sample_text, "loc", confidence_threshold: 0.5)
     assert_instance_of Array, locs
-    assert locs.all? { |e| e["label"] == "LOC" }
+    assert locs.all? { |e| e[:label] == "LOC" }
   end
   
   def test_analyze_method
@@ -196,14 +196,14 @@ class NERComprehensiveTest < Minitest::Test
     entities = hybrid.extract_entities(text)
     
     # Should find emails
-    emails = entities.select { |e| e["label"] == "EMAIL" }
+    emails = entities.select { |e| e[:label] == "EMAIL" }
     assert_equal 2, emails.length
-    assert emails.any? { |e| e["text"] == "john@apple.com" }
-    assert emails.any? { |e| e["text"] == "mary@google.com" }
+    assert emails.any? { |e| e[:text] == "john@apple.com" }
+    assert emails.any? { |e| e[:text] == "mary@google.com" }
     
     # Should find company
-    companies = entities.select { |e| e["label"] == "COMPANY" }
-    assert companies.any? { |e| e["text"] == "Microsoft" }
+    companies = entities.select { |e| e[:label] == "COMPANY" }
+    assert companies.any? { |e| e[:text] == "Microsoft" }
   end
   
   def test_pattern_recognizer_string_patterns
@@ -216,9 +216,9 @@ class NERComprehensiveTest < Minitest::Test
     entities = recognizer.recognize(text)
     
     assert_equal 2, entities.length
-    assert entities.all? { |e| e["label"] == "ID" }
-    assert entities.any? { |e| e["text"] == "ID-1234" }
-    assert entities.any? { |e| e["text"] == "ID-5678" }
+    assert entities.all? { |e| e[:label] == "ID" }
+    assert entities.any? { |e| e[:text] == "ID-1234" }
+    assert entities.any? { |e| e[:text] == "ID-5678" }
   end
   
   def test_merge_entities_complex_overlaps
@@ -235,7 +235,7 @@ class NERComprehensiveTest < Minitest::Test
     # Should only have one entity due to overlap resolution
     # First match (LONG) should win because it appears first in processing
     assert_equal 1, entities.length
-    assert_equal "Steve Jobs", entities.first["text"]
-    assert_equal "LONG", entities.first["label"]
+    assert_equal "Steve Jobs", entities.first[:text]
+    assert_equal "LONG", entities.first[:label]
   end
 end

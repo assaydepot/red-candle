@@ -3,7 +3,7 @@ use candle_transformers::models::bert::{BertModel, Config};
 use candle_core::{Device as CoreDevice, Tensor, DType, Module as CanModule};
 use candle_nn::{VarBuilder, Linear};
 use hf_hub::{api::sync::Api, Repo, RepoType};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use crate::ruby::{Device, Result};
 use crate::tokenizer::{TokenizerWrapper, loader::TokenizerLoader};
@@ -36,8 +36,8 @@ pub struct NER {
 }
 
 impl NER {
-    pub fn new(model_id: String, device: Option<Device>, tokenizer_id: Option<String>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu).as_device()?;
+    pub fn new(model_id: String, device: Option<Device>, tokenizer: Option<String>) -> Result<Self> {
+        let device = device.unwrap_or(Device::best()).as_device()?;
         
         let result = (|| -> std::result::Result<(BertModel, TokenizerWrapper, Linear, NERConfig), Box<dyn std::error::Error + Send + Sync>> {
             let api = Api::new()?;
@@ -46,18 +46,18 @@ impl NER {
             // Download model files
             let config_filename = repo.get("config.json")?;
             
-            // Handle tokenizer loading with optional tokenizer_id
-            let tokenizer = if let Some(tok_id) = tokenizer_id {
+            // Handle tokenizer loading with optional tokenizer
+            let tokenizer_wrapper = if let Some(tok_id) = tokenizer {
                 // Use the specified tokenizer
                 let tok_repo = api.repo(Repo::new(tok_id, RepoType::Model));
                 let tokenizer_filename = tok_repo.get("tokenizer.json")?;
                 let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
-                TokenizerLoader::with_padding(tokenizer, None)
+                TokenizerWrapper::new(TokenizerLoader::with_padding(tokenizer, None))
             } else {
                 // Try to load tokenizer from model repo
                 let tokenizer_filename = repo.get("tokenizer.json")?;
                 let tokenizer = tokenizers::Tokenizer::from_file(tokenizer_filename)?;
-                TokenizerLoader::with_padding(tokenizer, None)
+                TokenizerWrapper::new(TokenizerLoader::with_padding(tokenizer, None))
             };
             let weights_filename = repo.get("pytorch_model.safetensors")
                 .or_else(|_| repo.get("model.safetensors"))?;
@@ -101,7 +101,7 @@ impl NER {
                 vb.pp("classifier")
             )?;
             
-            Ok((model, TokenizerWrapper::new(tokenizer), classifier, ner_config))
+            Ok((model, tokenizer_wrapper, classifier, ner_config))
         })();
         
         match result {
@@ -185,13 +185,13 @@ impl NER {
         let result = RArray::new();
         for entity in entities {
             let hash = RHash::new();
-            hash.aset("text", entity.text)?;
-            hash.aset("label", entity.label)?;
-            hash.aset("start", entity.start)?;
-            hash.aset("end", entity.end)?;
-            hash.aset("confidence", entity.confidence)?;
-            hash.aset("token_start", entity.token_start)?;
-            hash.aset("token_end", entity.token_end)?;
+            hash.aset(magnus::Symbol::new("text"), entity.text)?;
+            hash.aset(magnus::Symbol::new("label"), entity.label)?;
+            hash.aset(magnus::Symbol::new("start"), entity.start)?;
+            hash.aset(magnus::Symbol::new("end"), entity.end)?;
+            hash.aset(magnus::Symbol::new("confidence"), entity.confidence)?;
+            hash.aset(magnus::Symbol::new("token_start"), entity.token_start)?;
+            hash.aset(magnus::Symbol::new("token_end"), entity.token_end)?;
             result.push(hash)?;
         }
         
@@ -382,6 +382,35 @@ impl NER {
     pub fn model_info(&self) -> String {
         format!("NER model: {}, labels: {}", self.model_id, self.config.id2label.len())
     }
+    
+    /// Get the model_id
+    pub fn model_id(&self) -> String {
+        self.model_id.clone()
+    }
+    
+    /// Get the device
+    pub fn device(&self) -> Device {
+        Device::from_device(&self.device)
+    }
+    
+    /// Get all options as a hash
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        hash.aset("model_id", self.model_id.clone())?;
+        hash.aset("device", self.device().__str__())?;
+        hash.aset("num_labels", self.config.id2label.len())?;
+        
+        // Add entity types as a list
+        let entity_types: Vec<String> = self.config.label2id.keys()
+            .filter(|l| *l != "O")
+            .map(|l| l.trim_start_matches("B-").trim_start_matches("I-").to_string())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        hash.aset("entity_types", entity_types)?;
+        
+        Ok(hash)
+    }
 }
 
 pub fn init(rb_candle: RModule) -> Result<()> {
@@ -392,6 +421,9 @@ pub fn init(rb_candle: RModule) -> Result<()> {
     ner_class.define_method("labels", method!(NER::labels, 0))?;
     ner_class.define_method("tokenizer", method!(NER::tokenizer, 0))?;
     ner_class.define_method("model_info", method!(NER::model_info, 0))?;
+    ner_class.define_method("model_id", method!(NER::model_id, 0))?;
+    ner_class.define_method("device", method!(NER::device, 0))?;
+    ner_class.define_method("options", method!(NER::options, 0))?;
     
     Ok(())
 }

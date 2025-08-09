@@ -53,39 +53,39 @@ class NERCoreFunctionalityTest < Minitest::Test
     assert_instance_of Array, entities
     entities.each do |entity|
       assert_instance_of Hash, entity
-      assert entity.key?("text")
-      assert entity.key?("label")
-      assert entity.key?("start")
-      assert entity.key?("end")
-      assert entity.key?("confidence")
-      assert entity.key?("token_start")
-      assert entity.key?("token_end")
+      assert entity.key?(:text)
+      assert entity.key?(:label)
+      assert entity.key?(:start)
+      assert entity.key?(:end)
+      assert entity.key?(:confidence)
+      assert entity.key?(:token_start)
+      assert entity.key?(:token_end)
       
       # Validate data types
-      assert_instance_of String, entity["text"]
-      assert_instance_of String, entity["label"]
-      assert_instance_of Integer, entity["start"]
-      assert_instance_of Integer, entity["end"]
-      assert_kind_of Numeric, entity["confidence"]
-      assert_instance_of Integer, entity["token_start"]
-      assert_instance_of Integer, entity["token_end"]
+      assert_instance_of String, entity[:text]
+      assert_instance_of String, entity[:label]
+      assert_instance_of Integer, entity[:start]
+      assert_instance_of Integer, entity[:end]
+      assert_kind_of Numeric, entity[:confidence]
+      assert_instance_of Integer, entity[:token_start]
+      assert_instance_of Integer, entity[:token_end]
       
       # Validate ranges
-      assert entity["start"] >= 0
-      assert entity["end"] > entity["start"]
-      assert entity["end"] <= text.length
-      assert entity["confidence"] >= 0.0
-      assert entity["confidence"] <= 1.0
-      assert entity["token_start"] >= 0
-      assert entity["token_end"] > entity["token_start"]
+      assert entity[:start] >= 0
+      assert entity[:end] > entity[:start]
+      assert entity[:end] <= text.length
+      assert entity[:confidence] >= 0.0
+      assert entity[:confidence] <= 1.0
+      assert entity[:token_start] >= 0
+      assert entity[:token_end] > entity[:token_start]
       
       # Validate text extraction - handle potential unicode issues
-      extracted = text[entity["start"]...entity["end"]]
+      extracted = text[entity[:start]...entity[:end]]
       # Due to tokenization, the extracted text might have slight differences
       # but should be mostly the same
-      assert extracted.include?(entity["text"]) || entity["text"].include?(extracted) ||
-             extracted.strip == entity["text"].strip,
-             "Entity text '#{entity["text"]}' doesn't match extracted '#{extracted}'"
+      assert extracted.include?(entity[:text]) || entity[:text].include?(extracted) ||
+             extracted.strip == entity[:text].strip,
+             "Entity text '#{entity[:text]}' doesn't match extracted '#{extracted}'"
     end
   end
   
@@ -103,11 +103,11 @@ class NERCoreFunctionalityTest < Minitest::Test
     
     # All entities should meet their respective thresholds
     low_threshold_entities.each do |entity|
-      assert entity["confidence"] >= 0.3
+      assert entity[:confidence] >= 0.3
     end
     
     high_threshold_entities.each do |entity|
-      assert entity["confidence"] >= 0.95
+      assert entity[:confidence] >= 0.95
     end
   end
   
@@ -139,9 +139,9 @@ class NERCoreFunctionalityTest < Minitest::Test
     # Should handle unicode without crashing
     entities.each do |entity|
       # Text extraction should work correctly with unicode
-      extracted = text[entity["start"]...entity["end"]]
+      extracted = text[entity[:start]...entity[:end]]
       # Tokenization might cause slight boundary differences with unicode
-      assert entity["text"].length > 0, "Entity text should not be empty"
+      assert entity[:text].length > 0, "Entity text should not be empty"
       assert extracted.length > 0, "Extracted text should not be empty"
     end
   end

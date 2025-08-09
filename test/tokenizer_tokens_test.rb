@@ -36,11 +36,11 @@ class TokenizerTokensTest < Minitest::Test
     result = @tokenizer.encode_with_tokens(text)
     
     assert_instance_of Hash, result
-    assert result.key?("ids")
-    assert result.key?("tokens")
+    assert result.key?(:ids)
+    assert result.key?(:tokens)
     
-    ids = result["ids"]
-    tokens = result["tokens"]
+    ids = result[:ids]
+    tokens = result[:tokens]
     
     assert_equal ids.length, tokens.length
     assert ids.all? { |id| id.is_a?(Integer) }

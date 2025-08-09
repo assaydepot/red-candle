@@ -50,26 +50,26 @@ end
 
 ```ruby
 # CPU (always works)
-model = Candle::EmbeddingModel.new(device: Candle::Device.cpu)
+model = Candle::EmbeddingModel.from_pretrained(device: Candle::Device.cpu)
 
 # Metal
-model = Candle::EmbeddingModel.new(device: Candle::Device.metal)
+model = Candle::EmbeddingModel.from_pretrained(device: Candle::Device.metal)
 
 # CUDA (if available)
-model = Candle::EmbeddingModel.new(device: Candle::Device.cuda)
+model = Candle::EmbeddingModel.from_pretrained(device: Candle::Device.cuda)
 ```
 
 ### Reranker
 
 ```ruby
 # CPU (always works)
-reranker = Candle::Reranker.new(device: Candle::Device.cpu)
+reranker = Candle::Reranker.from_pretrained(device: Candle::Device.cpu)
 
 # Metal
-reranker = Candle::Reranker.new(device: Candle::Device.metal)
+reranker = Candle::Reranker.from_pretrained(device: Candle::Device.metal)
 
 # CUDA (if available)
-reranker = Candle::Reranker.new(device: Candle::Device.cuda)
+reranker = Candle::Reranker.from_pretrained(device: Candle::Device.cuda)
 ```
 
 ### LLM

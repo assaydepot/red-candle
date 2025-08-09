@@ -11,15 +11,15 @@ class NERTest < Minitest::Test
     text = "TP53 and BRCA1 mutations are common. CD4+ cells express CD8."
     entities = recognizer.recognize(text)
     
-    assert entities.any? { |e| e["text"] == "TP53" }
-    assert entities.any? { |e| e["text"] == "BRCA1" }
-    assert entities.any? { |e| e["text"] == "CD4" }
-    assert entities.any? { |e| e["text"] == "CD8" }
+    assert entities.any? { |e| e[:text] == "TP53" }
+    assert entities.any? { |e| e[:text] == "BRCA1" }
+    assert entities.any? { |e| e[:text] == "CD4" }
+    assert entities.any? { |e| e[:text] == "CD8" }
     
     entities.each do |e|
-      assert_equal "GENE", e["label"]
-      assert_equal 1.0, e["confidence"]
-      assert_equal "pattern", e["source"]
+      assert_equal "GENE", e[:label]
+      assert_equal 1.0, e[:confidence]
+      assert_equal "pattern", e[:source]
     end
   end
   
@@ -31,10 +31,10 @@ class NERTest < Minitest::Test
     entities = recognizer.recognize(text)
     
     assert_equal 2, entities.length
-    assert entities.any? { |e| e["text"] == "TP53" }
-    assert entities.any? { |e| e["text"] == "BRCA1" }
+    assert entities.any? { |e| e[:text] == "TP53" }
+    assert entities.any? { |e| e[:text] == "BRCA1" }
     # ABC1 not in gazetteer, so not recognized
-    refute entities.any? { |e| e["text"] == "ABC1" }
+    refute entities.any? { |e| e[:text] == "ABC1" }
   end
   
   def test_gazetteer_case_sensitivity
@@ -47,7 +47,7 @@ class NERTest < Minitest::Test
     recognizer_cs = Candle::GazetteerEntityRecognizer.new("GENE", ["TP53"], case_sensitive: true)
     entities = recognizer_cs.recognize("tp53 and TP53 and Tp53")
     assert_equal 1, entities.length
-    assert_equal "TP53", entities.first["text"]
+    assert_equal "TP53", entities.first[:text]
   end
   
   def test_hybrid_ner_without_model
@@ -64,14 +64,14 @@ class NERTest < Minitest::Test
     entities = hybrid.extract_entities(text)
     
     # Should find pattern-based genes
-    genes = entities.select { |e| e["label"] == "GENE" }
-    assert genes.any? { |e| e["text"] == "TP53" }
-    assert genes.any? { |e| e["text"] == "CDKN2A" }
+    genes = entities.select { |e| e[:label] == "GENE" }
+    assert genes.any? { |e| e[:text] == "TP53" }
+    assert genes.any? { |e| e[:text] == "CDKN2A" }
     
     # Should find gazetteer-based proteins
-    proteins = entities.select { |e| e["label"] == "PROTEIN" }
-    assert proteins.any? { |e| e["text"] == "p53" }
-    assert proteins.any? { |e| e["text"] == "p16" }
+    proteins = entities.select { |e| e[:label] == "PROTEIN" }
+    assert proteins.any? { |e| e[:text] == "p53" }
+    assert proteins.any? { |e| e[:text] == "p16" }
   end
   
   def test_entity_overlap_resolution
@@ -87,7 +87,7 @@ class NERTest < Minitest::Test
     # Should only have one entity due to overlap resolution
     assert_equal 1, entities.length
     # First match wins (ALPHANUM comes first)
-    assert_equal "ALPHANUM", entities.first["label"]
+    assert_equal "ALPHANUM", entities.first[:label]
   end
   
   def test_word_boundary_detection
@@ -112,8 +112,8 @@ class NERTest < Minitest::Test
     entities = ner.extract_entities(text)
     
     # Check for expected entities
-    assert entities.any? { |e| e["label"] == "ORG" && e["text"].include?("Apple") }
-    assert entities.any? { |e| e["label"] == "PER" && e["text"].include?("Steve Jobs") }
-    assert entities.any? { |e| e["label"] == "LOC" && e["text"].include?("Cupertino") }
+    assert entities.any? { |e| e[:label] == "ORG" && e[:text].include?("Apple") }
+    assert entities.any? { |e| e[:label] == "PER" && e[:text].include?("Steve Jobs") }
+    assert entities.any? { |e| e[:label] == "LOC" && e[:text].include?("Cupertino") }
   end
 end

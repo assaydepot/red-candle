@@ -51,6 +51,21 @@ module Candle
       to_f.to_i
     end
     
+    # Improved inspect method showing shape, dtype, and device
+    def inspect
+      shape_str = shape.join("x")
+      
+      parts = ["#<Candle::Tensor"]
+      parts << "shape=#{shape_str}"
+      parts << "dtype=#{dtype}"
+      parts << "device=#{device}"
+      
+      # Add element count for clarity
+      parts << "elements=#{elem_count}"
+      
+      parts.join(" ") + ">"
+    end
+    
     
     # Override class methods to support keyword arguments for device
     class << self
