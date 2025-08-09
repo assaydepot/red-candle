@@ -6,7 +6,16 @@ require 'bundler/setup'
 require 'net/http'
 require 'json'
 require 'fileutils'
-require 'candle'
+
+# Try to load candle, but handle if it's not compiled yet
+begin
+  require 'candle'
+  CANDLE_AVAILABLE = true
+rescue LoadError => e
+  puts "Warning: Candle library not available (#{e.message})"
+  puts "Please run 'rake compile' first to build the native extension."
+  exit 1
+end
 
 class ModelDownloader
   HUGGINGFACE_HUB = "https://huggingface.co"

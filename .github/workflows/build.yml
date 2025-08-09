@@ -40,11 +40,21 @@ jobs:
       - name: Install Valgrind
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
+      # Compile the native extension first
+      - name: Compile native extension
+        run: bundle exec rake compile
+
       # Pre-download models if not cached
       - name: Pre-download test models
         run: |
           echo "Pre-downloading models to avoid rate limits..."
-          bundle exec ruby script/download_test_models.rb
+          # Try the main download script first (requires compiled extension)
+          if bundle exec ruby script/download_test_models.rb; then
+            echo "Models downloaded successfully with Candle"
+          else
+            echo "Falling back to HTTP downloader..."
+            ruby script/download_models_http.rb
+          fi
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_HOME: ~/.cache/huggingface

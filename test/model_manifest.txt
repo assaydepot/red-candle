@@ -1,0 +1,25 @@
+# List of models required for tests
+# Format: model_id [optional: specific files]
+# This file is used as a cache key in CI
+
+# NER Models
+Babelscape/wikineural-multilingual-ner
+dslim/bert-base-NER
+
+# Embedding Models
+sentence-transformers/all-MiniLM-L6-v2
+jinaai/jina-embeddings-v2-base-en
+
+# Reranker Models
+cross-encoder/ms-marco-MiniLM-L-12-v2
+
+# LLM Models (GGUF)
+TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF gguf:tinyllama-1.1b-chat-v1.0.Q3_K_S.gguf
+
+# Tokenizers
+bert-base-uncased
+gpt2
+TinyLlama/TinyLlama-1.1B-Chat-v1.0
+
+# Small test models (for quick tests)
+microsoft/phi-2
