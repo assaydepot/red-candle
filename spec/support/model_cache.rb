@@ -44,4 +44,15 @@ module ModelCache
       loaded_model
     end
   end
+  
+  # Clear all cached models to free memory
+  def clear!
+    @cache.clear
+    GC.start # Force garbage collection
+  end
+  
+  # Clear specific model
+  def clear_model(key)
+    @cache.delete(key)
+  end
 end
