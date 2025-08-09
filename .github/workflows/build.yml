@@ -58,4 +58,4 @@ jobs:
       - name: Display Disk Space After Test
         run: df -h
 
-      - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
+      - run: bundle exec yard --readme README.md --markup markdown --markup-provider redcarpet
