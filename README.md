@@ -610,7 +610,7 @@ text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, Cal
 entities = ner.extract_entities(text)
 
 entities.each do |entity|
-  puts "#{entity['text']} (#{entity['label']}) - confidence: #{entity['confidence'].round(2)}"
+  puts "#{entity[:text]} (#{entity[:label]}) - confidence: #{entity[:confidence].round(2)}"
 end
 # Output:
 # Apple Inc. (ORG) - confidence: 0.99
