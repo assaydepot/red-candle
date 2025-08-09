@@ -8,6 +8,7 @@ class CandleInformersComparisonTest < Minitest::Test
   FLOAT_TOLERANCE = 1e-4
   
   def test_reranker_comparison
+    skip "Informers gem doesn't respect HF_HUB_OFFLINE mode" if ENV['HF_HUB_OFFLINE'] == '1'
     model_id = "cross-encoder/ms-marco-MiniLM-L-12-v2"
     query = "How many people live in London?"
     docs = [
@@ -39,6 +40,7 @@ class CandleInformersComparisonTest < Minitest::Test
   end
 
   def test_embedding_model_comparison
+    skip "Informers gem doesn't respect HF_HUB_OFFLINE mode" if ENV['HF_HUB_OFFLINE'] == '1'
     sentences = ["How is the weather today?", "What is the current weather like today?"]
 
     # Test with Informers

@@ -50,63 +50,30 @@ jobs:
       - name: Pre-download test models
         run: |
           echo "Pre-downloading models to avoid rate limits..."
-          echo "Default cache location: ~/.cache/huggingface"
           
-          # Debug: Check what hf_hub expects
-          echo "=== Debugging cache locations ==="
-          echo "HOME: $HOME"
-          echo "XDG_CACHE_HOME: ${XDG_CACHE_HOME:-not set}"
-          echo "HF_HOME: ${HF_HOME:-not set}"
-          echo "HUGGINGFACE_HUB_CACHE: ${HUGGINGFACE_HUB_CACHE:-not set}"
-          
-          # List existing cache if any
-          echo "=== Existing cache check ==="
-          if [ -d ~/.cache/huggingface/hub ]; then
-            echo "Found cache at ~/.cache/huggingface/hub"
-            ls -la ~/.cache/huggingface/hub/ | head -10
-            echo "Models cached:"
-            ls -d ~/.cache/huggingface/hub/models--* 2>/dev/null | head -10 || echo "No models found"
+          # Check if we have a good cache
+          if [ -d ~/.cache/huggingface/hub ] && [ "$(ls -A ~/.cache/huggingface/hub/models--* 2>/dev/null | wc -l)" -gt 5 ]; then
+            echo "✓ Found existing cache with models"
+            echo "Models cached: $(ls -d ~/.cache/huggingface/hub/models--* 2>/dev/null | wc -l)"
+            echo "Cache size: $(du -sh ~/.cache/huggingface 2>/dev/null | cut -f1)"
           else
-            echo "No cache found at ~/.cache/huggingface/hub"
+            echo "⚠ Cache incomplete or missing, downloading models..."
+            # Download models using Candle (requires compiled extension)
+            # Use HF_TOKEN for higher rate limits
+            bundle exec ruby script/download_test_models.rb
           fi
-          
-          # Download models using Candle (requires compiled extension)
-          bundle exec ruby script/download_test_models.rb
-          
-          # Show what was cached
-          echo "=== Post-download cache check ==="
-          echo "Cache contents:"
-          ls -la ~/.cache/huggingface/hub/ 2>/dev/null | head -20 || echo "No hub directory found"
-          echo "Total cache size:"
-          du -sh ~/.cache/huggingface 2>/dev/null || echo "Cache not found"
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-
-      # Debug: Check if cache is being used
-      - name: Debug cache usage
-        run: |
-          echo "=== Testing if cache works ==="
-          # Try loading a simple tokenizer to see if it downloads
-          ruby -e "
-            require 'bundler/setup'
-            require 'candle'
-            
-            puts 'Testing bert-base-uncased tokenizer...'
-            start_time = Time.now
-            tokenizer = Candle::Tokenizer.from_pretrained('bert-base-uncased')
-            elapsed = Time.now - start_time
-            
-            if elapsed < 1
-              puts \"✓ Loaded in #{elapsed.round(2)}s - likely from cache\"
-            else
-              puts \"⚠ Loaded in #{elapsed.round(2)}s - might have downloaded\"
-            end
-          " || echo "Test failed"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: Run tests with Valgrind Massif (Peak Memory)
-        run: valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
+        run: |
+          # If we have a good cache, use offline mode to avoid API calls entirely
+          if [ -d ~/.cache/huggingface/hub ] && [ "$(ls -A ~/.cache/huggingface/hub/models--* 2>/dev/null | wc -l)" -gt 5 ]; then
+            echo "Using HF_HUB_OFFLINE mode with cached models"
+            export HF_HUB_OFFLINE=1
+          fi
+          
+          valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
