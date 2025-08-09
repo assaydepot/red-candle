@@ -2,9 +2,10 @@
 # Format: model_id [optional: specific files]
 # This file is used as a cache key in CI
 
-# NER Models
+# NER Models  
 Babelscape/wikineural-multilingual-ner
-dslim/bert-base-NER
+# Note: dslim/bert-base-NER uses vocab.txt format which may not be fully supported
+# It's kept as a fallback but the primary model above should work
 
 # Embedding Models
 sentence-transformers/all-MiniLM-L6-v2

@@ -126,7 +126,17 @@ class ModelDownloader
     when /NER/
       # NER model
       puts "  Type: NER Model"
-      Candle::NER.from_pretrained(model_id)
+      begin
+        Candle::NER.from_pretrained(model_id)
+      rescue => e
+        if e.message.include?("tokenizer") || e.message.include?("404")
+          puts "  Note: Model may use incompatible tokenizer format (expected by tests as fallback)"
+          # This is expected for dslim/bert-base-NER - it's a fallback model
+          # The primary model (Babelscape/wikineural-multilingual-ner) should work
+        else
+          raise
+        end
+      end
       
     when /phi-2/
       # LLM

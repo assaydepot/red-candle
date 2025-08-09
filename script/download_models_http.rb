@@ -57,7 +57,8 @@ class HTTPModelDownloader
     when /reranker|cross-encoder/
       base_files + ['tokenizer.json', 'tokenizer_config.json', 'pytorch_model.bin', 'model.safetensors']
     when /NER/
-      base_files + ['tokenizer.json', 'tokenizer_config.json', 'pytorch_model.bin', 'model.safetensors']
+      # NER models might use BERT tokenizer (vocab.txt) or modern tokenizer (tokenizer.json)
+      base_files + ['tokenizer.json', 'tokenizer_config.json', 'vocab.txt', 'pytorch_model.bin', 'model.safetensors']
     when /phi-2|llama|mistral/
       # Large models - just download config for caching purposes
       base_files + ['tokenizer.json', 'tokenizer_config.json']
