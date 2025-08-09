@@ -48,7 +48,6 @@ RSpec.configure do |config|
 
   # Include helpers
   config.include DeviceHelpers
-  config.include SimpleModelCache
   
   # Suppress warnings during tests (same as Minitest setup)
   config.before(:suite) do
