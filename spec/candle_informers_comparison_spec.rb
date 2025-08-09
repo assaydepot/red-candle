@@ -8,6 +8,9 @@ RSpec.describe "CandleInformersComparison" do
   FLOAT_TOLERANCE = 1e-4
   
   describe "reranker comparison" do
+    before do
+      skip "Informers gem doesn't respect HF_HUB_OFFLINE mode" if ENV['HF_HUB_OFFLINE'] == '1'
+    end
     it "produces similar scores to Informers" do
       model_id = "cross-encoder/ms-marco-MiniLM-L-12-v2"
       query = "How many people live in London?"
@@ -41,6 +44,9 @@ RSpec.describe "CandleInformersComparison" do
   end
 
   describe "embedding model comparison" do
+    before do
+      skip "Informers gem doesn't respect HF_HUB_OFFLINE mode" if ENV['HF_HUB_OFFLINE'] == '1'
+    end
     it "produces similar embeddings to Informers" do
       sentences = ["How is the weather today?", "What is the current weather like today?"]
 

@@ -45,22 +45,15 @@ jobs:
       - name: Display Disk Space Before Test
         run: df -h
 
-      - name: Install Valgrind
-        run: sudo apt-get update && sudo apt-get install -y valgrind
-
       - name: Compile native extension
         run: bundle exec rake compile
 
-      - name: Run specs with Valgrind Massif (Peak Memory)
+      - name: Run specs
         run: |
           # HF_HUB_OFFLINE is already set by S3 sync step
           # This ensures no HuggingFace API calls during tests
           echo "Running specs with HF_HUB_OFFLINE=$HF_HUB_OFFLINE"
-          valgrind --tool=massif --massif-out-file=massif.out bundle exec rspec
-
-      - name: Display Peak Memory Usage
-        run: |
-          ms_print massif.out | head -n 30
+          bundle exec rspec
 
       - name: Display Disk Space After Test
         run: df -h

@@ -177,7 +177,7 @@ red-candle/
 ├── ext/              # Native extensions
 │   └── candle/       # Rust extension
 │       └── src/      # Rust source files
-├── test/             # Test suite
+├── spec/             # RSpec test suite
 ├── examples/         # Usage examples
 ├── docs/             # Additional documentation
 └── bin/              # Executables
