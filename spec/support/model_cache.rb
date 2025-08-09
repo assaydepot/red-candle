@@ -45,6 +45,26 @@ module ModelCache
     end
   end
   
+  def ner_model
+    ner  # Alias for consistency
+  end
+  
+  def embedding_model
+    @cache[:embedding_model] ||= begin
+      Candle::EmbeddingModel.from_pretrained(
+        "sentence-transformers/all-MiniLM-L6-v2",
+        tokenizer: "sentence-transformers/all-MiniLM-L6-v2",
+        model_type: Candle::EmbeddingModelType::MINILM
+      )
+    end
+  end
+  
+  def reranker
+    @cache[:reranker] ||= begin
+      Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
+    end
+  end
+  
   # Clear all cached models to free memory
   def clear!
     @cache.clear
