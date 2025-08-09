@@ -66,4 +66,24 @@ RSpec.configure do |config|
       puts
     end
   end
+  
+  # Global cleanup after suite completes
+  config.after(:suite) do
+    # Clear all cached models
+    ModelCache.clear! if defined?(ModelCache)
+    
+    # Force garbage collection to clean up native resources
+    GC.start(full_mark: true, immediate_sweep: true)
+    
+    # Give the system a moment to clean up
+    sleep(0.1)
+  end
+  
+  # Periodic cleanup during long test runs
+  config.after(:all) do |example_group|
+    # Run GC after each top-level describe block
+    if example_group.class.top_level?
+      GC.start
+    end
+  end
 end

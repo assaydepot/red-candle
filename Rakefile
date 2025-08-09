@@ -12,7 +12,7 @@ rescue LoadError
   rspec_available = false
 end
 
-task default: :test
+task default: :spec
 Rake::TestTask.new do |t|
   t.deps << :compile
   t.libs << "test"
@@ -187,8 +187,11 @@ task "coverage:rust" => "rust:coverage:html"
 if rspec_available
   desc "Run RSpec tests"
   RSpec::Core::RakeTask.new(:spec) do |t|
-    t.rspec_opts = "--format documentation"
+    t.rspec_opts = "--format progress"
   end
+  
+  # Add compile as a dependency for spec task
+  task spec: :compile
   
   namespace :spec do
     desc "Run RSpec tests with all devices"
