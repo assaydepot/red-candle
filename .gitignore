@@ -10,6 +10,7 @@
 /test/version_tmp/
 /tmp/
 /vendor/
+.rspec_status
 
 # Used by dotenv library to load environment variables.
 # .env
