@@ -20,6 +20,27 @@ jobs:
           ruby-version: ruby
           bundler-cache: true
 
+      # Configure AWS credentials for S3 access
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Download HuggingFace cache from S3
+      - name: Sync HuggingFace cache from S3
+        run: |
+          echo "Downloading HuggingFace cache from S3..."
+          aws s3 sync s3://red-candle-hf-cache/cache/ ~/.cache/huggingface/ --quiet
+          echo "Cache downloaded successfully"
+          echo "Cache size: $(du -sh ~/.cache/huggingface | cut -f1)"
+          echo "Models cached: $(ls -d ~/.cache/huggingface/hub/models--* 2>/dev/null | wc -l)"
+
+          # Set offline mode since we have all models
+          echo "HF_HUB_OFFLINE=1" >> $GITHUB_ENV
+          echo "Offline mode enabled - no HuggingFace API calls will be made"
+
       - name: Display Memory Usage
         run: free -h
 
