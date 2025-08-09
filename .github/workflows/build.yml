@@ -15,16 +15,18 @@ jobs:
             tmp
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # Cache HuggingFace models
+      # Cache HuggingFace models to avoid rate limiting
+      # Uses default hf_hub cache location: ~/.cache/huggingface/hub
+      # Models are pre-downloaded after compilation to ensure proper cache structure
       - name: Cache HuggingFace models
         uses: actions/cache@v3
         with:
           path: |
             ~/.cache/huggingface
-            ~/Library/Caches/huggingface
-          key: ${{ runner.os }}-huggingface-models-v1-${{ hashFiles('test/model_manifest.txt') }}
+            /home/runner/.cache/huggingface
+          key: ${{ runner.os }}-huggingface-models-v2-${{ hashFiles('test/model_manifest.txt') }}
           restore-keys: |
-            ${{ runner.os }}-huggingface-models-v1-
+            ${{ runner.os }}-huggingface-models-v2-
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -48,22 +50,65 @@ jobs:
       - name: Pre-download test models
         run: |
           echo "Pre-downloading models to avoid rate limits..."
-          # Try the main download script first (requires compiled extension)
-          if bundle exec ruby script/download_test_models.rb; then
-            echo "Models downloaded successfully with Candle"
+          echo "Default cache location: ~/.cache/huggingface"
+          
+          # Debug: Check what hf_hub expects
+          echo "=== Debugging cache locations ==="
+          echo "HOME: $HOME"
+          echo "XDG_CACHE_HOME: ${XDG_CACHE_HOME:-not set}"
+          echo "HF_HOME: ${HF_HOME:-not set}"
+          echo "HUGGINGFACE_HUB_CACHE: ${HUGGINGFACE_HUB_CACHE:-not set}"
+          
+          # List existing cache if any
+          echo "=== Existing cache check ==="
+          if [ -d ~/.cache/huggingface/hub ]; then
+            echo "Found cache at ~/.cache/huggingface/hub"
+            ls -la ~/.cache/huggingface/hub/ | head -10
+            echo "Models cached:"
+            ls -d ~/.cache/huggingface/hub/models--* 2>/dev/null | head -10 || echo "No models found"
           else
-            echo "Falling back to HTTP downloader..."
-            ruby script/download_models_http.rb
+            echo "No cache found at ~/.cache/huggingface/hub"
           fi
+          
+          # Download models using Candle (requires compiled extension)
+          bundle exec ruby script/download_test_models.rb
+          
+          # Show what was cached
+          echo "=== Post-download cache check ==="
+          echo "Cache contents:"
+          ls -la ~/.cache/huggingface/hub/ 2>/dev/null | head -20 || echo "No hub directory found"
+          echo "Total cache size:"
+          du -sh ~/.cache/huggingface 2>/dev/null || echo "Cache not found"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_HOME: ~/.cache/huggingface
+
+      # Debug: Check if cache is being used
+      - name: Debug cache usage
+        run: |
+          echo "=== Testing if cache works ==="
+          # Try loading a simple tokenizer to see if it downloads
+          ruby -e "
+            require 'bundler/setup'
+            require 'candle'
+            
+            puts 'Testing bert-base-uncased tokenizer...'
+            start_time = Time.now
+            tokenizer = Candle::Tokenizer.from_pretrained('bert-base-uncased')
+            elapsed = Time.now - start_time
+            
+            if elapsed < 1
+              puts \"✓ Loaded in #{elapsed.round(2)}s - likely from cache\"
+            else
+              puts \"⚠ Loaded in #{elapsed.round(2)}s - might have downloaded\"
+            end
+          " || echo "Test failed"
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: Run tests with Valgrind Massif (Peak Memory)
         run: valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
         env:
-          HF_HOME: ~/.cache/huggingface
-          HF_OFFLINE: true  # Use only cached models
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: Display Peak Memory Usage
         run: |

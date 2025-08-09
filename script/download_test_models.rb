@@ -1,19 +1,23 @@
 #!/usr/bin/env ruby
 # Script to pre-download all models needed for tests
 # This avoids rate limiting during test runs
+#
+# IMPORTANT: This script requires the native extension to be compiled first!
+# The models MUST be downloaded through Candle/hf_hub to create the proper
+# cache structure that the Rust code expects.
 
 require 'bundler/setup'
-require 'net/http'
-require 'json'
 require 'fileutils'
 
-# Try to load candle, but handle if it's not compiled yet
+# Require candle - fail if not compiled
 begin
   require 'candle'
-  CANDLE_AVAILABLE = true
 rescue LoadError => e
-  puts "Warning: Candle library not available (#{e.message})"
+  puts "ERROR: Candle library not available (#{e.message})"
   puts "Please run 'rake compile' first to build the native extension."
+  puts ""
+  puts "The native extension is required because only the hf_hub Rust crate"
+  puts "can create the proper cache structure that will be reused during tests."
   exit 1
 end
 
@@ -22,7 +26,8 @@ class ModelDownloader
   
   def initialize
     @hf_token = ENV['HF_TOKEN']
-    @hf_home = ENV['HF_HOME'] || File.expand_path("~/.cache/huggingface")
+    # Let hf_hub use its default location
+    @hf_home = File.expand_path("~/.cache/huggingface")
     @manifest_file = File.join(__dir__, '..', 'test', 'model_manifest.txt')
     @models_to_download = []
     @failed_downloads = []
@@ -72,8 +77,13 @@ class ModelDownloader
         
         puts "  ✓ Successfully cached"
       rescue => e
-        puts "  ✗ Failed: #{e.message}"
-        @failed_downloads << model_info
+        # Some failures are expected and okay
+        if model_info[:model_id].include?("dslim/bert-base-NER") && e.message.include?("404")
+          puts "  ℹ Expected failure (incompatible tokenizer format)"
+        else
+          puts "  ✗ Failed: #{e.message}"
+          @failed_downloads << model_info
+        end
         
         # Don't fail on individual model errors, continue with others
         if e.message.include?("429") || e.message.include?("Too Many Requests")
