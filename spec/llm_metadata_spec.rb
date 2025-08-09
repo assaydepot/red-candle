@@ -16,6 +16,13 @@ RSpec.describe "LLMMetadata" do
     skip "LLM model loading failed: #{e.message}"
   end
   
+  # Clear cached models after this spec file completes to free memory
+  after(:all) do
+    ModelCache.clear_model(:gguf_llm)
+    ModelCache.clear_model(:llm)
+    GC.start
+  end
+  
   describe "#model_id" do
     it "returns correct model_id for GGUF model" do
       expect(gguf_llm).to respond_to(:model_id)

@@ -10,6 +10,12 @@ RSpec.describe "NERCoreFunctionality" do
     model
   end
   
+  # Clear cached model after this spec file completes to free memory
+  after(:all) do
+    ModelCache.clear_model(:ner)
+    GC.start
+  end
+  
   # Test extract_entities method comprehensively
   describe "#extract_entities" do
     context "basic functionality" do
