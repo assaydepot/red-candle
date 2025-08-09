@@ -5,8 +5,6 @@ jobs:
     runs-on: red-candle-runner
     steps:
       - uses: actions/checkout@v3
-
-      # Cache Rust dependencies
       - uses: actions/cache@v3
         with:
           path: |
@@ -53,8 +51,12 @@ jobs:
       - name: Compile native extension
         run: bundle exec rake compile
 
-      - name: Run tests with Valgrind Massif (Peak Memory)
-        run: valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
+      - name: Run specs with Valgrind Massif (Peak Memory)
+        run: |
+          # HF_HUB_OFFLINE is already set by S3 sync step
+          # This ensures no HuggingFace API calls during tests
+          echo "Running specs with HF_HUB_OFFLINE=$HF_HUB_OFFLINE"
+          valgrind --tool=massif --massif-out-file=massif.out bundle exec rspec
 
       - name: Display Peak Memory Usage
         run: |
