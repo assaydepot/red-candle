@@ -1,4 +1,5 @@
 require "spec_helper"
+require "support/llama_shared_examples"
 
 RSpec.describe "TinyLlama LLM" do
   before(:all) do
@@ -23,7 +24,11 @@ RSpec.describe "TinyLlama LLM" do
     end
   end
   
-  describe "generation config" do
+  # Use shared examples for common Llama architecture tests
+  it_behaves_like "llama architecture model", "TinyLlama"
+  
+  # TinyLlama-specific tests
+  describe "generation config presets" do
     it "creates default config" do
       config = Candle::GenerationConfig.default
       expect(config.max_length).to eq(512)
@@ -47,111 +52,56 @@ RSpec.describe "TinyLlama LLM" do
       expect(config.temperature).to be_between(0.5, 1.0)
       expect(config.repetition_penalty).to be > 1.0
     end
-  end
-  
-  describe "generation" do
-    it "generates text with default config" do
-      skip unless @model_loaded == true
-      
-      prompt = "Hello, my name is"
-      config = Candle::GenerationConfig.new(max_length: 20)
-      result = @llm.generate(prompt, config: config)
-      
-      expect(result).to be_a(String)
-      expect(result).not_to be_empty
-    end
     
-    it "generates with custom config" do
-      skip unless @model_loaded == true
+    it "chains config modifications with 'with' method" do
+      config = Candle::GenerationConfig.default
+      new_config = config.with(temperature: 0.9, max_length: 200)
       
-      config = Candle::GenerationConfig.new(
-        max_length: 30,
-        temperature: 0.5,
-        top_p: 0.9
-      )
+      # Original should be unchanged
+      expect(config.temperature).to eq(0.7)
+      expect(config.max_length).to eq(512)
       
-      prompt = "Count to 5:"
-      result = @llm.generate(prompt, config: config)
-      
-      expect(result).to be_a(String)
-      expect(result).not_to be_empty
-    end
-    
-    it "supports streaming generation" do
-      skip unless @model_loaded == true
-      
-      prompt = "Once upon a time"
-      chunks = []
-      
-      config = Candle::GenerationConfig.new(max_length: 20)
-      @llm.generate_stream(prompt, config: config) do |chunk|
-        chunks << chunk
-      end
-      
-      expect(chunks).not_to be_empty
-      expect(chunks.join).to be_a(String)
-    end
-  end
-  
-  describe "chat interface" do
-    it "handles single message" do
-      skip unless @model_loaded == true
-      
-      messages = [
-        { role: "user", content: "Hi!" }
-      ]
-      
-      config = Candle::GenerationConfig.new(max_length: 30)
-      response = @llm.chat(messages, config: config)
-      expect(response).to be_a(String)
-      expect(response).not_to be_empty
-    end
-    
-    it "handles conversation" do
-      skip unless @model_loaded == true
-      
-      messages = [
-        { role: "user", content: "What's 2+2?" },
-        { role: "assistant", content: "2+2 equals 4." },
-        { role: "user", content: "And 3+3?" }
-      ]
-      
-      config = Candle::GenerationConfig.new(max_length: 30)
-      response = @llm.chat(messages, config: config)
-      expect(response).to be_a(String)
-    end
-    
-    it "applies TinyLlama chat template" do
-      skip unless @model_loaded == true
-      
-      messages = [
-        { role: "system", content: "You are a helpful assistant" },
-        { role: "user", content: "Hello" }
-      ]
-      
-      formatted = @llm.apply_chat_template(messages)
-      expect(formatted).to be_a(String)
-      # TinyLlama uses Llama format
-      expect(formatted).to include("<|")
+      # New config should have updated values
+      expect(new_config.temperature).to eq(0.9)
+      expect(new_config.max_length).to eq(200)
     end
   end
   
   describe "tokenizer registry" do
-    it "finds TinyLlama tokenizer" do
+    it "finds TinyLlama tokenizer automatically" do
       expect(Candle::LLM.guess_tokenizer("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF"))
         .to eq("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
-      expect(Candle::LLM.guess_tokenizer("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF"))
+      
+      # Should also work for variants
+      expect(Candle::LLM.guess_tokenizer("someone/tinyllama-1.1b-gguf"))
         .to eq("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+    end
+    
+    it "registers custom tokenizers" do
+      # Test exact match registration
+      Candle::LLM.register_tokenizer("custom/tinyllama-variant", "custom/tokenizer")
+      expect(Candle::LLM.guess_tokenizer("custom/tinyllama-variant"))
+        .to eq("custom/tokenizer")
+      
+      # Test pattern registration
+      Candle::LLM.register_tokenizer(/tiny.*custom/i, "custom/tiny-tokenizer")
+      expect(Candle::LLM.guess_tokenizer("user/tiny-model-custom"))
+        .to eq("custom/tiny-tokenizer")
     end
   end
   
-  describe "metadata" do
-    it "has model configuration" do
+  describe "fast CI verification" do
+    it "loads and generates quickly for CI testing" do
       skip unless @model_loaded == true
       
-      expect(@llm).to respond_to(:generate)
-      expect(@llm).to respond_to(:chat)
-      expect(@llm).to respond_to(:apply_chat_template)
+      # This test ensures TinyLlama can be used as a fast smoke test in CI
+      start_time = Time.now
+      config = Candle::GenerationConfig.new(max_length: 10, temperature: 0.0)
+      result = @llm.generate("Test", config: config)
+      elapsed = Time.now - start_time
+      
+      expect(result).not_to be_empty
+      expect(elapsed).to be < 2.0  # Should complete quickly
     end
   end
 end
