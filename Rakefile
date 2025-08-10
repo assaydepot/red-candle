@@ -161,7 +161,7 @@ namespace :spec do
       sh "rspec spec/llm/tinyllama_spec.rb --format documentation"
     end
 
-    desc "Run all LLM tests (WARNING: downloads large models)"
+    desc "Run all LLM tests (WARNING: requires large models already downloaded)"
     task :all => [:gemma, :phi, :qwen, :mistral, :llama, :tinyllama]
   end
 end
