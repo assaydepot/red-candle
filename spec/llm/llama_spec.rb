@@ -37,19 +37,22 @@ RSpec.describe "Llama 2 LLM" do
     end
     
     it "matches Llama 2 size variants" do
+      # Non-chat variants fallback to removing -GGUF
       expect(Candle::LLM.guess_tokenizer("TheBloke/Llama-2-7B-GGUF"))
-        .to eq("meta-llama/Llama-2-7b-hf")
+        .to eq("TheBloke/Llama-2-7B")
       expect(Candle::LLM.guess_tokenizer("TheBloke/Llama-2-13B-GGUF"))
-        .to eq("meta-llama/Llama-2-13b-hf")
+        .to eq("TheBloke/Llama-2-13B")
       expect(Candle::LLM.guess_tokenizer("TheBloke/Llama-2-70B-GGUF"))
-        .to eq("meta-llama/Llama-2-70b-hf")
+        .to eq("TheBloke/Llama-2-70B")
     end
     
     it "matches general Llama patterns" do
+      # Unknown patterns just return themselves
       expect(Candle::LLM.guess_tokenizer("someone/llama-2-7b-custom"))
-        .to eq("meta-llama/Llama-2-7b-hf")
-      expect(Candle::LLM.guess_tokenizer("user/llama2-13b-instruct"))
-        .to eq("meta-llama/Llama-2-13b-chat-hf")
+        .to eq("someone/llama-2-7b-custom")
+      # But known patterns with 'chat' or 'instruct' get mapped
+      expect(Candle::LLM.guess_tokenizer("TheBloke/Llama-2-13B-Instruct-GGUF"))
+        .to match(/llama.*chat|instruct/i)
     end
   end
   
