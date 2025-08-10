@@ -74,7 +74,7 @@ RSpec.describe "Phi LLM" do
   describe "structured generation" do
     it "generates structured output with JSON schema" do
       skip unless @model_loaded == true
-      skip "Structured generation tests are slow"
+      # Executing without skip to test structured generation
       
       schema = {
         type: "object",
@@ -85,15 +85,24 @@ RSpec.describe "Phi LLM" do
         required: ["name", "age"]
       }
       
+      # Create constraint from schema
+      constraint = @llm.constraint_from_schema(schema)
+      
       config = Candle::GenerationConfig.new(
-        max_length: 50,
-        constraint: { type: :json_schema, value: schema }
+        max_length: 100,
+        constraint: constraint,
+        stop_on_constraint_satisfaction: false  # Important: don't stop early
       )
       
       prompt = "Generate a person with name John and age 30:"
       result = @llm.generate(prompt, config: config)
       
-      expect { JSON.parse(result.sub(prompt, "").strip) }.not_to raise_error
+      json_str = result.sub(prompt, "").strip
+      parsed = JSON.parse(json_str)
+      
+      expect(parsed).to be_a(Hash)
+      expect(parsed["name"]).to be_a(String)
+      expect(parsed["age"]).to be_a(Integer)
     end
   end
   

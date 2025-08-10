@@ -189,8 +189,22 @@ module Candle
     def recognize(text, tokenizer = nil)
       entities = []
       
+      # Limit text length to prevent ReDoS on very long strings
+      # This is especially important for Ruby < 3.2
+      max_length = 1_000_000  # 1MB of text
+      if text.length > max_length
+        warn "PatternEntityRecognizer: Text truncated from #{text.length} to #{max_length} chars for safety"
+        text = text[0...max_length]
+      end
+      
       @patterns.each do |pattern|
         regex = pattern.is_a?(Regexp) ? pattern : Regexp.new(pattern)
+        
+        # Validate regex doesn't have obvious ReDoS patterns
+        source = regex.source
+        if source =~ /([+*]|\{\d*,\d*\}).*([+*]|\{\d*,\d*\})/
+          warn "PatternEntityRecognizer: Pattern /#{source}/ may be vulnerable to ReDoS (nested quantifiers)"
+        end
         
         text.scan(regex) do |match|
           match_text = $&
