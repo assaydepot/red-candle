@@ -169,7 +169,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#from_pretrained-class_method" title="from_pretrained (class method)">.<strong>from_pretrained</strong>(model_id, device: nil, tokenizer: nil)  &#x21d2; NER </a>
+      <a href="#from_pretrained-class_method" title="from_pretrained (class method)">.<strong>from_pretrained</strong>(model_id, device: Candle::Device.best, tokenizer: nil)  &#x21d2; NER </a>
     
 
     
@@ -429,7 +429,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="from_pretrained-class_method">
   
-    .<strong>from_pretrained</strong>(model_id, device: nil, tokenizer: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Candle::NER (class)">NER</a></span></tt> 
+    .<strong>from_pretrained</strong>(model_id, device: Candle::Device.best, tokenizer: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Candle::NER (class)">NER</a></span></tt> 
   
 
   
@@ -468,10 +468,10 @@
         <span class='name'>device</span>
       
       
-        <span class='type'>(<tt>Device</tt>, <tt>nil</tt>)</span>
+        <span class='type'>(<tt>Device</tt>)</span>
       
       
-        <em class="default">(defaults to: <tt>nil</tt>)</em>
+        <em class="default">(defaults to: <tt>Candle::Device.best</tt>)</em>
       
       
         &mdash;
@@ -526,14 +526,14 @@
       <pre class="lines">
 
 
-36
-37
-38</pre>
+39
+40
+41</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 36</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 39</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='label'>device:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>tokenizer:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_from_pretrained'>from_pretrained</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='label'>device:</span> <span class='const'><span class='object_link'><a href="../Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_best'>best</span><span class='comma'>,</span> <span class='label'>tokenizer:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -567,9 +567,6 @@
       <pre class="lines">
 
 
-41
-42
-43
 44
 45
 46
@@ -595,10 +592,13 @@
 66
 67
 68
-69</pre>
+69
+70
+71
+72</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 41</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 44</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_suggested_models'>suggested_models</span>
   <span class='lbrace'>{</span>
@@ -666,10 +666,10 @@
       <pre class="lines">
 
 
-73</pre>
+76</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 73</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 76</span>
 
 <span class='id identifier rubyid_alias_method'>alias_method</span> <span class='symbol'>:_extract_entities</span><span class='comma'>,</span> <span class='symbol'>:extract_entities</span></pre>
     </td>
@@ -759,15 +759,15 @@
       <pre class="lines">
 
 
-123
-124
-125
 126
 127
-128</pre>
+128
+129
+130
+131</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 123</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 126</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_analyze'>analyze</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='float'>0.9</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -824,19 +824,19 @@
       <pre class="lines">
 
 
-88
-89
-90
 91
 92
 93
 94
 95
 96
-97</pre>
+97
+98
+99
+100</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 88</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 91</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_entity_types'>entity_types</span>
   <span class='kw'>return</span> <span class='ivar'>@entity_types</span> <span class='kw'>if</span> <span class='ivar'>@entity_types</span>
@@ -935,13 +935,13 @@
       <pre class="lines">
 
 
-80
-81
-82
-83</pre>
+83
+84
+85
+86</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 80</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 83</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='float'>0.9</span><span class='rparen'>)</span>
   <span class='comment'># Call the native method with positional arguments
@@ -1050,17 +1050,17 @@
       <pre class="lines">
 
 
-113
-114
-115
-116</pre>
+116
+117
+118
+119</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 113</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 116</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_extract_entity_type'>extract_entity_type</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='float'>0.9</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='id identifier rubyid_confidence_threshold'>confidence_threshold</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_e'>e</span><span class='op'>|</span> <span class='id identifier rubyid_e'>e</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>label</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='id identifier rubyid_entity_type'>entity_type</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_e'>e</span><span class='op'>|</span> <span class='id identifier rubyid_e'>e</span><span class='lbracket'>[</span><span class='symbol'>:label</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='id identifier rubyid_entity_type'>entity_type</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1149,9 +1149,6 @@
       <pre class="lines">
 
 
-135
-136
-137
 138
 139
 140
@@ -1163,22 +1160,25 @@
 146
 147
 148
-149</pre>
+149
+150
+151
+152</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 135</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 138</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_format_entities'>format_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='float'>0.9</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='label'>confidence_threshold:</span> <span class='id identifier rubyid_confidence_threshold'>confidence_threshold</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_text'>text</span> <span class='kw'>if</span> <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
   
   <span class='comment'># Sort by start position (reverse for easier insertion)
-</span>  <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_sort_by!'>sort_by!</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_e'>e</span><span class='op'>|</span> <span class='op'>-</span><span class='id identifier rubyid_e'>e</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>start</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+</span>  <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_sort_by!'>sort_by!</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_e'>e</span><span class='op'>|</span> <span class='op'>-</span><span class='id identifier rubyid_e'>e</span><span class='lbracket'>[</span><span class='symbol'>:start</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
   
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span>
   <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_entity'>entity</span><span class='op'>|</span>
-    <span class='id identifier rubyid_label'>label</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>label</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>confidence</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>]</span><span class='tstring_end'>&quot;</span></span>
-    <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_insert'>insert</span><span class='lparen'>(</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>end</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_label'>label</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_label'>label</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='symbol'>:label</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='symbol'>:confidence</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>]</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_insert'>insert</span><span class='lparen'>(</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='symbol'>:end</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_label'>label</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   
   <span class='id identifier rubyid_result'>result</span>
@@ -1236,15 +1236,39 @@
       <pre class="lines">
 
 
-154
-155
-156</pre>
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 154</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 157</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_inspect'>inspect</span>
-  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>#&lt;Candle::NER </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_model_info'>model_info</span><span class='embexpr_end'>}</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span> <span class='kw'>rescue</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  
+  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>#&lt;Candle::NER</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>model=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>model_id</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&quot;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>device=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>device</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&quot;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>labels=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>num_labels</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>num_labels</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+  
+  <span class='kw'>if</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>entity_types</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>entity_types</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+    <span class='id identifier rubyid_types'>types</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>entity_types</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>,</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_parts'>parts</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>types=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_types'>types</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  
+  <span class='id identifier rubyid_parts'>parts</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1315,12 +1339,12 @@
       <pre class="lines">
 
 
-103
-104
-105</pre>
+106
+107
+108</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 103</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 106</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_supports_entity?'>supports_entity?</span><span class='lparen'>(</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_entity_types'>entity_types</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='rparen'>)</span>
@@ -1335,7 +1359,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Aug  6 13:04:05 2025 by
+  Generated on Mon Aug 11 03:06:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>

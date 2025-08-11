@@ -347,14 +347,14 @@
       <pre class="lines">
 
 
-207
-208
-209
-210
-211</pre>
+230
+231
+232
+233
+234</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 230</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span> <span class='id identifier rubyid_terms'>terms</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>case_sensitive:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@entity_type</span> <span class='op'>=</span> <span class='id identifier rubyid_entity_type'>entity_type</span>
@@ -399,12 +399,12 @@
       <pre class="lines">
 
 
-205
-206
-207</pre>
+228
+229
+230</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 205</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 228</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_case_sensitive'>case_sensitive</span>
   <span class='ivar'>@case_sensitive</span>
@@ -442,12 +442,12 @@
       <pre class="lines">
 
 
-205
-206
-207</pre>
+228
+229
+230</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 205</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 228</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_entity_type'>entity_type</span>
   <span class='ivar'>@entity_type</span>
@@ -485,12 +485,12 @@
       <pre class="lines">
 
 
-205
-206
-207</pre>
+228
+229
+230</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 205</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 228</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_terms'>terms</span>
   <span class='ivar'>@terms</span>
@@ -533,14 +533,14 @@
       <pre class="lines">
 
 
-214
-215
-216
-217
-218</pre>
+237
+238
+239
+240
+241</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 214</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 237</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_terms'>add_terms</span><span class='lparen'>(</span><span class='id identifier rubyid_terms'>terms</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_terms'>terms</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_terms'>terms</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_terms'>terms</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Array</span><span class='rparen'>)</span>
@@ -578,16 +578,16 @@
       <pre class="lines">
 
 
-221
-222
-223
-224
-225
-226
-227</pre>
+244
+245
+246
+247
+248
+249
+250</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 221</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 244</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_load_from_file'>load_from_file</span><span class='lparen'>(</span><span class='id identifier rubyid_filepath'>filepath</span><span class='rparen'>)</span>
   <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_readlines'>readlines</span><span class='lparen'>(</span><span class='id identifier rubyid_filepath'>filepath</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_line'>line</span><span class='op'>|</span>
@@ -627,39 +627,39 @@
       <pre class="lines">
 
 
-230
-231
-232
-233
-234
-235
-236
-237
-238
-239
-240
-241
-242
-243
-244
-245
-246
-247
-248
-249
-250
-251
-252
 253
 254
 255
 256
 257
 258
-259</pre>
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 230</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/ner.rb', line 253</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_recognize'>recognize</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -676,12 +676,12 @@
       
       <span class='kw'>if</span> <span class='id identifier rubyid_word_boundary?'>word_boundary?</span><span class='lparen'>(</span><span class='id identifier rubyid_prev_char'>prev_char</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_word_boundary?'>word_boundary?</span><span class='lparen'>(</span><span class='id identifier rubyid_next_char'>next_char</span><span class='rparen'>)</span>
         <span class='id identifier rubyid_entities'>entities</span> <span class='op'>&lt;&lt;</span> <span class='lbrace'>{</span>
-          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>text</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_text'>text</span><span class='lbracket'>[</span><span class='id identifier rubyid_idx'>idx</span><span class='comma'>,</span> <span class='id identifier rubyid_pattern'>pattern</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='rbracket'>]</span><span class='comma'>,</span>
-          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>label</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='ivar'>@entity_type</span><span class='comma'>,</span>
-          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>start</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_idx'>idx</span><span class='comma'>,</span>
-          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>end</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_idx'>idx</span> <span class='op'>+</span> <span class='id identifier rubyid_pattern'>pattern</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='comma'>,</span>
-          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>confidence</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='float'>1.0</span><span class='comma'>,</span>
-          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>source</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>gazetteer</span><span class='tstring_end'>&quot;</span></span>
+          <span class='label'>text:</span> <span class='id identifier rubyid_text'>text</span><span class='lbracket'>[</span><span class='id identifier rubyid_idx'>idx</span><span class='comma'>,</span> <span class='id identifier rubyid_pattern'>pattern</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='rbracket'>]</span><span class='comma'>,</span>
+          <span class='label'>label:</span> <span class='ivar'>@entity_type</span><span class='comma'>,</span>
+          <span class='label'>start:</span> <span class='id identifier rubyid_idx'>idx</span><span class='comma'>,</span>
+          <span class='label'>end:</span> <span class='id identifier rubyid_idx'>idx</span> <span class='op'>+</span> <span class='id identifier rubyid_pattern'>pattern</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='comma'>,</span>
+          <span class='label'>confidence:</span> <span class='float'>1.0</span><span class='comma'>,</span>
+          <span class='label'>source:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>gazetteer</span><span class='tstring_end'>&quot;</span></span>
         <span class='rbrace'>}</span>
       <span class='kw'>end</span>
       
@@ -701,7 +701,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Aug  6 13:04:06 2025 by
+  Generated on Mon Aug 11 03:06:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>

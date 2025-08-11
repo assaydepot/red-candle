@@ -98,7 +98,7 @@
 
     <ul class="summary">
       
-        <li class="public ">
+        <li class="public deprecated">
   <span class="summary_signature">
     
       <a href="#best_device-class_method" title="best_device (class method)">.<strong>best_device</strong>  &#x21d2; Object </a>
@@ -111,12 +111,12 @@
   
   
   
-  
+  <span class="deprecated note title">deprecated</span>
   
 
   
-    <span class="summary_desc"><div class='inline'>
-<p>Get the best available device (Metal &gt; CUDA &gt; CPU).</p>
+    <span class="summary_desc"><strong>Deprecated.</strong> <div class='inline'>
+<p>Use Candle::Device.best instead</p>
 </div></span>
   
 </li>
@@ -142,7 +142,10 @@
   
 </h3><div class="docstring">
   <div class="discussion">
-    
+    <div class="note deprecated"><strong>Deprecated.</strong> <div class='inline'>
+<p>Use Candle::Device.best instead</p>
+</div></div>
+
 <p>Get the best available device (Metal &gt; CUDA &gt; CPU)</p>
 
 
@@ -157,43 +160,17 @@
       <pre class="lines">
 
 
-4
 5
 6
 7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20</pre>
+8</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/candle/device_utils.rb', line 4</span>
+      <pre class="code"><span class="info file"># File 'lib/candle/device_utils.rb', line 5</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_best_device'>best_device</span>
-  <span class='comment'># Try devices in order of preference
-</span>  <span class='kw'>begin</span>
-    <span class='comment'># Try Metal first (for Mac users)
-</span>    <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span>
-  <span class='kw'>rescue</span>
-    <span class='comment'># :nocov:
-</span>    <span class='kw'>begin</span>
-      <span class='comment'># Try CUDA next (for NVIDIA GPU users)
-</span>      <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>
-    <span class='kw'>rescue</span>
-      <span class='comment'># Fall back to CPU
-</span>      <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>
-    <span class='kw'>end</span>
-    <span class='comment'># :nocov:
-</span>  <span class='kw'>end</span>
+  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[DEPRECATION] `DeviceUtils.best_device` is deprecated. Please use `Device.best` instead.</span><span class='tstring_end'>&quot;</span></span>
+  <span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_best'>best</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -205,7 +182,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Aug  6 13:04:05 2025 by
+  Generated on Mon Aug 11 03:06:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>

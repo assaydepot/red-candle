@@ -57,7 +57,7 @@
         <div class="clear"></div>
       </div>
 
-      <div id="content"><div id='filecontents'><h1 id="red-candle-native-llms-for-ruby"><code>red-candle</code> Native LLMs for Ruby 🚀</h1>
+      <div id="content"><div id='filecontents'><p><img src="/docs/assets/logo-title.png" alt="red-candle" height="80px"></p>
 
 <p><a href="https://github.com/assaydepot/red-candle/actions/workflows/build.yml"><img src="https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg" alt="build"></a>
 <a href="https://badge.fury.io/rb/red-candle"><img src="https://badge.fury.io/rb/red-candle.svg" alt="Gem Version"></a></p>
@@ -75,7 +75,7 @@ gem install red-candle
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
 
 <span class='comment'># Download a model (one-time, ~650MB) - Mistral, Llama3, Gemma all work!
-</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
                                   <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Chat with it - no API calls, running locally in your Ruby process!
@@ -84,8 +84,8 @@ gem install red-candle
 <span class='rbracket'>]</span>
 
 <span class='id identifier rubyid_puts'>puts</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_chat'>chat</span><span class='lparen'>(</span><span class='id identifier rubyid_messages'>messages</span><span class='rparen'>)</span>
-<span class='comment'># =&gt; &quot;Ruby is a dynamic, object-oriented programming language known for its 
-</span><span class='comment'>#     simplicity, elegance, and productivity, often used for web development 
+<span class='comment'># =&gt; &quot;Ruby is a dynamic, object-oriented programming language known for its
+</span><span class='comment'>#     simplicity, elegance, and productivity, often used for web development
 </span><span class='comment'>#     with frameworks like Rails.&quot;
 </span></code></pre>
 
@@ -160,22 +160,16 @@ rm -rf ~/.cache/huggingface/hub/
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
 
 <span class='comment'># Default model (JinaBERT) on CPU
-</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
+</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/EmbeddingModel.html#from_pretrained-class_method" title="Candle::EmbeddingModel.from_pretrained (method)">from_pretrained</a></span></span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Specify device (CPU, Metal, or CUDA)
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>     <span class='comment'># or Candle::Device.metal, Candle::Device.cuda
-</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span><span class='lparen'>(</span>
-  <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>jinaai/jina-embeddings-v2-base-en</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span>
-<span class='rparen'>)</span>
+</span><span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/EmbeddingModel.html#from_pretrained-class_method" title="Candle::EmbeddingModel.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>jinaai/jina-embeddings-v2-base-en</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Reranker also supports device selection
-</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span>
-  <span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span>
-<span class='rparen'>)</span>
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
 <span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>query</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>doc1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>doc2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>doc3</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
 </code></pre>
 
@@ -207,8 +201,8 @@ rm -rf ~/.cache/huggingface/hub/
 </blockquote>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># Load quantized models - always specify the GGUF filename
-</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/Llama-2-7B-Chat-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
-                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> 
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/Llama-2-7B-Chat-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span>
                                   <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>llama-2-7b-chat.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Register custom tokenizer mappings for your models
@@ -224,7 +218,7 @@ rm -rf ~/.cache/huggingface/hub/
 <ul>
 <li>Full precision: ~28 GB</li>
 <li>Q8_0 (8-bit): ~7 GB - Best quality, larger size</li>
-<li>Q5_K_M (5-bit): ~4.5 GB - Very good quality<br></li>
+<li>Q5_K_M (5-bit): ~4.5 GB - Very good quality</li>
 <li>Q4_K_M (4-bit): ~4 GB - Recommended default, best balance</li>
 <li>Q3_K_M (3-bit): ~3 GB - Good for memory-constrained systems</li>
 </ul>
@@ -252,7 +246,7 @@ rm -rf ~/.cache/huggingface/hub/
 <li>Authenticate your session. Simplest way is with <code>huggingface-cli login</code>. Detail here: <a href="https://huggingface.co/docs/huggingface_hub/en/guides/cli">Huggingface CLI</a></li>
 </ol>
 
-<p>More details here: <a href="HUGGINGFACE.md">Huggingface Authentication</a></p>
+<p>More details here: <a href="docs/HUGGINGFACE.md">Huggingface Authentication</a></p>
 </blockquote>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
@@ -285,14 +279,14 @@ rm -rf ~/.cache/huggingface/hub/
 
 <h3 id="gpu-acceleration">GPU Acceleration</h3>
 
-<p>We see an 18x speed up running LLMs under CUDA vs CPU and a &gt;3x speed up running under Metal vs CPU. Details <a href="DEVICE_SUPPORT.md#performance-considerations">here</a>.</p>
+<p>We see an 18x speed up running LLMs under CUDA vs CPU and a &gt;3x speed up running under Metal vs CPU. Details <a href="docs/DEVICE_SUPPORT.md#performance-considerations">here</a>.</p>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># CPU works for all models
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cpu'>cpu</span>
 <span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TinyLlama/TinyLlama-1.1B-Chat-v1.0</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='rparen'>)</span>
 
 <span class='comment'># Metal
-</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span> 
+</span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_metal'>metal</span>
 
 <span class='comment'># CUDA support (for NVIDIA GPUs)
 </span><span class='id identifier rubyid_device'>device</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'>Device</span><span class='period'>.</span><span class='id identifier rubyid_cuda'>cuda</span>   <span class='comment'># Linux/Windows with NVIDIA GPU
@@ -407,9 +401,9 @@ rm -rf ~/.cache/huggingface/hub/
 
 <pre class="code ruby"><code class="ruby">&gt; require &#39;candle&#39;
 # Ruby memory = 25.9 MB
-&gt; model = Candle::EmbeddingModel.new
+&gt; model = Candle::EmbeddingModel.from_pretrained
 # Ruby memory = 3.50 GB
-&gt; model2 = Candle::EmbeddingModel.new
+&gt; model2 = Candle::EmbeddingModel.from_pretrained
 # Ruby memory = 7.04 GB
 &gt; model2 = nil
 &gt; GC.start
@@ -433,7 +427,7 @@ print(embedding)
 <p>And the following ruby:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
-<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
+<span class='id identifier rubyid_model'>model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/EmbeddingModel.html#from_pretrained-class_method" title="Candle::EmbeddingModel.from_pretrained (method)">from_pretrained</a></span></span>
 <span class='id identifier rubyid_embedding'>embedding</span> <span class='op'>=</span> <span class='id identifier rubyid_model'>model</span><span class='period'>.</span><span class='id identifier rubyid_embedding'>embedding</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hi there!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
@@ -446,13 +440,13 @@ print(embedding)
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>candle</span><span class='tstring_end'>&#39;</span></span>
 
 <span class='comment'># Initialize the reranker with a cross-encoder model
-</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Define your query and candidate documents
 </span><span class='id identifier rubyid_query'>query</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>How many people live in London?</span><span class='tstring_end'>&quot;</span></span>
 <span class='id identifier rubyid_documents'>documents</span> <span class='op'>=</span> <span class='lbracket'>[</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>London is known for its financial district</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Around 9 Million people live in London</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Around 9 Million people live in London</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>The weather in London is often rainy</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>London is the capital of England</span><span class='tstring_end'>&quot;</span></span>
 <span class='rbracket'>]</span>
@@ -538,7 +532,7 @@ print(embedding)
 <p>For faster inference on NVIDIA GPUs:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># Initialize with CUDA if available (falls back to CPU if not)
-</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>cuda:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>cuda:</span> <span class='kw'>true</span><span class='rparen'>)</span>
 </code></pre>
 
 <h3 id="how-it-works">How It Works</h3>
@@ -586,7 +580,7 @@ print(embedding)
 </span>
 <span class='comment'># Get both IDs and tokens together
 </span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_with_tokens'>encode_with_tokens</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>preprocessing</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-<span class='comment'># =&gt; {&quot;ids&quot; =&gt; [101, 3653, 22618, 2527, 102], 
+<span class='comment'># =&gt; {&quot;ids&quot; =&gt; [101, 3653, 22618, 2527, 102],
 </span><span class='comment'>#     &quot;tokens&quot; =&gt; [&quot;[CLS]&quot;, &quot;prep&quot;, &quot;##ro&quot;, &quot;##ces&quot;, &quot;##sing&quot;, &quot;[SEP]&quot;]}
 </span></code></pre>
 
@@ -644,11 +638,11 @@ print(embedding)
 <span class='id identifier rubyid_llm_tokenizer'>llm_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_llm'>llm</span><span class='period'>.</span><span class='id identifier rubyid_tokenizer'>tokenizer</span>
 
 <span class='comment'># From EmbeddingModel
-</span><span class='id identifier rubyid_embedding_model'>embedding_model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/EmbeddingModel.html#new-class_method" title="Candle::EmbeddingModel.new (method)">new</a></span></span>
+</span><span class='id identifier rubyid_embedding_model'>embedding_model</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/EmbeddingModel.html" title="Candle::EmbeddingModel (class)">EmbeddingModel</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/EmbeddingModel.html#from_pretrained-class_method" title="Candle::EmbeddingModel.from_pretrained (method)">from_pretrained</a></span></span>
 <span class='id identifier rubyid_emb_tokenizer'>emb_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_embedding_model'>embedding_model</span><span class='period'>.</span><span class='id identifier rubyid_tokenizer'>tokenizer</span>
 
 <span class='comment'># From Reranker
-</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/Reranker.html#new-class_method" title="Candle::Reranker.new (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>model_path:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 <span class='id identifier rubyid_rank_tokenizer'>rank_tokenizer</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_tokenizer'>tokenizer</span>
 </code></pre>
 
@@ -658,7 +652,7 @@ print(embedding)
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># See how words are split into subwords
 </span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_tokenizer'>tokenizer</span><span class='period'>.</span><span class='id identifier rubyid_encode_with_tokens'>encode_with_tokens</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>unbelievable</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-<span class='comment'># =&gt; {&quot;ids&quot; =&gt; [101, 4895, 6499, 102], 
+<span class='comment'># =&gt; {&quot;ids&quot; =&gt; [101, 4895, 6499, 102],
 </span><span class='comment'>#     &quot;tokens&quot; =&gt; [&quot;[CLS]&quot;, &quot;un&quot;, &quot;##believable&quot;, &quot;[SEP]&quot;]}
 </span>
 <span class='comment'># The ## prefix indicates a continuation of the previous token
@@ -670,7 +664,7 @@ print(embedding)
 
 <ul>
 <li><strong>Token Analysis</strong>: Understand how your text is being processed by models</li>
-<li><strong>Debugging</strong>: See why certain inputs might cause unexpected model behavior<br></li>
+<li><strong>Debugging</strong>: See why certain inputs might cause unexpected model behavior</li>
 <li><strong>Custom Preprocessing</strong>: Build your own text processing pipelines</li>
 <li><strong>Educational</strong>: Teach how modern NLP models handle text</li>
 <li><strong>NER Preparation</strong>: Get aligned tokens for named entity recognition tasks</li>
@@ -697,7 +691,7 @@ print(embedding)
 <span class='id identifier rubyid_entities'>entities</span> <span class='op'>=</span> <span class='id identifier rubyid_ner'>ner</span><span class='period'>.</span><span class='id identifier rubyid_extract_entities'>extract_entities</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
 
 <span class='id identifier rubyid_entities'>entities</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_entity'>entity</span><span class='op'>|</span>
-  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>text</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>label</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>) - confidence: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>confidence</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='symbol'>:text</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='symbol'>:label</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>) - confidence: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity'>entity</span><span class='lbracket'>[</span><span class='symbol'>:confidence</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span>
 <span class='comment'># Output:
 </span><span class='comment'># Apple Inc. (ORG) - confidence: 0.99
@@ -747,8 +741,8 @@ print(embedding)
 <span class='id identifier rubyid_drug_recognizer'>drug_recognizer</span><span class='period'>.</span><span class='id identifier rubyid_load_from_file'>load_from_file</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>drug_names.txt</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># Case-sensitive matching
-</span><span class='id identifier rubyid_product_recognizer'>product_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html" title="Candle::GazetteerEntityRecognizer (class)">GazetteerEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html#initialize-instance_method" title="Candle::GazetteerEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PRODUCT</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
-  <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPhone</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPad</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>MacBook</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> 
+</span><span class='id identifier rubyid_product_recognizer'>product_recognizer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html" title="Candle::GazetteerEntityRecognizer (class)">GazetteerEntityRecognizer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Candle/GazetteerEntityRecognizer.html#initialize-instance_method" title="Candle::GazetteerEntityRecognizer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PRODUCT</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPhone</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPad</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>MacBook</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
   <span class='label'>case_sensitive:</span> <span class='kw'>true</span>
 <span class='rparen'>)</span>
 </code></pre>
@@ -764,7 +758,7 @@ print(embedding)
 </span><span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_pattern_recognizer'>add_pattern_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>EMAIL</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b</span><span class='regexp_end'>/</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
 <span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_pattern_recognizer'>add_pattern_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PHONE</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b\d{3}[-.]?\d{3}[-.]?\d{4}\b</span><span class='regexp_end'>/</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
 
-<span class='comment'># Add gazetteer recognizers  
+<span class='comment'># Add gazetteer recognizers
 </span><span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_gazetteer_recognizer'>add_gazetteer_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>COMPANY</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Apple</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Google</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Microsoft</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
 <span class='id identifier rubyid_hybrid'>hybrid</span><span class='period'>.</span><span class='id identifier rubyid_add_gazetteer_recognizer'>add_gazetteer_recognizer</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>PRODUCT</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>iPhone</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Android</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Windows</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
 
@@ -782,7 +776,7 @@ print(embedding)
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># Biomedical entities
 </span><span class='id identifier rubyid_gene_patterns'>gene_patterns</span> <span class='op'>=</span> <span class='lbracket'>[</span>
-  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z][A-Z0-9]{2,}\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>      <span class='comment'># TP53, BRCA1, EGFR
+  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z][A-Z0-9]{2,10}\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>    <span class='comment'># TP53, BRCA1, EGFR (bounded for safety)
 </span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\bCD\d+\b</span><span class='regexp_end'>/</span></span><span class='comma'>,</span>                  <span class='comment'># CD4, CD8, CD34
 </span>  <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\b[A-Z]+\d[A-Z]\d*\b</span><span class='regexp_end'>/</span></span>        <span class='comment'># RAD51C, PALB2
 </span><span class='rbracket'>]</span>
@@ -815,7 +809,7 @@ print(embedding)
 <span class='comment'># English NER (requires separate tokenizer)
 </span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>dslim/bert-base-NER</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>tokenizer:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bert-base-cased</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
-<span class='comment'># Multilingual NER  
+<span class='comment'># Multilingual NER
 </span><span class='id identifier rubyid_ner'>ner</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/NER.html" title="Candle::NER (class)">NER</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/NER.html#from_pretrained-class_method" title="Candle::NER.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Davlan/bert-base-multilingual-cased-ner-hrl</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
 <span class='comment'># OntoNotes 5 (18 entity types including DATE, TIME, MONEY, etc.)
@@ -846,7 +840,7 @@ print(embedding)
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>text</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Apple Inc.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>          <span class='comment'># The entity text
 </span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>label</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ORG</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>               <span class='comment'># Entity type
 </span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>start</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>0</span><span class='comma'>,</span>                   <span class='comment'># Character start position
-</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>end</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>10</span><span class='comma'>,</span>                    <span class='comment'># Character end position  
+</span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>end</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>10</span><span class='comma'>,</span>                    <span class='comment'># Character end position
 </span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>confidence</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='float'>0.99</span><span class='comma'>,</span>           <span class='comment'># Confidence score (0-1)
 </span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>token_start</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>0</span><span class='comma'>,</span>             <span class='comment'># Token start index (model-based only)
 </span>  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>token_end</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='int'>2</span><span class='comma'>,</span>               <span class='comment'># Token end index (model-based only)
@@ -875,8 +869,8 @@ print(embedding)
 <li>Q3_K_M (3-bit) - Minimum recommended quantization</li>
 </ul>
 
-<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
-                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> 
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span>
                                   <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
@@ -895,7 +889,7 @@ print(embedding)
 <li>Ensure you&#39;re using the latest version of red-candle (1.0.0 or higher)</li>
 <li>Make sure to specify the exact GGUF filename:
 <code>ruby
-llm = Candle::LLM.from_pretrained(&quot;TheBloke/Mistral-7B-Instruct-v0.2-GGUF&quot;, 
+llm = Candle::LLM.from_pretrained(&quot;TheBloke/Mistral-7B-Instruct-v0.2-GGUF&quot;,
                                  device: device,
                                  gguf_file: &quot;mistral-7b-instruct-v0.2.Q4_K_M.gguf&quot;)
 </code></li>
@@ -914,8 +908,8 @@ llm = Candle::LLM.from_pretrained(&quot;TheBloke/Mistral-7B-Instruct-v0.2-GGUF&q
 <p><strong>Solution:</strong> Specify the exact GGUF filename:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># Visit the HuggingFace repository to find the exact filename
-</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/Llama-2-7B-Chat-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> 
-                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span> 
+</span><span class='id identifier rubyid_llm'>llm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/LLM.html" title="Candle::LLM (class)">LLM</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/LLM.html#from_pretrained-class_method" title="Candle::LLM.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TheBloke/Llama-2-7B-Chat-GGUF</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+                                  <span class='label'>device:</span> <span class='id identifier rubyid_device'>device</span><span class='comma'>,</span>
                                   <span class='label'>gguf_file:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>llama-2-7b-chat.Q4_K_M.gguf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 </code></pre>
 
@@ -944,7 +938,7 @@ llm = Candle::LLM.from_pretrained(&quot;TheBloke/Mistral-7B-Instruct-v0.2-GGUF&q
 
 <p><strong>Cause:</strong> Some GGUF files may have been created with older conversion tools that don&#39;t include all required metadata fields.</p>
 
-<p><strong>Solution:</strong> </p>
+<p><strong>Solution:</strong></p>
 
 <ul>
 <li>Try a different GGUF file from the same model</li>
@@ -1063,7 +1057,7 @@ bundle exec rake rust:coverage:clean
 </div></div>
 
       <div id="footer">
-  Generated on Wed Aug  6 13:04:05 2025 by
+  Generated on Mon Aug 11 03:06:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
