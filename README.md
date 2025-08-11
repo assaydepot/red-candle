@@ -1,4 +1,4 @@
-# `red-candle` Native LLMs for Ruby 🚀
+<img src="/docs/assets/logo-title.png" alt="red-candle" height="80px">
 
 [![build](https://github.com/assaydepot/red-candle/actions/workflows/build.yml/badge.svg)](https://github.com/assaydepot/red-candle/actions/workflows/build.yml)
 [![Gem Version](https://badge.fury.io/rb/red-candle.svg)](https://badge.fury.io/rb/red-candle)
@@ -18,7 +18,7 @@ gem install red-candle
 require 'candle'
 
 # Download a model (one-time, ~650MB) - Mistral, Llama3, Gemma all work!
-llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
+llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF",
                                   gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
 
 # Chat with it - no API calls, running locally in your Ruby process!
@@ -27,8 +27,8 @@ messages = [
 ]
 
 puts llm.chat(messages)
-# => "Ruby is a dynamic, object-oriented programming language known for its 
-#     simplicity, elegance, and productivity, often used for web development 
+# => "Ruby is a dynamic, object-oriented programming language known for its
+#     simplicity, elegance, and productivity, often used for web development
 #     with frameworks like Rails."
 ```
 
@@ -99,22 +99,16 @@ x = x.reshape([3, 2])
 require 'candle'
 
 # Default model (JinaBERT) on CPU
-model = Candle::EmbeddingModel.new
+model = Candle::EmbeddingModel.from_pretrained
 embedding = model.embedding("Hi there!")
 
 # Specify device (CPU, Metal, or CUDA)
 device = Candle::Device.cpu     # or Candle::Device.metal, Candle::Device.cuda
-model = Candle::EmbeddingModel.new(
-  model_path: "jinaai/jina-embeddings-v2-base-en",
-  device: device
-)
+model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
 embedding = model.embedding("Hi there!")
 
 # Reranker also supports device selection
-reranker = Candle::Reranker.new(
-  model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2",
-  device: device
-)
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2", device: device)
 results = reranker.rerank("query", ["doc1", "doc2", "doc3"])
 ```
 
@@ -140,8 +134,8 @@ Red-Candle supports quantized models in GGUF format, offering 4-8x memory reduct
 
 ```ruby
 # Load quantized models - always specify the GGUF filename
-llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", 
-                                  device: device, 
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF",
+                                  device: device,
                                   gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
 
 # Register custom tokenizer mappings for your models
@@ -155,7 +149,7 @@ Candle::LLM.register_tokenizer("my-org/my-model-GGUF", "my-org/my-tokenizer")
 **Memory usage comparison (7B models):**
 - Full precision: ~28 GB
 - Q8_0 (8-bit): ~7 GB - Best quality, larger size
-- Q5_K_M (5-bit): ~4.5 GB - Very good quality  
+- Q5_K_M (5-bit): ~4.5 GB - Very good quality
 - Q4_K_M (4-bit): ~4 GB - Recommended default, best balance
 - Q3_K_M (3-bit): ~3 GB - Good for memory-constrained systems
 
@@ -169,13 +163,13 @@ Candle::LLM.register_tokenizer("my-org/my-model-GGUF", "my-org/my-tokenizer")
 > **Warning**: Q2_K quantization can lead to "weight is negative, too large or not a valid number" errors during inference. Use Q3_K_M or higher for stable operation.
 
 > ### ⚠️ Huggingface login warning
-> 
+>
 > Many models, including the one below, require you to agree to the terms. You'll need to:
 > 1. Login to [Huggingface](https://huggingface.co)
 > 2. Agree to the terms. For example: [here](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
 > 3. Authenticate your session. Simplest way is with `huggingface-cli login`. Detail here: [Huggingface CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli)
 >
-> More details here: [Huggingface Authentication](HUGGINGFACE.md)
+> More details here: [Huggingface Authentication](docs/HUGGINGFACE.md)
 
 ```ruby
 require 'candle'
@@ -208,7 +202,7 @@ response = llm.chat(messages)
 
 ### GPU Acceleration
 
-We see an 18x speed up running LLMs under CUDA vs CPU and a >3x speed up running under Metal vs CPU. Details [here](DEVICE_SUPPORT.md#performance-considerations).
+We see an 18x speed up running LLMs under CUDA vs CPU and a >3x speed up running under Metal vs CPU. Details [here](docs/DEVICE_SUPPORT.md#performance-considerations).
 
 ```ruby
 # CPU works for all models
@@ -216,7 +210,7 @@ device = Candle::Device.cpu
 llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", device: device)
 
 # Metal
-device = Candle::Device.metal 
+device = Candle::Device.metal
 
 # CUDA support (for NVIDIA GPUs)
 device = Candle::Device.cuda   # Linux/Windows with NVIDIA GPU
@@ -325,9 +319,9 @@ The default model (`jinaai/jina-embeddings-v2-base-en` with the `sentence-transf
 ```ruby
 > require 'candle'
 # Ruby memory = 25.9 MB
-> model = Candle::EmbeddingModel.new
+> model = Candle::EmbeddingModel.from_pretrained
 # Ruby memory = 3.50 GB
-> model2 = Candle::EmbeddingModel.new
+> model2 = Candle::EmbeddingModel.from_pretrained
 # Ruby memory = 7.04 GB
 > model2 = nil
 > GC.start
@@ -353,7 +347,7 @@ And the following ruby:
 
 ```ruby
 require 'candle'
-model = Candle::EmbeddingModel.new
+model = Candle::EmbeddingModel.from_pretrained
 embedding = model.embedding("Hi there!")
 ```
 
@@ -367,13 +361,13 @@ Red-Candle includes support for cross-encoder reranking models, which can be use
 require 'candle'
 
 # Initialize the reranker with a cross-encoder model
-reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
 
 # Define your query and candidate documents
 query = "How many people live in London?"
 documents = [
   "London is known for its financial district",
-  "Around 9 Million people live in London", 
+  "Around 9 Million people live in London",
   "The weather in London is often rainy",
   "London is the capital of England"
 ]
@@ -457,7 +451,7 @@ For faster inference on NVIDIA GPUs:
 
 ```ruby
 # Initialize with CUDA if available (falls back to CPU if not)
-reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2", cuda: true)
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2", cuda: true)
 ```
 
 ### How It Works
@@ -501,7 +495,7 @@ tokens = tokenizer.encode_to_tokens("Hello, world!")
 
 # Get both IDs and tokens together
 result = tokenizer.encode_with_tokens("preprocessing")
-# => {"ids" => [101, 3653, 22618, 2527, 102], 
+# => {"ids" => [101, 3653, 22618, 2527, 102],
 #     "tokens" => ["[CLS]", "prep", "##ro", "##ces", "##sing", "[SEP]"]}
 ```
 
@@ -563,11 +557,11 @@ llm = Candle::LLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 llm_tokenizer = llm.tokenizer
 
 # From EmbeddingModel
-embedding_model = Candle::EmbeddingModel.new
+embedding_model = Candle::EmbeddingModel.from_pretrained
 emb_tokenizer = embedding_model.tokenizer
 
 # From Reranker
-reranker = Candle::Reranker.new(model_path: "cross-encoder/ms-marco-MiniLM-L-12-v2")
+reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
 rank_tokenizer = reranker.tokenizer
 ```
 
@@ -578,7 +572,7 @@ Modern tokenizers split unknown or rare words into subword pieces:
 ```ruby
 # See how words are split into subwords
 result = tokenizer.encode_with_tokens("unbelievable")
-# => {"ids" => [101, 4895, 6499, 102], 
+# => {"ids" => [101, 4895, 6499, 102],
 #     "tokens" => ["[CLS]", "un", "##believable", "[SEP]"]}
 
 # The ## prefix indicates a continuation of the previous token
@@ -589,7 +583,7 @@ complex = tokenizer.encode_to_tokens("preprocessing tokenization")
 ### Use Cases
 
 - **Token Analysis**: Understand how your text is being processed by models
-- **Debugging**: See why certain inputs might cause unexpected model behavior  
+- **Debugging**: See why certain inputs might cause unexpected model behavior
 - **Custom Preprocessing**: Build your own text processing pipelines
 - **Educational**: Teach how modern NLP models handle text
 - **NER Preparation**: Get aligned tokens for named entity recognition tasks
@@ -616,7 +610,7 @@ text = "Apple Inc. was founded by Steve Jobs and Steve Wozniak in Cupertino, Cal
 entities = ner.extract_entities(text)
 
 entities.each do |entity|
-  puts "#{entity['text']} (#{entity['label']}) - confidence: #{entity['confidence'].round(2)}"
+  puts "#{entity[:text]} (#{entity[:label]}) - confidence: #{entity[:confidence].round(2)}"
 end
 # Output:
 # Apple Inc. (ORG) - confidence: 0.99
@@ -668,8 +662,8 @@ drug_recognizer = Candle::GazetteerEntityRecognizer.new("DRUG")
 drug_recognizer.load_from_file("drug_names.txt")
 
 # Case-sensitive matching
-product_recognizer = Candle::GazetteerEntityRecognizer.new("PRODUCT", 
-  ["iPhone", "iPad", "MacBook"], 
+product_recognizer = Candle::GazetteerEntityRecognizer.new("PRODUCT",
+  ["iPhone", "iPad", "MacBook"],
   case_sensitive: true
 )
 ```
@@ -686,7 +680,7 @@ hybrid = Candle::HybridNER.new("Babelscape/wikineural-multilingual-ner")
 hybrid.add_pattern_recognizer("EMAIL", [/\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b/])
 hybrid.add_pattern_recognizer("PHONE", [/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/])
 
-# Add gazetteer recognizers  
+# Add gazetteer recognizers
 hybrid.add_gazetteer_recognizer("COMPANY", ["Apple", "Google", "Microsoft"])
 hybrid.add_gazetteer_recognizer("PRODUCT", ["iPhone", "Android", "Windows"])
 
@@ -705,7 +699,7 @@ Perfect for specialized domains:
 ```ruby
 # Biomedical entities
 gene_patterns = [
-  /\b[A-Z][A-Z0-9]{2,}\b/,      # TP53, BRCA1, EGFR
+  /\b[A-Z][A-Z0-9]{2,10}\b/,    # TP53, BRCA1, EGFR (bounded for safety)
   /\bCD\d+\b/,                  # CD4, CD8, CD34
   /\b[A-Z]+\d[A-Z]\d*\b/        # RAD51C, PALB2
 ]
@@ -739,7 +733,7 @@ ner = Candle::NER.from_pretrained("Babelscape/wikineural-multilingual-ner")
 # English NER (requires separate tokenizer)
 ner = Candle::NER.from_pretrained("dslim/bert-base-NER", tokenizer: "bert-base-cased")
 
-# Multilingual NER  
+# Multilingual NER
 ner = Candle::NER.from_pretrained("Davlan/bert-base-multilingual-cased-ner-hrl")
 
 # OntoNotes 5 (18 entity types including DATE, TIME, MONEY, etc.)
@@ -758,9 +752,9 @@ ner = Candle::NER.from_pretrained("allenai/scibert_scivocab_uncased")
    ```
 
 2. **Batch Processing**: Process multiple texts together when possible
-   
+
 3. **Confidence Threshold**: Balance precision/recall with appropriate thresholds
-   
+
 4. **Entity Resolution**: The hybrid NER automatically handles overlapping entities
 
 ### Output Format
@@ -772,7 +766,7 @@ All NER methods return entities in a consistent format:
   "text" => "Apple Inc.",          # The entity text
   "label" => "ORG",               # Entity type
   "start" => 0,                   # Character start position
-  "end" => 10,                    # Character end position  
+  "end" => 10,                    # Character end position
   "confidence" => 0.99,           # Confidence score (0-1)
   "token_start" => 0,             # Token start index (model-based only)
   "token_end" => 2,               # Token end index (model-based only)
@@ -799,8 +793,8 @@ All NER methods return entities in a consistent format:
 - Q3_K_M (3-bit) - Minimum recommended quantization
 
 ```ruby
-llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF", 
-                                  device: device, 
+llm = Candle::LLM.from_pretrained("TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF",
+                                  device: device,
                                   gguf_file: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
 ```
 
@@ -817,7 +811,7 @@ Failed to load quantized model: cannot find tensor model.embed_tokens.weight (Ru
 1. Ensure you're using the latest version of red-candle (1.0.0 or higher)
 2. Make sure to specify the exact GGUF filename:
    ```ruby
-   llm = Candle::LLM.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-GGUF", 
+   llm = Candle::LLM.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-GGUF",
                                      device: device,
                                      gguf_file: "mistral-7b-instruct-v0.2.Q4_K_M.gguf")
    ```
@@ -835,8 +829,8 @@ Failed to load quantized model: No GGUF file found in repository TheBloke/model-
 **Solution:** Specify the exact GGUF filename:
 ```ruby
 # Visit the HuggingFace repository to find the exact filename
-llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF", 
-                                  device: device, 
+llm = Candle::LLM.from_pretrained("TheBloke/Llama-2-7B-Chat-GGUF",
+                                  device: device,
                                   gguf_file: "llama-2-7b-chat.Q4_K_M.gguf")
 ```
 
@@ -864,7 +858,7 @@ Failed to load GGUF model: cannot find llama.attention.head_count in metadata (R
 
 **Cause:** Some GGUF files may have been created with older conversion tools that don't include all required metadata fields.
 
-**Solution:** 
+**Solution:**
 - Try a different GGUF file from the same model
 - Look for GGUF files from TheBloke or other reputable sources
 - Check if a newer version of the GGUF file is available

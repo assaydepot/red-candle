@@ -14,7 +14,7 @@ hybrid_ner = Candle::HybridNER.new
 
 # Add gene name patterns
 gene_patterns = [
-  /\b[A-Z][A-Z0-9]{2,}\b/,           # TP53, BRCA1, EGFR
+  /\b[A-Z][A-Z0-9]{2,10}\b/,         # TP53, BRCA1, EGFR (bounded for ReDoS safety)
   /\b[A-Z][a-z]+\d+\b/,              # Abc1, Sox2
   /\b[A-Z]{2,}-[A-Z0-9]+\b/,         # HLA-B27, IL-6
   /\bCD\d+\b/,                       # CD4, CD8, CD34
@@ -104,7 +104,7 @@ puts "\n\nSpecialized Gene Recognition:"
 puts "-" * 30
 
 # Gene with mutation notation
-mutation_pattern = /\b([A-Z][A-Z0-9]{2,})\s+([A-Z]\d+[A-Z])\b/
+mutation_pattern = /\b([A-Z][A-Z0-9]{2,10})\s+([A-Z]\d+[A-Z])\b/  # Bounded for ReDoS safety
 
 text_with_mutations = "Common mutations include KRAS G12D, BRAF V600E, and EGFR T790M in lung cancer."
 puts "\nText: \"#{text_with_mutations}\""

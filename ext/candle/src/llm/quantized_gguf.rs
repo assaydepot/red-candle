@@ -18,7 +18,7 @@ pub struct QuantizedGGUF {
     device: Device,
     model_id: String,
     eos_token_id: u32,
-    architecture: String,
+    pub architecture: String,
     _chat_template: Option<String>,
 }
 

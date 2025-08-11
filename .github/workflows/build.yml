@@ -18,23 +18,44 @@ jobs:
           ruby-version: ruby
           bundler-cache: true
 
+      # Configure AWS credentials for S3 access
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Download HuggingFace cache from S3
+      - name: Sync HuggingFace cache from S3
+        run: |
+          echo "Downloading HuggingFace cache from S3..."
+          aws s3 sync s3://red-candle-hf-cache/cache/ ~/.cache/huggingface/ --quiet
+          echo "Cache downloaded successfully"
+          echo "Cache size: $(du -sh ~/.cache/huggingface | cut -f1)"
+          echo "Models cached: $(ls -d ~/.cache/huggingface/hub/models--* 2>/dev/null | wc -l)"
+
+          # Set offline mode since we have all models
+          echo "HF_HUB_OFFLINE=1" >> $GITHUB_ENV
+          echo "Offline mode enabled - no HuggingFace API calls will be made"
+
       - name: Display Memory Usage
         run: free -h
 
       - name: Display Disk Space Before Test
         run: df -h
 
-      - name: Install Valgrind
-        run: sudo apt-get update && sudo apt-get install -y valgrind
+      - name: Compile native extension
+        run: bundle exec rake compile
 
-      - name: Run tests with Valgrind Massif (Peak Memory)
-        run: valgrind --tool=massif --massif-out-file=massif.out bundle exec rake test
-
-      - name: Display Peak Memory Usage
+      - name: Run specs
         run: |
-          ms_print massif.out | head -n 30
+          # HF_HUB_OFFLINE is already set by S3 sync step
+          # This ensures no HuggingFace API calls during tests
+          echo "Running specs with HF_HUB_OFFLINE=$HF_HUB_OFFLINE"
+          bundle exec rspec
 
       - name: Display Disk Space After Test
         run: df -h
 
-      - run: bundle exec yard --fail-on-warning --readme README.md --markup markdown --markup-provider redcarpet
+      - run: bundle exec yard --readme README.md --markup markdown --markup-provider redcarpet

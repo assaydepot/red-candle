@@ -201,6 +201,37 @@ impl GenerationConfig {
             index: Arc::clone(c),
         })
     }
+    
+    /// Get all options as a hash
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        
+        hash.aset("max_length", self.inner.max_length)?;
+        hash.aset("temperature", self.inner.temperature)?;
+        
+        if let Some(top_p) = self.inner.top_p {
+            hash.aset("top_p", top_p)?;
+        }
+        
+        if let Some(top_k) = self.inner.top_k {
+            hash.aset("top_k", top_k)?;
+        }
+        
+        hash.aset("repetition_penalty", self.inner.repetition_penalty)?;
+        hash.aset("repetition_penalty_last_n", self.inner.repetition_penalty_last_n)?;
+        hash.aset("seed", self.inner.seed)?;
+        hash.aset("stop_sequences", self.inner.stop_sequences.clone())?;
+        hash.aset("include_prompt", self.inner.include_prompt)?;
+        hash.aset("debug_tokens", self.inner.debug_tokens)?;
+        hash.aset("stop_on_constraint_satisfaction", self.inner.stop_on_constraint_satisfaction)?;
+        hash.aset("stop_on_match", self.inner.stop_on_match)?;
+        
+        if self.inner.constraint.is_some() {
+            hash.aset("has_constraint", true)?;
+        }
+        
+        Ok(hash)
+    }
 }
 
 #[derive(Clone)]
@@ -214,7 +245,7 @@ pub struct LLM {
 impl LLM {
     /// Create a new LLM from a pretrained model
     pub fn from_pretrained(model_id: String, device: Option<Device>) -> Result<Self> {
-        let device = device.unwrap_or(Device::Cpu);
+        let device = device.unwrap_or(Device::best());
         let candle_device = device.as_device()?;
         
         // For now, we'll use tokio runtime directly
@@ -448,6 +479,67 @@ impl LLM {
         model_ref.apply_chat_template(&json_messages)
             .map_err(|e| Error::new(magnus::exception::runtime_error(), format!("Failed to apply chat template: {}", e)))
     }
+    
+    /// Get the model ID
+    pub fn model_id(&self) -> String {
+        self.model_id.clone()
+    }
+    
+    /// Get model options
+    pub fn options(&self) -> Result<RHash> {
+        let hash = RHash::new();
+        
+        // Basic metadata
+        hash.aset("model_id", self.model_id.clone())?;
+        let device_str = match self.device {
+            Device::Cpu => "cpu",
+            Device::Cuda => "cuda",
+            Device::Metal => "metal",
+        };
+        hash.aset("device", device_str)?;
+        
+        // Parse model_id to extract GGUF file if present
+        if let Some(at_pos) = self.model_id.find('@') {
+            let (base_model, gguf_part) = self.model_id.split_at(at_pos);
+            let gguf_part = &gguf_part[1..]; // Skip the @ character
+            
+            // Check for tokenizer (@@)
+            if let Some(tokenizer_pos) = gguf_part.find("@@") {
+                let (gguf_file, tokenizer) = gguf_part.split_at(tokenizer_pos);
+                hash.aset("base_model", base_model)?;
+                hash.aset("gguf_file", gguf_file)?;
+                hash.aset("tokenizer_source", &tokenizer[2..])?;
+            } else {
+                hash.aset("base_model", base_model)?;
+                hash.aset("gguf_file", gguf_part)?;
+            }
+        }
+        
+        // Add model type
+        let model = match self.model.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let model_ref = model.borrow();
+        
+        let model_type = match &*model_ref {
+            ModelType::Mistral(_) => "Mistral",
+            ModelType::Llama(_) => "Llama",
+            ModelType::Gemma(_) => "Gemma",
+            ModelType::Qwen(_) => "Qwen",
+            ModelType::Phi(_) => "Phi",
+            ModelType::QuantizedGGUF(_) => "QuantizedGGUF",
+        };
+        hash.aset("model_type", model_type)?;
+        
+        // For GGUF models, add architecture info
+        if let ModelType::QuantizedGGUF(gguf) = &*model_ref {
+            hash.aset("architecture", gguf.architecture.clone())?;
+            hash.aset("eos_token_id", gguf.eos_token_id())?;
+        }
+        
+        Ok(hash)
+    }
 }
 
 // Define a standalone function for from_pretrained that handles variable arguments
@@ -486,6 +578,7 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_generation_config.define_method("stop_on_constraint_satisfaction", method!(GenerationConfig::stop_on_constraint_satisfaction, 0))?;
     rb_generation_config.define_method("stop_on_match", method!(GenerationConfig::stop_on_match, 0))?;
     rb_generation_config.define_method("constraint", method!(GenerationConfig::constraint, 0))?;
+    rb_generation_config.define_method("options", method!(GenerationConfig::options, 0))?;
     
     let rb_llm = rb_candle.define_class("LLM", magnus::class::object())?;
     rb_llm.define_singleton_method("_from_pretrained", function!(from_pretrained_wrapper, -1))?;
@@ -497,6 +590,8 @@ pub fn init_llm(rb_candle: RModule) -> Result<()> {
     rb_llm.define_method("eos_token", method!(LLM::eos_token, 0))?;
     rb_llm.define_method("clear_cache", method!(LLM::clear_cache, 0))?;
     rb_llm.define_method("apply_chat_template", method!(LLM::apply_chat_template, 1))?;
+    rb_llm.define_method("model_id", method!(LLM::model_id, 0))?;
+    rb_llm.define_method("options", method!(LLM::options, 0))?;
     
     Ok(())
 }

@@ -177,7 +177,7 @@ red-candle/
 ├── ext/              # Native extensions
 │   └── candle/       # Rust extension
 │       └── src/      # Rust source files
-├── test/             # Test suite
+├── spec/             # RSpec test suite
 ├── examples/         # Usage examples
 ├── docs/             # Additional documentation
 └── bin/              # Executables
@@ -258,13 +258,13 @@ impl ClassName {
 
 ## Testing
 
-### Framework: Minitest
+### Framework: RSpec
 
 ```ruby
-require_relative "test_helper"
+require "spec_helper"
 
-class ClassNameTest < Minitest::Test
-  def test_feature_description
+RSpec.describe "ClassName" do
+  it "does something" do
     # Test implementation
   end
 end
@@ -273,20 +273,33 @@ end
 ### Test Commands
 
 ```bash
-rake              # Run default tests
-rake test         # Run unit tests
-rake test:device  # Run device compatibility tests
-rake test:benchmark # Run benchmarks
-rake test:all     # Run all tests
-rake test:device:cpu/metal/cuda # Test specific device
+rake              # Run default specs (excludes LLM tests)
+rake spec         # Run unit specs (excludes LLM tests)
+rake spec:device  # Run device compatibility tests
+rake spec:llm:gemma    # Run Gemma LLM tests (downloads large models)
+rake spec:llm:phi      # Run Phi LLM tests (downloads large models)
+rake spec:llm:qwen     # Run Qwen LLM tests (downloads large models)
+rake spec:llm:mistral  # Run Mistral LLM tests (downloads large models)
+rake spec:llm:llama    # Run Llama LLM tests (downloads large models)
+rake spec:llm:tinyllama # Run TinyLlama tests (smaller, faster model for CI)
+rake spec:llm:all      # Run ALL LLM tests (requires all models downloaded)
+rake spec:device:cpu/metal/cuda # Test specific device
 ```
+
+### Important Testing Notes
+
+- **NO SKIP_LARGE_MODELS flag**: LLM specs always run when explicitly called via `rake spec:llm:*`
+- The default `rake` and `rake spec` commands exclude LLM tests to keep CI fast
+- LLM tests require models to be downloaded (cached in `~/.cache/huggingface/`)
+- TinyLlama is the smallest/fastest model, good for smoke testing (~450MB)
+- Other models range from 1-7GB depending on quantization
 
 ## Development Workflow
 
 ```mermaid
 graph LR
     A[bundle install] --> B[rake compile]
-    B --> C[rake test]
+    B --> C[rake spec]
     C --> D{Tests Pass?}
     D -->|No| E[Fix Issues]
     E --> B
@@ -296,7 +309,7 @@ graph LR
 ## Build Commands
 
 - **Compile**: `rake compile`
-- **Test**: `rake test`
+- **Test**: `rake spec`
 - **Lint**: Check if lint command exists in project
 - **Type check**: Check if type checking is configured
 
@@ -564,7 +577,7 @@ For specialized domains, combine patterns and dictionaries:
 ```ruby
 # Pattern-based (e.g., for genes)
 gene_recognizer = Candle::PatternEntityRecognizer.new("GENE", [
-  /\b[A-Z][A-Z0-9]{2,}\b/,  # TP53, BRCA1
+  /\b[A-Z][A-Z0-9]{2,10}\b/,  # TP53, BRCA1 (bounded for safety)
   /\bCD\d+\b/               # CD4, CD8
 ])
 

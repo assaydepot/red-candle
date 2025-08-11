@@ -25,7 +25,7 @@ begin
     puts "CUDA: ❌ Not available"
   end
   
-  puts "\nBest device: #{Candle::DeviceUtils.best_device.inspect}"
+  puts "\nBest device: #{Candle::Device.best.inspect}"
 rescue => e
   puts "Error checking devices: #{e.message}"
 end
@@ -34,10 +34,7 @@ end
 puts "\n--- EmbeddingModel on Metal ---"
 begin
   device = Candle::Device.metal
-  model = Candle::EmbeddingModel.new(
-    model_path: "jinaai/jina-embeddings-v2-base-en",
-    device: device
-  )
+  model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: device)
   
   texts = [
     "Ruby is a beautiful programming language.",
@@ -57,7 +54,7 @@ end
 puts "\n--- Reranker on Metal ---"
 begin
   device = Candle::Device.metal
-  reranker = Candle::Reranker.new(device: device)
+  reranker = Candle::Reranker.from_pretrained(device: device)
   
   query = "What is Ruby programming?"
   documents = [
@@ -90,19 +87,14 @@ end
 puts "\n--- Smart Device Selection ---"
 begin
   # Get the best available device
-  best = Candle::DeviceUtils.best_device
+  best = Candle::Device.best
   puts "Best available device: #{best.inspect}"
   
   # Should automatically use the best device (Metal on Mac)
-  model = Candle::EmbeddingModel.new(
-    model_path: "jinaai/jina-embeddings-v2-base-en",
-    device: best
-  )
+  model = Candle::EmbeddingModel.from_pretrained("jinaai/jina-embeddings-v2-base-en", device: best)
   puts "✅ Created EmbeddingModel with best device"
   
-  reranker = Candle::Reranker.new(
-    device: best
-  )
+  reranker = Candle::Reranker.from_pretrained(device: best)
   puts "✅ Created Reranker with best device"
 rescue => e
   puts "❌ Failed: #{e.message}"
