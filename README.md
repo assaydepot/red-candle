@@ -699,7 +699,7 @@ Perfect for specialized domains:
 ```ruby
 # Biomedical entities
 gene_patterns = [
-  /\b[A-Z][A-Z0-9]{2,}\b/,      # TP53, BRCA1, EGFR
+  /\b[A-Z][A-Z0-9]{2,10}\b/,    # TP53, BRCA1, EGFR (bounded for safety)
   /\bCD\d+\b/,                  # CD4, CD8, CD34
   /\b[A-Z]+\d[A-Z]\d*\b/        # RAD51C, PALB2
 ]

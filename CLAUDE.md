@@ -577,7 +577,7 @@ For specialized domains, combine patterns and dictionaries:
 ```ruby
 # Pattern-based (e.g., for genes)
 gene_recognizer = Candle::PatternEntityRecognizer.new("GENE", [
-  /\b[A-Z][A-Z0-9]{2,}\b/,  # TP53, BRCA1
+  /\b[A-Z][A-Z0-9]{2,10}\b/,  # TP53, BRCA1 (bounded for safety)
   /\bCD\d+\b/               # CD4, CD8
 ])
 

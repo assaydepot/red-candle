@@ -156,7 +156,8 @@ RSpec.describe Candle::PatternEntityRecognizer do
     context "with problematic patterns from security alert" do
       let(:recognizer) do
         described_class.new("GENE", [
-          /\b[A-Z][A-Z0-9]{2,}\b/,  # This could cause ReDoS
+          # CodeQL Alert: These patterns are intentionally included to test ReDoS protection
+          /\b[A-Z][A-Z0-9]{2,}\b/,  # This could cause ReDoS without protection
           /\bCD\d+\b/               # This is safe
         ])
       end
@@ -227,6 +228,8 @@ RSpec.describe Candle::PatternEntityRecognizer do
     context "with pattern validation" do
       it "handles patterns with nested quantifiers" do
         recognizer = described_class.new("TEST")
+        # Intentionally problematic pattern for testing ReDoS protection
+        # CodeQL Alert: This pattern is intentionally vulnerable to test our protection
         recognizer.add_pattern(/(\w+)*$/)
         
         # Even with nested quantifiers, should complete quickly

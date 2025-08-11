@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'pattern_validator'
+
 module Candle
   # Named Entity Recognition (NER) for token classification
   #
@@ -174,13 +176,38 @@ module Candle
   class PatternEntityRecognizer
     attr_reader :patterns, :entity_type
     
-    def initialize(entity_type, patterns = [])
+    def initialize(entity_type, patterns = [], validate: true)
       @entity_type = entity_type
-      @patterns = patterns
+      @patterns = []
+      
+      # Validate patterns if requested
+      patterns.each do |pattern|
+        if validate && ENV['CANDLE_VALIDATE_PATTERNS'] != 'false'
+          validation = PatternValidator.validate(pattern)
+          unless validation[:safe]
+            validation[:warnings].each do |warning|
+              warn "PatternEntityRecognizer: Pattern /#{pattern.source}/ - #{warning}"
+            end
+          end
+        end
+        @patterns << pattern
+      end
     end
     
-    # Add a pattern (String or Regexp)
-    def add_pattern(pattern)
+    # Add a pattern (String or Regexp) with optional validation
+    def add_pattern(pattern, validate: true)
+      if validate && ENV['CANDLE_VALIDATE_PATTERNS'] != 'false'
+        validation = PatternValidator.validate(pattern)
+        unless validation[:safe]
+          validation[:warnings].each do |warning|
+            warn "PatternEntityRecognizer: #{warning}"
+          end
+          validation[:suggestions].each do |suggestion|
+            warn "  Suggestion: #{suggestion}"
+          end
+        end
+      end
+      
       @patterns << pattern
       self
     end
