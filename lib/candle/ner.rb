@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'pattern_validator'
+# Pattern validation available but not forced
+# require_relative 'pattern_validator'  # Uncomment if needed
 
 module Candle
   # Named Entity Recognition (NER) for token classification
@@ -176,38 +177,13 @@ module Candle
   class PatternEntityRecognizer
     attr_reader :patterns, :entity_type
     
-    def initialize(entity_type, patterns = [], validate: true)
+    def initialize(entity_type, patterns = [])
       @entity_type = entity_type
-      @patterns = []
-      
-      # Validate patterns if requested
-      patterns.each do |pattern|
-        if validate && ENV['CANDLE_VALIDATE_PATTERNS'] != 'false'
-          validation = PatternValidator.validate(pattern)
-          unless validation[:safe]
-            validation[:warnings].each do |warning|
-              warn "PatternEntityRecognizer: Pattern /#{pattern.source}/ - #{warning}"
-            end
-          end
-        end
-        @patterns << pattern
-      end
+      @patterns = patterns
     end
     
-    # Add a pattern (String or Regexp) with optional validation
-    def add_pattern(pattern, validate: true)
-      if validate && ENV['CANDLE_VALIDATE_PATTERNS'] != 'false'
-        validation = PatternValidator.validate(pattern)
-        unless validation[:safe]
-          validation[:warnings].each do |warning|
-            warn "PatternEntityRecognizer: #{warning}"
-          end
-          validation[:suggestions].each do |suggestion|
-            warn "  Suggestion: #{suggestion}"
-          end
-        end
-      end
-      
+    # Add a pattern (String or Regexp)
+    def add_pattern(pattern)
       @patterns << pattern
       self
     end
@@ -226,12 +202,6 @@ module Candle
       
       @patterns.each do |pattern|
         regex = pattern.is_a?(Regexp) ? pattern : Regexp.new(pattern)
-        
-        # Validate regex doesn't have obvious ReDoS patterns
-        source = regex.source
-        if source =~ /([+*]|\{\d*,\d*\}).*([+*]|\{\d*,\d*\})/
-          warn "PatternEntityRecognizer: Pattern /#{source}/ may be vulnerable to ReDoS (nested quantifiers)"
-        end
         
         text.scan(regex) do |match|
           match_text = $&

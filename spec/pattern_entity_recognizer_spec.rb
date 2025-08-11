@@ -230,6 +230,7 @@ RSpec.describe Candle::PatternEntityRecognizer do
         recognizer = described_class.new("TEST")
         # Intentionally problematic pattern for testing ReDoS protection
         # CodeQL Alert: This pattern is intentionally vulnerable to test our protection
+        # codeql[rb/polynomial-redos]: Test pattern to verify ReDoS protection works
         recognizer.add_pattern(/(\w+)*$/)
         
         # Even with nested quantifiers, should complete quickly
