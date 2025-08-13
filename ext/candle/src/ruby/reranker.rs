@@ -37,9 +37,10 @@ impl Reranker {
             let config = std::fs::read_to_string(config_filename)?;
             let config: Config = serde_json::from_str(&config)?;
 
-            // Setup tokenizer with padding
+            // Setup tokenizer with padding AND truncation for BERT's max length
             let tokenizer = Tokenizer::from_file(tokenizer_filename)?;
             let tokenizer = TokenizerLoader::with_padding(tokenizer, None);
+            let tokenizer = TokenizerLoader::with_truncation(tokenizer, 512);  // BERT max length
             
             // Load model weights
             let vb = unsafe {

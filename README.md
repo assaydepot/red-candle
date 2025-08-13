@@ -469,6 +469,55 @@ The reranker uses a BERT-based architecture that:
 
 This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.
 
+### Performance Considerations
+
+**Important**: The Reranker automatically truncates documents to 512 tokens (BERT's maximum sequence length) to ensure stable performance and prevent errors.
+
+#### Performance Guidelines
+
+1. **Document Length**: Documents longer than ~400 words will be truncated
+   - The first 512 tokens (roughly 300-400 words) are used
+   - Consider splitting very long documents into chunks if full coverage is needed
+
+2. **Batch Size**: Process multiple documents in one call for efficiency
+   ```ruby
+   # Good: Single call with multiple documents
+   results = reranker.rerank(query, documents)
+   
+   # Less efficient: Multiple calls
+   documents.map { |doc| reranker.rerank(query, [doc]) }
+   ```
+
+3. **Expected Performance**:
+   - **CPU**: ~0.3-0.5s per query-document pair
+   - **GPU (Metal/CUDA)**: ~0.05-0.1s per query-document pair
+   - Performance is consistent regardless of document length due to truncation
+
+4. **Chunking Strategy** for long documents:
+   ```ruby
+   def rerank_long_document(query, long_text, chunk_size: 300)
+     # Split into overlapping chunks
+     words = long_text.split
+     chunks = []
+     
+     (0...words.length).step(chunk_size - 50) do |i|
+       chunk = words[i...(i + chunk_size)].join(" ")
+       chunks << chunk
+     end
+     
+     # Rerank chunks
+     results = reranker.rerank(query, chunks)
+     
+     # Return best chunk
+     results.max_by { |r| r[:score] }
+   end
+   ```
+
+5. **Memory Usage**: 
+   - Model size: ~125MB
+   - Each batch processes all documents simultaneously
+   - Consider batching if you have many documents
+
 ## Tokenizer
 
 Red-Candle provides direct access to tokenizers for text preprocessing and analysis. This is useful for understanding how models process text, debugging issues, and building custom NLP pipelines.
