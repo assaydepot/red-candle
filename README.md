@@ -363,6 +363,12 @@ require 'candle'
 # Initialize the reranker with a cross-encoder model
 reranker = Candle::Reranker.from_pretrained("cross-encoder/ms-marco-MiniLM-L-12-v2")
 
+# Or with custom max_length for truncation (default is 512)
+reranker = Candle::Reranker.from_pretrained(
+  "cross-encoder/ms-marco-MiniLM-L-12-v2",
+  max_length: 256  # Faster processing with less context
+)
+
 # Define your query and candidate documents
 query = "How many people live in London?"
 documents = [
@@ -471,7 +477,27 @@ This joint processing allows cross-encoders to capture subtle semantic relations
 
 ### Performance Considerations
 
-**Important**: The Reranker automatically truncates documents to 512 tokens (BERT's maximum sequence length) to ensure stable performance and prevent errors.
+**Important**: The Reranker automatically truncates documents to ensure stable performance. The default maximum is 512 tokens, but this is configurable.
+
+#### Configurable Truncation
+
+You can adjust the `max_length` parameter to balance performance and context:
+
+```ruby
+# Default: 512 tokens (maximum context, ~300ms per doc on CPU)
+reranker = Candle::Reranker.from_pretrained(model_id)
+
+# Faster: 256 tokens (~60% faster, ~120ms per doc on CPU)
+reranker = Candle::Reranker.from_pretrained(model_id, max_length: 256)
+
+# Fastest: 128 tokens (~80% faster, ~60ms per doc on CPU)
+reranker = Candle::Reranker.from_pretrained(model_id, max_length: 128)
+```
+
+Choose based on your needs:
+- **512 tokens**: Maximum context for complex queries (default)
+- **256 tokens**: Good balance of speed and context
+- **128 tokens**: Fast processing for simple matching
 
 #### Performance Guidelines
 
