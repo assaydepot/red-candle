@@ -6,18 +6,20 @@ module Candle
     # Load a pre-trained reranker model from HuggingFace
     # @param model_id [String] HuggingFace model ID (defaults to cross-encoder/ms-marco-MiniLM-L-12-v2)
     # @param device [Candle::Device] The device to use for computation (defaults to best available)
+    # @param max_length [Integer] Maximum sequence length for truncation (defaults to 512)
     # @return [Reranker] A new Reranker instance
-    def self.from_pretrained(model_id = DEFAULT_MODEL_PATH, device: Candle::Device.best)
-      _create(model_id, device)
+    def self.from_pretrained(model_id = DEFAULT_MODEL_PATH, device: Candle::Device.best, max_length: 512)
+      _create(model_id, device, max_length)
     end
     
     # Constructor for creating a new Reranker with optional parameters
     # @deprecated Use {.from_pretrained} instead
     # @param model_path [String, nil] The path to the model on Hugging Face
     # @param device [Candle::Device, Candle::Device.cpu] The device to use for computation
-    def self.new(model_path: DEFAULT_MODEL_PATH, device: Candle::Device.best)
+    # @param max_length [Integer] Maximum sequence length for truncation (defaults to 512)
+    def self.new(model_path: DEFAULT_MODEL_PATH, device: Candle::Device.best, max_length: 512)
       $stderr.puts "[DEPRECATION] `Reranker.new` is deprecated. Please use `Reranker.from_pretrained` instead."
-      _create(model_path, device)
+      _create(model_path, device, max_length)
     end
 
     # Returns documents ranked by relevance using the specified pooling method.
