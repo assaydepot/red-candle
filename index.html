@@ -442,6 +442,12 @@ print(embedding)
 <span class='comment'># Initialize the reranker with a cross-encoder model
 </span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
+<span class='comment'># Or with custom max_length for truncation (default is 512)
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>cross-encoder/ms-marco-MiniLM-L-12-v2</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>max_length:</span> <span class='int'>256</span>  <span class='comment'># Faster processing with less context
+</span><span class='rparen'>)</span>
+
 <span class='comment'># Define your query and candidate documents
 </span><span class='id identifier rubyid_query'>query</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>How many people live in London?</span><span class='tstring_end'>&quot;</span></span>
 <span class='id identifier rubyid_documents'>documents</span> <span class='op'>=</span> <span class='lbracket'>[</span>
@@ -554,6 +560,87 @@ print(embedding)
 </ol>
 
 <p>This joint processing allows cross-encoders to capture subtle semantic relationships between queries and documents, making them more accurate for reranking tasks, though at the cost of higher computational requirements.</p>
+
+<h3 id="performance-considerations">Performance Considerations</h3>
+
+<p><strong>Important</strong>: The Reranker automatically truncates documents to ensure stable performance. The default maximum is 512 tokens, but this is configurable.</p>
+
+<h4 id="configurable-truncation">Configurable Truncation</h4>
+
+<p>You can adjust the <code>max_length</code> parameter to balance performance and context:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Default: 512 tokens (maximum context, ~300ms per doc on CPU)
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='rparen'>)</span>
+
+<span class='comment'># Faster: 256 tokens (~60% faster, ~120ms per doc on CPU)
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='label'>max_length:</span> <span class='int'>256</span><span class='rparen'>)</span>
+
+<span class='comment'># Fastest: 128 tokens (~80% faster, ~60ms per doc on CPU)
+</span><span class='id identifier rubyid_reranker'>reranker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Candle.html" title="Candle (module)">Candle</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Candle/Reranker.html" title="Candle::Reranker (class)">Reranker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_pretrained'><span class='object_link'><a href="Candle/Reranker.html#from_pretrained-class_method" title="Candle::Reranker.from_pretrained (method)">from_pretrained</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_model_id'>model_id</span><span class='comma'>,</span> <span class='label'>max_length:</span> <span class='int'>128</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>Choose based on your needs:</p>
+
+<ul>
+<li><strong>512 tokens</strong>: Maximum context for complex queries (default)</li>
+<li><strong>256 tokens</strong>: Good balance of speed and context</li>
+<li><strong>128 tokens</strong>: Fast processing for simple matching</li>
+</ul>
+
+<h4 id="performance-guidelines">Performance Guidelines</h4>
+
+<ol>
+<li><p><strong>Document Length</strong>: Documents longer than ~400 words will be truncated</p>
+
+<ul>
+<li>The first 512 tokens (roughly 300-400 words) are used</li>
+<li>Consider splitting very long documents into chunks if full coverage is needed</li>
+</ul></li>
+<li><p><strong>Batch Size</strong>: Process multiple documents in one call for efficiency</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Good: Single call with multiple documents
+</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_reranker'>reranker</span><span class='period'>.</span><span class='id identifier rubyid_rerank'>rerank</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_documents'>documents</span><span class='rparen'>)</span>
+</code></pre></li>
+</ol>
+
+<p># Less efficient: Multiple calls
+   documents.map { |doc| reranker.rerank(query, [doc]) }</p>
+
+<pre class="code ruby"><code class="ruby">
+3. **Expected Performance**:
+   - **CPU**: ~0.3-0.5s per query-document pair
+   - **GPU (Metal/CUDA)**: ~0.05-0.1s per query-document pair
+   - Performance is consistent regardless of document length due to truncation
+
+4. **Chunking Strategy** for long documents:
+   ```ruby
+   def rerank_long_document(query, long_text, chunk_size: 300)
+     # Split into overlapping chunks
+     words = long_text.split
+     chunks = []
+
+     (0...words.length).step(chunk_size - 50) do |i|
+       chunk = words[i...(i + chunk_size)].join(&quot; &quot;)
+       chunks &lt;&lt; chunk
+     end
+
+     # Rerank chunks
+     results = reranker.rerank(query, chunks)
+
+     # Return best chunk
+     results.max_by { |r| r[:score] }
+   end
+</code></pre>
+
+<ol>
+<li><strong>Memory Usage</strong>: 
+
+<ul>
+<li>Model size: ~125MB</li>
+<li>Each batch processes all documents simultaneously</li>
+<li>Consider batching if you have many documents</li>
+</ul></li>
+</ol>
 
 <h2 id="tokenizer">Tokenizer</h2>
 
@@ -1057,7 +1144,7 @@ bundle exec rake rust:coverage:clean
 </div></div>
 
       <div id="footer">
-  Generated on Mon Aug 11 03:06:24 2025 by
+  Generated on Mon Aug 18 15:56:01 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.4.5).
 </div>
